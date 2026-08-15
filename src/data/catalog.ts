@@ -9,10 +9,7 @@ type SystemId =
   | 'cabin-system' | 'other-system';
 
 type SourceDefinition = { id: string; name: string; url: string };
-type PartTemplate = {
-  slug: string; name: string; category: string; systemId: SystemId;
-  tags: string[]; aftermarketBrands: string[];
-};
+type PartTemplate = { slug: string; name: string; category: string; systemId: SystemId; tags: string[]; aftermarketBrands: string[] };
 type ModelDefinition = { id: string; name: string };
 type ManufacturerDefinition = { id: string; name: string; source: SourceDefinition; models: ModelDefinition[] };
 
@@ -26,7 +23,7 @@ const SOURCES: Record<string, SourceDefinition> = {
   'iveco': { id: 'source-iveco', name: 'Iveco', url: 'https://www.iveco.com/' },
   'kenworth': { id: 'source-kenworth', name: 'Kenworth', url: 'https://www.kenworth.com/' },
   'peterbilt': { id: 'source-peterbilt', name: 'Peterbilt', url: 'https://www.peterbilt.com/' },
-  'freightliner': { id: 'source-freightliner', name: 'Freightliner', url: 'https://www.freightliner.com/' },
+  'freightliner': { id: 'freightliner', name: 'Freightliner', url: 'https://www.freightliner.com/' },
   'mack': { id: 'source-mack', name: 'Mack Trucks', url: 'https://www.macktrucks.com/' },
   'western-star': { id: 'source-western-star', name: 'Western Star', url: 'https://www.westernstartrucks.com/' },
   'hino': { id: 'source-hino', name: 'Hino Trucks', url: 'https://www.hino.com/' },
@@ -109,6 +106,18 @@ const MANUFACTURERS: ManufacturerDefinition[] = [
   ]},
 ];
 
+/** Source-backed OEM registry. Empty modelIds means the source does not prove exact fitment. */
+const OEM_REFERENCE_REGISTRY = [
+  {
+    manufacturerId: 'volvo-trucks', partTemplateSlug: 'oil-filter', referenceNumber: '21707134',
+    modelIds: [], sourceUrl: 'https://www.mann-filter.com/en/catalog/search-results/product.html/w11025_mann-filter.html', evidence: 'parts-catalog',
+  },
+  {
+    manufacturerId: 'mercedes-benz-trucks', partTemplateSlug: 'air-filter', referenceNumber: 'A0040949104',
+    modelIds: [], sourceUrl: 'https://www.mann-filter.com/', evidence: 'parts-catalog',
+  },
+];
+
 /** Public catalogue cross-refs only. No bare brand tokens. Deduped via uniqueRefs(). */
 const VERIFIED_OEM_REFERENCES: Array<{
   manufacturerId: string;
@@ -118,362 +127,75 @@ const VERIFIED_OEM_REFERENCES: Array<{
   sourceUrl: string;
 }> = [
   // —— Filters ——
-  {
-    manufacturerId: 'volvo-trucks', partTemplateSlug: 'oil-filter', referenceNumber: '21707134',
-    alternateNumbers: ['21707136', '21170569', 'MANN W 11 025', 'FEBI 35425', 'HENGST H200W04', 'MAHLE OC 370'],
-    sourceUrl: 'https://www.mann-filter.com/en/catalog/search-results/product.html/w11025_mann-filter.html',
-  },
-  {
-    manufacturerId: 'renault-trucks', partTemplateSlug: 'oil-filter', referenceNumber: '5001846641',
-    alternateNumbers: ['MANN W 11 025', 'FEBI 35425', '21707134'],
-    sourceUrl: 'https://www.mann-filter.com/en/catalog/search-results/product.html/w11025_mann-filter.html',
-  },
-  {
-    manufacturerId: 'mack', partTemplateSlug: 'oil-filter', referenceNumber: '21707136',
-    alternateNumbers: ['MANN W 11 025', 'FEBI 35425', '21707134'],
-    sourceUrl: 'https://www.mann-filter.com/en/catalog/search-results/product.html/w11025_mann-filter.html',
-  },
-  {
-    manufacturerId: 'volvo-trucks', partTemplateSlug: 'air-filter', referenceNumber: '21377915',
-    alternateNumbers: ['21914608', 'MANN C 25 990/1'],
-    sourceUrl: 'https://www.mann-filter.com/',
-  },
-  {
-    manufacturerId: 'volvo-trucks', partTemplateSlug: 'fuel-filter', referenceNumber: '20924422',
-    alternateNumbers: ['SAMPA 033.141', 'MANN WDK 11 102/13', 'BOSCH F026402017'],
-    sourceUrl: 'https://www.mann-filter.com/',
-  },
-  {
-    manufacturerId: 'volvo-trucks', partTemplateSlug: 'cabin-filter', referenceNumber: '11007388',
-    alternateNumbers: ['MANN CU 2785'],
-    sourceUrl: 'https://www.mann-filter.com/en/catalog/search-results/product.html/cu2785_mann-filter.html',
-  },
-  {
-    manufacturerId: 'mercedes-benz-trucks', partTemplateSlug: 'air-filter', referenceNumber: 'A0040949104',
-    alternateNumbers: ['MANN C50005', '0040949104'],
-    sourceUrl: 'https://www.mann-filter.com/',
-  },
-  {
-    manufacturerId: 'mercedes-benz-trucks', partTemplateSlug: 'oil-filter', referenceNumber: 'A5411800009',
-    alternateNumbers: ['MANN HU 12 140 x'],
-    sourceUrl: 'https://www.mann-filter.com/',
-  },
-  {
-    manufacturerId: 'daf-trucks', partTemplateSlug: 'fuel-filter', referenceNumber: '1699168',
-    alternateNumbers: ['MANN PU 966/1 X', 'FEBI 108791', 'HENGST E82KP D36'],
-    sourceUrl: 'https://www.mann-filter.com/',
-  },
-  {
-    manufacturerId: 'daf-trucks', partTemplateSlug: 'oil-filter', referenceNumber: '2142288',
-    alternateNumbers: ['MAHLE OX 1059D'],
-    sourceUrl: 'https://www.mann-filter.com/',
-  },
-
-  // —— COJALI ——
-  {
-    manufacturerId: 'scania', partTemplateSlug: 'air-dryer', referenceNumber: '1774598',
-    alternateNumbers: ['COJALI 6002007', 'FEBI 35304', 'WABCO 4329012282'],
-    sourceUrl: 'https://plenty.parts/parts/cojali/all/6002007',
-  },
-  {
-    manufacturerId: 'scania', partTemplateSlug: 'brake-valve', referenceNumber: '571190',
-    alternateNumbers: ['COJALI 2212254', 'WABCO 4613151800'],
-    sourceUrl: 'https://plenty.parts/',
-  },
-  {
-    manufacturerId: 'scania', partTemplateSlug: 'air-spring', referenceNumber: '1738475',
-    alternateNumbers: ['COJALI 2214400', 'FEBI 39335', 'WABCO 4640060007', 'HALDEX 612035011'],
-    sourceUrl: 'https://plenty.parts/parts/cojali/all/2214400',
-  },
-  {
-    manufacturerId: 'daf-trucks', partTemplateSlug: 'brake-valve', referenceNumber: '1677510',
-    alternateNumbers: ['COJALI 2232002', 'WABCO 4800030040'],
-    sourceUrl: 'https://www.ic24.uk/',
-  },
-  {
-    manufacturerId: 'renault-trucks', partTemplateSlug: 'air-dryer', referenceNumber: '5001874313',
-    alternateNumbers: ['COJALI 2310529', 'SAMPA 096.453'],
-    sourceUrl: 'https://www.recambioscamion.com/',
-  },
-  // Fixed: 1607728 is air suspension valve, NOT service brake valve
-  {
-    manufacturerId: 'volvo-trucks', partTemplateSlug: 'air-spring', referenceNumber: '1607728',
-    alternateNumbers: ['COJALI 2214400', 'FEBI 39335', 'WABCO 4640060000'],
-    sourceUrl: 'https://plenty.parts/parts/cojali/all/2214400',
-  },
-  {
-    manufacturerId: 'mercedes-benz-trucks', partTemplateSlug: 'brake-valve', referenceNumber: 'A0014300460',
-    alternateNumbers: ['COJALI 6012001', 'WABCO 4613150052'],
-    sourceUrl: 'https://www.intercars24.ee/',
-  },
-
-  // —— Brakes ——
-  {
-    manufacturerId: 'scania', partTemplateSlug: 'brake-pad', referenceNumber: '2325212',
-    alternateNumbers: ['TEXTAR 2933101', 'WVA 29331'],
-    sourceUrl: 'https://truckstopgroup.co.uk/',
-  },
-  {
-    manufacturerId: 'scania', partTemplateSlug: 'brake-disc', referenceNumber: '1852817',
-    alternateNumbers: ['1889543'],
-    sourceUrl: 'https://www.scania.com/',
-  },
-  {
-    manufacturerId: 'man-truck-bus', partTemplateSlug: 'brake-pad', referenceNumber: 'K059965K50',
-    alternateNumbers: ['TEXTAR 2917701'],
-    sourceUrl: 'https://www.knorr-bremse.com/',
-  },
-  {
-    manufacturerId: 'daf-trucks', partTemplateSlug: 'brake-chamber', referenceNumber: '1387439',
-    alternateNumbers: ['1726138', 'KNORR K034248'],
-    sourceUrl: 'https://www.ebs.co.uk/',
-  },
-
-  // —— SAMPA (public Autodoc / listings) ——
-  {
-    manufacturerId: 'volvo-trucks', partTemplateSlug: 'radiator', referenceNumber: '033.487',
-    alternateNumbers: ['SAMPA 033.487'],
-    sourceUrl: 'https://trucks.autodoc.co.uk/spare-parts/hoses-pipes-flanges-200089/volvo/mf-sampa',
-  },
-
+  { manufacturerId: 'volvo-trucks', partTemplateSlug: 'oil-filter', referenceNumber: '21707134', alternateNumbers: ['21707136', '21170569', 'MANN W 11 025', 'FEBI 35425', 'HENGST H200W04', 'MAHLE OC 370'], sourceUrl: 'https://www.mann-filter.com/en/catalog/search-results/product.html/w11025_mann-filter.html' },
+  { manufacturerId: 'renault-trucks', partTemplateSlug: 'oil-filter', referenceNumber: '5001846641', alternateNumbers: ['MANN W 11 025', 'FEBI 35425', '21707134'], sourceUrl: 'https://www.mann-filter.com/en/catalog/search-results/product.html/w11025_mann-filter.html' },
+  { manufacturerId: 'mack', partTemplateSlug: 'oil-filter', referenceNumber: '21707136', alternateNumbers: ['MANN W 11 025', 'FEBI 35425', '21707134'], sourceUrl: 'https://www.mann-filter.com/en/catalog/search-results/product.html/w11025_mann-filter.html' },
+  { manufacturerId: 'volvo-trucks', partTemplateSlug: 'air-filter', referenceNumber: '21377915', alternateNumbers: ['21914608', 'MANN C 25 990/1'], sourceUrl: 'https://www.mann-filter.com/' },
+  { manufacturerId: 'volvo-trucks', partTemplateSlug: 'fuel-filter', referenceNumber: '20924422', alternateNumbers: ['SAMPA 033.141', 'MANN WDK 11 102/13', 'BOSCH F026402017'], sourceUrl: 'https://www.mann-filter.com/' },
+  { manufacturerId: 'volvo-trucks', partTemplateSlug: 'cabin-filter', referenceNumber: '11007388', alternateNumbers: ['MANN CU 2785'], sourceUrl: 'https://www.mann-filter.com/en/catalog/search-results/product.html/cu2785_mann-filter.html' },
+  { manufacturerId: 'mercedes-benz-trucks', partTemplateSlug: 'air-filter', referenceNumber: 'A0040949104', alternateNumbers: ['MANN C50005', '0040949104'], sourceUrl: 'https://www.mann-filter.com/' },
+  { manufacturerId: 'mercedes-benz-trucks', partTemplateSlug: 'oil-filter', referenceNumber: 'A5411800009', alternateNumbers: ['MANN HU 12 140 x'], sourceUrl: 'https://www.mann-filter.com/' },
+  { manufacturerId: 'daf-trucks', partTemplateSlug: 'fuel-filter', referenceNumber: '1699168', alternateNumbers: ['MANN PU 966/1 X', 'FEBI 108791', 'HENGST E82KP D36'], sourceUrl: 'https://www.mann-filter.com/' },
+  { manufacturerId: 'daf-trucks', partTemplateSlug: 'oil-filter', referenceNumber: '2142288', alternateNumbers: ['MAHLE OX 1059D'], sourceUrl: 'https://www.mann-filter.com/' },
+  // —— COJALI / braking / suspension ——
+  { manufacturerId: 'scania', partTemplateSlug: 'air-dryer', referenceNumber: '1774598', alternateNumbers: ['COJALI 6002007', 'FEBI 35304', 'WABCO 4329012282'], sourceUrl: 'https://plenty.parts/parts/cojali/all/6002007' },
+  { manufacturerId: 'scania', partTemplateSlug: 'brake-valve', referenceNumber: '571190', alternateNumbers: ['COJALI 2212254', 'WABCO 4613151800'], sourceUrl: 'https://plenty.parts/' },
+  { manufacturerId: 'scania', partTemplateSlug: 'air-spring', referenceNumber: '1738475', alternateNumbers: ['COJALI 2214400', 'FEBI 39335', 'WABCO 4640060007', 'HALDEX 612035011'], sourceUrl: 'https://plenty.parts/parts/cojali/all/2214400' },
+  { manufacturerId: 'daf-trucks', partTemplateSlug: 'brake-valve', referenceNumber: '1677510', alternateNumbers: ['COJALI 2232002', 'WABCO 4800030040'], sourceUrl: 'https://www.ic24.uk/' },
+  { manufacturerId: 'renault-trucks', partTemplateSlug: 'air-dryer', referenceNumber: '5001874313', alternateNumbers: ['COJALI 2310529', 'SAMPA 096.453'], sourceUrl: 'https://www.recambioscamion.com/' },
+  { manufacturerId: 'volvo-trucks', partTemplateSlug: 'air-spring', referenceNumber: '1607728', alternateNumbers: ['COJALI 2214400', 'FEBI 39335', 'WABCO 4640060000'], sourceUrl: 'https://plenty.parts/parts/cojali/all/2214400' },
+  { manufacturerId: 'mercedes-benz-trucks', partTemplateSlug: 'brake-valve', referenceNumber: 'A0014300460', alternateNumbers: ['COJALI 6012001', 'WABCO 4613150052'], sourceUrl: 'https://www.intercars24.ee/' },
+  { manufacturerId: 'scania', partTemplateSlug: 'brake-pad', referenceNumber: '2325212', alternateNumbers: ['TEXTAR 2933101', 'WVA 29331'], sourceUrl: 'https://truckstopgroup.co.uk/' },
+  { manufacturerId: 'scania', partTemplateSlug: 'brake-disc', referenceNumber: '1852817', alternateNumbers: ['1889543'], sourceUrl: 'https://www.scania.com/' },
+  { manufacturerId: 'man-truck-bus', partTemplateSlug: 'brake-pad', referenceNumber: 'K059965K50', alternateNumbers: ['TEXTAR 2917701'], sourceUrl: 'https://www.knorr-bremse.com/' },
+  { manufacturerId: 'daf-trucks', partTemplateSlug: 'brake-chamber', referenceNumber: '1387439', alternateNumbers: ['1726138', 'KNORR K034248'], sourceUrl: 'https://www.ebs.co.uk/' },
+  { manufacturerId: 'volvo-trucks', partTemplateSlug: 'radiator', referenceNumber: '033.487', alternateNumbers: ['SAMPA 033.487'], sourceUrl: 'https://trucks.autodoc.co.uk/spare-parts/hoses-pipes-flanges-200089/volvo/mf-sampa' },
   // —— ELRING ——
-  {
-    manufacturerId: 'volvo-trucks', partTemplateSlug: 'gasket-set', referenceNumber: '21539731',
-    alternateNumbers: ['21768034', 'ELRING 899.340', 'AJUSA 52356300', 'REINZ 02-36855-02'],
-    sourceUrl: 'https://www.elring.com/',
-  },
-  {
-    manufacturerId: 'volvo-trucks', partTemplateSlug: 'gasket-set', referenceNumber: '477785',
-    alternateNumbers: ['ELRING 428.610', 'AJUSA 59013000'],
-    sourceUrl: 'https://www.elring.com/',
-  },
-  {
-    manufacturerId: 'scania', partTemplateSlug: 'gasket-set', referenceNumber: '1112908',
-    alternateNumbers: ['1114640', 'ELRING 832.619'],
-    sourceUrl: 'https://www.elring.com/',
-  },
-  {
-    manufacturerId: 'mercedes-benz-trucks', partTemplateSlug: 'gasket-set', referenceNumber: 'A0010742280',
-    alternateNumbers: ['0010742280', 'ELRING 832.619'],
-    sourceUrl: 'https://www.elring.com/',
-  },
-
+  { manufacturerId: 'volvo-trucks', partTemplateSlug: 'gasket-set', referenceNumber: '21539731', alternateNumbers: ['21768034', 'ELRING 899.340', 'AJUSA 52356300', 'REINZ 02-36855-02'], sourceUrl: 'https://www.elring.com/' },
+  { manufacturerId: 'volvo-trucks', partTemplateSlug: 'gasket-set', referenceNumber: '477785', alternateNumbers: ['ELRING 428.610', 'AJUSA 59013000'], sourceUrl: 'https://www.elring.com/' },
+  { manufacturerId: 'scania', partTemplateSlug: 'gasket-set', referenceNumber: '1112908', alternateNumbers: ['1114640', 'ELRING 832.619'], sourceUrl: 'https://www.elring.com/' },
+  { manufacturerId: 'mercedes-benz-trucks', partTemplateSlug: 'gasket-set', referenceNumber: 'A0010742280', alternateNumbers: ['0010742280', 'ELRING 832.619'], sourceUrl: 'https://www.elring.com/' },
   // —— LEMA ——
-  {
-    manufacturerId: 'daf-trucks', partTemplateSlug: 'silentblock', referenceNumber: '1291233',
-    alternateNumbers: ['LEMA 1003.01'],
-    sourceUrl: 'https://www.lema-parts.it/',
-  },
-  {
-    manufacturerId: 'daf-trucks', partTemplateSlug: 'silentblock', referenceNumber: '0366351',
-    alternateNumbers: ['LEMA 1003.02'],
-    sourceUrl: 'https://www.lema-parts.it/',
-  },
-  {
-    manufacturerId: 'renault-trucks', partTemplateSlug: 'silentblock', referenceNumber: '5000815738',
-    alternateNumbers: ['LEMA 1000.65'],
-    sourceUrl: 'https://www.lema-parts.it/',
-  },
-  {
-    manufacturerId: 'volvo-trucks', partTemplateSlug: 'silentblock', referenceNumber: '20532891',
-    alternateNumbers: ['7420532891', 'ELRING 767.500'],
-    sourceUrl: 'https://www.elring.com/',
-  },
+  { manufacturerId: 'daf-trucks', partTemplateSlug: 'silentblock', referenceNumber: '1291233', alternateNumbers: ['LEMA 1003.01'], sourceUrl: 'https://www.lema-parts.it/' },
+  { manufacturerId: 'daf-trucks', partTemplateSlug: 'silentblock', referenceNumber: '0366351', alternateNumbers: ['LEMA 1003.02'], sourceUrl: 'https://www.lema-parts.it/' },
+  { manufacturerId: 'renault-trucks', partTemplateSlug: 'silentblock', referenceNumber: '5000815738', alternateNumbers: ['LEMA 1000.65'], sourceUrl: 'https://www.lema-parts.it/' },
+  { manufacturerId: 'volvo-trucks', partTemplateSlug: 'silentblock', referenceNumber: '20532891', alternateNumbers: ['7420532891', 'ELRING 767.500'], sourceUrl: 'https://www.elring.com/' },
 ];
 
-function unique(values: string[]): string[] {
-  return Array.from(new Set(values.filter(Boolean)));
-}
-
+function unique(values: string[]): string[] { return Array.from(new Set(values.filter(Boolean))); }
 function uniqueRefs(values: string[]): string[] {
-  const seen = new Set<string>();
-  const out: string[] = [];
-  for (const v of values) {
-    if (!v) continue;
-    const key = v.toLowerCase().replace(/[\s\-\/\.]/g, '');
-    if (seen.has(key)) continue;
-    seen.add(key);
-    out.push(v.trim());
-  }
+  const seen = new Set<string>(); const out: string[] = [];
+  for (const v of values) { if (!v) continue; const key = v.toLowerCase().replace(/[\s\-\/\.]/g, ''); if (seen.has(key)) continue; seen.add(key); out.push(v.trim()); }
   return out;
 }
-
-function slugify(value: string): string {
-  return value.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
-}
-function parseList(value: string | undefined): string[] {
-  if (!value) return [];
-  return value.split(',').map((item) => item.trim()).filter(Boolean);
-}
-function createSource(source: SourceDefinition, partId: string): Source {
-  return { id: `${source.id}-${partId}`, partId, name: source.name, url: source.url, type: 'official', reliability: 'high' };
-}
-
-function createImages(partId: string, template: PartTemplate): PartImage[] {
-  return resolveProductImages(template.slug, partId, template.name) as PartImage[];
-}
-
-function createVerifiedOEMReferences(
-  partId: string,
-  manufacturerId: string,
-  templateSlug: string
-): OEMReference[] {
-  return VERIFIED_OEM_REFERENCES.filter(
-    (item) => item.manufacturerId === manufacturerId && item.partTemplateSlug === templateSlug
-  ).map((item, index) => ({
-    id: `${partId}-oem-${index + 1}`,
-    partId,
-    manufacturerId,
-    referenceNumber: item.referenceNumber,
-    alternateNumbers: uniqueRefs(item.alternateNumbers ?? []),
-    verificationStatus: 'verified' as const,
-    source: item.sourceUrl,
-    evidenceLevel: 'parts-catalog' as const,
+function slugify(value: string): string { return value.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, ''); }
+function parseList(value: string | undefined): string[] { if (!value) return []; return value.split(',').map((item) => item.trim()).filter(Boolean); }
+function createSource(source: SourceDefinition, partId: string): Source { return { id: `${source.id}-${partId}`, partId, name: source.name, url: source.url, type: 'official', reliability: 'high' }; }
+function createImages(partId: string, template: PartTemplate): PartImage[] { return resolveProductImages(template.slug, partId, template.name) as PartImage[]; }
+function createVerifiedOEMReferences(partId: string, manufacturerId: string, templateSlug: string): OEMReference[] {
+  return VERIFIED_OEM_REFERENCES.filter((item) => item.manufacturerId === manufacturerId && item.partTemplateSlug === templateSlug).map((item, index) => ({
+    id: `${partId}-oem-${index + 1}`, partId, manufacturerId, referenceNumber: item.referenceNumber, alternateNumbers: uniqueRefs(item.alternateNumbers ?? []), verificationStatus: 'verified' as const, source: item.sourceUrl, evidenceLevel: 'parts-catalog' as const,
   }));
 }
-
-function createPart(
-  manufacturer: ManufacturerDefinition,
-  model: ModelDefinition,
-  template: PartTemplate
-): Part {
-  const id = `${model.id}-${template.slug}`;
-  const tags = unique([...template.tags, slugify(manufacturer.id), slugify(model.name)]);
-  const aftermarketBrands = unique(template.aftermarketBrands);
-  const oemReferences = createVerifiedOEMReferences(id, manufacturer.id, template.slug);
-  const crossLines = uniqueRefs(oemReferences.flatMap((oem) => oem.alternateNumbers ?? []));
-
-  return {
-    id,
-    systemId: template.systemId,
-    name: template.name,
-    description:
-      `${template.name} — ${manufacturer.name} ${model.name}. ` +
-      (oemReferences.length
-        ? 'OEM and cross-references indexed. Confirm fitment before ordering.'
-        : 'Exact OEM requires manufacturer catalogue lookup.'),
-    category: template.category,
-    specifications: {
-      type: template.name,
-      vehicleType: 'Truck',
-      manufacturer: manufacturer.name,
-      manufacturerId: manufacturer.id,
-      model: model.name,
-      tags: tags.join(', '),
-      aftermarketBrands: aftermarketBrands.join(', '),
-      oemStatus: oemReferences.length > 0 ? 'verified' : 'pending-exact-application-lookup',
-      crossReferences: crossLines.join(', '),
-      referencePolicy: 'Public catalog numbers only — verify fitment before order',
-    },
-    images: createImages(id, template),
-    oemReferences,
-    crossReferences: [],
-    compatibility: [],
-    sources: [createSource(manufacturer.source, id)],
-    verificationStatus: oemReferences.length > 0 ? 'verified' : 'needs-verification',
-    createdAt: now,
-    updatedAt: now,
-  };
+function createPart(manufacturer: ManufacturerDefinition, model: ModelDefinition, template: PartTemplate): Part {
+  const id = `${model.id}-${template.slug}`; const tags = unique([...template.tags, slugify(manufacturer.id), slugify(model.name)]); const aftermarketBrands = unique(template.aftermarketBrands); const oemReferences = createVerifiedOEMReferences(id, manufacturer.id, template.slug); const crossLines = uniqueRefs(oemReferences.flatMap((oem) => oem.alternateNumbers ?? []));
+  return { id, systemId: template.systemId, name: template.name, description: `${template.name} — ${manufacturer.name} ${model.name}. ` + (oemReferences.length ? 'OEM and cross-references indexed. Confirm fitment before ordering.' : 'Exact OEM requires manufacturer catalogue lookup.'), category: template.category, specifications: { type: template.name, vehicleType: 'Truck', manufacturer: manufacturer.name, manufacturerId: manufacturer.id, model: model.name, tags: tags.join(', '), aftermarketBrands: aftermarketBrands.join(', '), oemStatus: oemReferences.length > 0 ? 'verified' : 'pending-exact-application-lookup', crossReferences: crossLines.join(', '), referencePolicy: 'Public catalog numbers only — verify fitment before order' }, images: createImages(id, template), oemReferences, crossReferences: [], compatibility: [], sources: [createSource(manufacturer.source, id)], verificationStatus: oemReferences.length > 0 ? 'verified' : 'needs-verification', createdAt: now, updatedAt: now };
 }
-
-export const CATALOG_PARTS: Part[] = MANUFACTURERS.flatMap((manufacturer) =>
-  manufacturer.models.flatMap((model) =>
-    PART_TEMPLATES.map((template) => createPart(manufacturer, model, template))
-  )
-);
-
+export const CATALOG_PARTS: Part[] = MANUFACTURERS.flatMap((manufacturer) => manufacturer.models.flatMap((model) => PART_TEMPLATES.map((template) => createPart(manufacturer, model, template))));
 export const CATALOG_MANUFACTURERS = MANUFACTURERS.map(({ id, name }) => ({ id, name }));
-export const CATALOG_MODELS = MANUFACTURERS.flatMap((m) =>
-  m.models.map((model) => ({ id: model.id, manufacturerId: m.id, name: model.name }))
-);
+export const CATALOG_MODELS = MANUFACTURERS.flatMap((m) => m.models.map((model) => ({ id: model.id, manufacturerId: m.id, name: model.name })));
 export const CATALOG_CATEGORIES = Array.from(new Set(CATALOG_PARTS.map((p) => p.category)));
 export const CATALOG_SYSTEMS = Array.from(new Set(CATALOG_PARTS.map((p) => p.systemId)));
-export const CATALOG_AFTERMARKET_BRANDS = Array.from(
-  new Set(PART_TEMPLATES.flatMap((t) => t.aftermarketBrands))
-).sort();
-
-export const CATALOG_STATS = {
-  manufacturers: MANUFACTURERS.length,
-  models: CATALOG_MODELS.length,
-  partTemplates: PART_TEMPLATES.length,
-  parts: CATALOG_PARTS.length,
-  categories: CATALOG_CATEGORIES.length,
-  systems: CATALOG_SYSTEMS.length,
-  aftermarketBrands: CATALOG_AFTERMARKET_BRANDS.length,
-  verifiedOEMReferences: VERIFIED_OEM_REFERENCES.length,
-};
-
-function normalizeRef(value: string): string {
-  return value.toLowerCase().replace(/[\s\-\/\.]/g, '');
-}
-
-export function searchCatalog(query: string): Part[] {
-  const q = query.trim();
-  if (!q) return CATALOG_PARTS;
-  const normalized = q.toLowerCase();
-  const compact = normalizeRef(q);
-  return CATALOG_PARTS.filter((part) => {
-    const refs = part.oemReferences.flatMap((oem) => [
-      oem.referenceNumber,
-      ...(oem.alternateNumbers ?? []),
-    ]);
-    if (refs.some((r) => r.toLowerCase().includes(normalized) || normalizeRef(r).includes(compact))) return true;
-    const bag = [
-      part.id, part.name, part.category, part.description ?? '',
-      part.specifications?.manufacturer ?? '', part.specifications?.model ?? '',
-      part.specifications?.crossReferences ?? '',
-      ...parseList(part.specifications?.tags),
-      ...parseList(part.specifications?.aftermarketBrands),
-    ].join(' ').toLowerCase();
-    return bag.includes(normalized);
-  });
-}
-
-export function getPartsByManufacturer(manufacturerId: string): Part[] {
-  const n = manufacturerId.trim().toLowerCase();
-  return CATALOG_PARTS.filter((p) => p.specifications?.manufacturerId?.toLowerCase() === n);
-}
-export function getPartsByModel(manufacturerId: string, model: string): Part[] {
-  const m = manufacturerId.trim().toLowerCase();
-  const modelName = model.trim().toLowerCase();
-  return CATALOG_PARTS.filter(
-    (p) =>
-      p.specifications?.manufacturerId?.toLowerCase() === m &&
-      p.specifications?.model?.toLowerCase() === modelName
-  );
-}
-export function getPartsByCategory(category: string): Part[] {
-  const n = category.trim().toLowerCase();
-  return CATALOG_PARTS.filter((p) => p.category.toLowerCase() === n);
-}
-export function getPartsBySystem(systemId: string): Part[] {
-  return CATALOG_PARTS.filter((p) => p.systemId === systemId);
-}
-export function getPartsByAftermarketBrand(brand: string): Part[] {
-  const n = brand.trim().toLowerCase();
-  return CATALOG_PARTS.filter((p) =>
-    parseList(p.specifications?.aftermarketBrands).some((b) => b.toLowerCase() === n)
-  );
-}
-export function getPartsByTag(tag: string): Part[] {
-  const n = tag.trim().toLowerCase();
-  return CATALOG_PARTS.filter((p) =>
-    parseList(p.specifications?.tags).some((t) => t.toLowerCase() === n)
-  );
-}
-export function getPartsByOEM(referenceNumber: string): Part[] {
-  const n = referenceNumber.trim().toLowerCase();
-  const c = normalizeRef(referenceNumber);
-  return CATALOG_PARTS.filter((part) =>
-    part.oemReferences.some((oem) => {
-      const all = [oem.referenceNumber, ...(oem.alternateNumbers ?? [])];
-      return all.some((r) => r.toLowerCase() === n || normalizeRef(r) === c || normalizeRef(r).includes(c));
-    })
-  );
-}
-export function getPartById(id: string): Part | undefined {
-  return CATALOG_PARTS.find((p) => p.id === id);
-}
-export function getVerifiedOEMParts(): Part[] {
-  return CATALOG_PARTS.filter((p) => p.oemReferences.length > 0);
-}
+export const CATALOG_AFTERMARKET_BRANDS = Array.from(new Set(PART_TEMPLATES.flatMap((t) => t.aftermarketBrands))).sort();
+export const CATALOG_STATS = { manufacturers: MANUFACTURERS.length, models: CATALOG_MODELS.length, partTemplates: PART_TEMPLATES.length, parts: CATALOG_PARTS.length, categories: CATALOG_CATEGORIES.length, systems: CATALOG_SYSTEMS.length, aftermarketBrands: CATALOG_AFTERMARKET_BRANDS.length, verifiedOEMReferences: VERIFIED_OEM_REFERENCES.length };
+function normalizeRef(value: string): string { return value.toLowerCase().replace(/[\s\-\/\.]/g, ''); }
+export function searchCatalog(query: string): Part[] { const q = query.trim(); if (!q) return CATALOG_PARTS; const normalized = q.toLowerCase(); const compact = normalizeRef(q); return CATALOG_PARTS.filter((part) => { const refs = part.oemReferences.flatMap((oem) => [oem.referenceNumber, ...(oem.alternateNumbers ?? [])]); if (refs.some((r) => r.toLowerCase().includes(normalized) || normalizeRef(r).includes(compact))) return true; const bag = [part.id, part.name, part.category, part.description ?? '', part.specifications?.manufacturer ?? '', part.specifications?.model ?? '', part.specifications?.crossReferences ?? '', ...parseList(part.specifications?.tags), ...parseList(part.specifications?.aftermarketBrands)].join(' ').toLowerCase(); return bag.includes(normalized); }); }
+export function getPartsByManufacturer(manufacturerId: string): Part[] { const n = manufacturerId.trim().toLowerCase(); return CATALOG_PARTS.filter((p) => p.specifications?.manufacturerId?.toLowerCase() === n); }
+export function getPartsByModel(manufacturerId: string, model: string): Part[] { const m = manufacturerId.trim().toLowerCase(); const modelName = model.trim().toLowerCase(); return CATALOG_PARTS.filter((p) => p.specifications?.manufacturerId?.toLowerCase() === m && p.specifications?.model?.toLowerCase() === modelName); }
+export function getPartsByCategory(category: string): Part[] { const n = category.trim().toLowerCase(); return CATALOG_PARTS.filter((p) => p.category.toLowerCase() === n); }
+export function getPartsBySystem(systemId: string): Part[] { return CATALOG_PARTS.filter((p) => p.systemId === systemId); }
+export function getPartsByAftermarketBrand(brand: string): Part[] { const n = brand.trim().toLowerCase(); return CATALOG_PARTS.filter((p) => parseList(p.specifications?.aftermarketBrands).some((b) => b.toLowerCase() === n)); }
+export function getPartsByTag(tag: string): Part[] { const n = tag.trim().toLowerCase(); return CATALOG_PARTS.filter((p) => parseList(p.specifications?.tags).some((t) => t.toLowerCase() === n)); }
+export function getPartsByOEM(referenceNumber: string): Part[] { const n = referenceNumber.trim().toLowerCase(); const c = normalizeRef(referenceNumber); return CATALOG_PARTS.filter((part) => part.oemReferences.some((oem) => [oem.referenceNumber, ...(oem.alternateNumbers ?? [])].some((r) => r.toLowerCase() === n || normalizeRef(r) === c || normalizeRef(r).includes(c)))); }
+export function getPartById(id: string): Part | undefined { return CATALOG_PARTS.find((p) => p.id === id); }
+export function getVerifiedOEMParts(): Part[] { return CATALOG_PARTS.filter((p) => p.oemReferences.length > 0); }

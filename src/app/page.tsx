@@ -16,6 +16,7 @@ import {
 import SearchBar from '@/components/search/SearchBar';
 import ManufacturerCard from '@/components/catalog/ManufacturerCard';
 import AdSlot from '@/components/ads/AdSlot';
+import PartsIntelligence from '@/components/ai/PartsIntelligence';
 import { TRUCK_MANUFACTURERS } from '@/types/catalog';
 import { CATALOG_STATS } from '@/data/catalog';
 import { useAppStore } from '@/store';
@@ -117,6 +118,8 @@ export default function Home() {
           <MiniStat value={CATALOG_STATS.verifiedOEMReferences} label="Verified OEM refs" />
         </div>
       </section>
+
+      <PartsIntelligence />
 
       {/* Manufacturers */}
       <section className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
