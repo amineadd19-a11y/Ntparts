@@ -1,0 +1,52 @@
+import { Part, PartImage } from '@/types';
+import { CATALOG_MANUFACTURERS, CATALOG_MODELS } from '@/data/catalog-core';
+import { resolveProductImages } from '@/data/catalog-images';
+
+type T = { slug:string; name:string; category:string; systemId:Part['systemId']; tags:string[]; brands:string[] };
+const TEMPLATES:T[] = [
+['brake-drum','Brake Drum','Brakes','brake-system',['brake','drum'],['BREMBO','FEBI','TRW']],
+['brake-lining','Brake Lining','Brakes','brake-system',['brake','lining'],['TEXTAR','TRW','FEBI']],
+['abs-sensor','ABS Sensor','Brakes','brake-system',['abs','sensor'],['BOSCH','KNORR-BREMSE','WABCO']],
+['compressor','Air Compressor','Engine','engine-system',['air','compressor'],['KNORR-BREMSE','WABCO']],
+['hydraulic-filter','Hydraulic Filter','Filters','other-system',['filter','hydraulic'],['DONALDSON','MAHLE','MANN-FILTER']],
+['fuel-pump','Fuel Pump','Engine','engine-system',['fuel','pump'],['BOSCH','DENSO']],
+['high-pressure-pump','High Pressure Fuel Pump','Engine','engine-system',['fuel','high pressure','pump'],['BOSCH','DENSO','DELPHI']],
+['turbo-actuator','Turbo Actuator','Engine','engine-system',['turbo','actuator'],['GARRETT','BORGWARNER']],
+['egr-valve','EGR Valve','Engine','engine-system',['egr','valve'],['BOSCH','PIERBURG','FEBI']],
+['oil-pump','Oil Pump','Engine','engine-system',['oil','pump'],['FEBI','MAHLE']],
+['intercooler','Intercooler','Cooling System','cooling-system',['intercooler','charge air'],['MAHLE','NRF']],
+['fan-clutch','Fan Clutch','Cooling System','cooling-system',['fan','clutch','cooling'],['MAHLE','BEHR','BORGWARNER']],
+['coolant-hose','Coolant Hose','Cooling System','cooling-system',['coolant','hose'],['GATES','DAYCO','FEBI']],
+['belt-tensioner','Belt Tensioner','Engine','engine-system',['belt','tensioner'],['INA','GATES','DAYCO']],
+['timing-kit','Timing Belt/Chain Kit','Engine','engine-system',['timing','kit'],['CONTITECH','GATES','DAYCO','INA']],
+['engine-mount','Engine Mount','Engine','engine-system',['engine','mount'],['FEBI','LEMFÖRDER']],
+['clutch-disc','Clutch Disc','Transmission','transmission-system',['clutch','disc'],['SACHS','LuK','VALEO']],
+['clutch-cover','Clutch Cover','Transmission','transmission-system',['clutch','cover'],['SACHS','LuK','VALEO']],
+['release-bearing','Release Bearing','Transmission','transmission-system',['clutch','bearing'],['SACHS','SKF','FAG']],
+['clutch-slave-cylinder','Clutch Slave Cylinder','Transmission','transmission-system',['clutch','hydraulic'],['ZF','SACHS','TRW']],
+['gearbox','Gearbox','Transmission','transmission-system',['gearbox','transmission'],['ZF']],
+['gearbox-filter','Transmission Filter','Transmission','transmission-system',['gearbox','filter'],['ZF','MANN-FILTER']],
+['propeller-shaft','Propeller Shaft','Transmission','transmission-system',['propeller','shaft'],['GKN','SPICER']],
+['universal-joint','Universal Joint','Transmission','transmission-system',['universal','joint','driveshaft'],['SPICER','GKN']],
+['cab-air-spring','Cab Air Spring','Cabin','cabin-system',['cab','air','spring'],['CONTINENTAL','FIRESTONE']],
+['control-arm','Control Arm','Suspension','suspension-system',['control','arm'],['LEMFÖRDER','TRW','FEBI']],
+['stabilizer-link','Stabilizer Link','Suspension','suspension-system',['stabilizer','link'],['LEMFÖRDER','TRW','FEBI']],
+['leaf-spring','Leaf Spring','Suspension','suspension-system',['leaf','spring'],['SACHS','FEBI']],
+['steering-pump','Steering Pump','Steering','steering-system',['steering','pump'],['ZF','TRW']],
+['steering-gear','Steering Gear','Steering','steering-system',['steering','gear'],['ZF','TRW']],
+['tie-rod','Tie Rod','Steering','steering-system',['tie','rod'],['LEMFÖRDER','TRW','FEBI']],
+['drag-link','Drag Link','Steering','steering-system',['drag','link'],['LEMFÖRDER','TRW','FEBI']],
+['battery','Truck Battery','Electrical','electrical-system',['battery'],['VARTA','BOSCH','EXIDE']],
+['glow-plug','Glow Plug','Electrical','electrical-system',['glow','plug'],['BOSCH','DENSO']],
+['engine-sensor','Engine Sensor','Electrical','electrical-system',['sensor','engine'],['BOSCH','DENSO','HELLA']],
+['headlamp','Headlamp','Electrical','electrical-system',['headlamp','lighting'],['HELLA','VALEO']],
+['wiper-motor','Wiper Motor','Cabin','cabin-system',['wiper','motor'],['HELLA','VALEO']],
+['door-lock','Door Lock','Cabin','cabin-system',['door','lock'],['FEBI','VALEO']],
+['exhaust-pipe','Exhaust Pipe','Exhaust','exhaust-system',['exhaust','pipe'],['BOSAL','HJS','FEBI']],
+['muffler','Muffler','Exhaust','exhaust-system',['exhaust','muffler'],['BOSAL','HJS']],
+['dpf','Diesel Particulate Filter','Exhaust','exhaust-system',['dpf','exhaust'],['HJS','BOSAL']],
+['scr-catalyst','SCR Catalyst','Exhaust','exhaust-system',['scr','catalyst','adblue'],['HJS','BOSAL']],
+['adblue-pump','AdBlue Pump','Exhaust','exhaust-system',['adblue','pump'],['BOSCH','HELLA']],
+];
+const templates=TEMPLATES.map(([slug,name,category,systemId,tags,brands])=>({slug,name,category,systemId,tags,brands} as T));
+export const CATALOG_EXPANSION:Part[]=CATALOG_MODELS.flatMap(model=>templates.map(t=>{const id=`${model.id}-${t.slug}`;const m=CATALOG_MANUFACTURERS.find(x=>x.id===model.manufacturerId)!;const images=resolveProductImages(t.slug,id,t.name) as PartImage[];return {id,systemId:t.systemId,name:t.name,description:`${t.name} — ${m.name} ${model.name}. Exact OEM and fitment are NOT VERIFIED.`,category:t.category,specifications:{type:t.name,vehicleType:'Truck',manufacturer:m.name,manufacturerId:m.id,model:model.name,tags:[...t.tags,m.id,model.name].join(', '),aftermarketBrands:t.brands.join(', '),oemStatus:'NOT VERIFIED',referencePolicy:'No OEM number claimed without authoritative verification'},images,oemReferences:[],crossReferences:[],compatibility:[],sources:[],verificationStatus:'needs-verification',createdAt:'2026-08-15T00:00:00.000Z',updatedAt:'2026-08-15T00:00:00.000Z'} as Part;}));
