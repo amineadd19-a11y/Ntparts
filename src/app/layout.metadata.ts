@@ -1,0 +1,2 @@
+export const metadata = { title: 'NTParts', description: 'Find the right truck part. Premium OEM reference search and compatibility checking.', keywords: 'truck parts, OEM references, compatibility, Volvo, DAF, Scania, MAN, Mercedes, Renault, Iveco', openGraph: { title: 'NTParts', description: 'Find the right truck part', type: 'website', url: 'https://ntparts.vercel.app' } };
+export default function RootLayout({ children }: { children: React.ReactNode }) { return children; }
