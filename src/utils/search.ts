@@ -3,7 +3,7 @@
  */
 
 import { Part, SearchResult } from '@/types';
-import { CATALOG_PARTS, searchCrossReferences } from '@/data/catalog';
+import { CATALOG_PARTS } from '@/data/catalog';
 
 const normalizeSearchText = (value: string): string =>
   value.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]/g, '');
@@ -113,6 +113,23 @@ class SearchCache {
 }
 
 export const searchCache = new SearchCache();
+
+/** Find parts and explicit cross-reference records already present in the catalog. */
+export function searchCrossReferences(query: string) {
+  const normalized = normalizeSearchText(query);
+  if (!normalized) return [];
+  return CATALOG_PARTS.flatMap((part) => (part.crossReferences || []).map((crossReference) => ({
+    ...crossReference,
+    partId: part.id,
+    manufacturerId: part.specifications?.manufacturerId || '',
+    partTemplateSlug: part.id.split('-').slice(1).join('-'),
+    description: crossReference.notes || crossReference.relationshipType,
+    numbers: part.oemReferences.flatMap((oem) => [oem.referenceNumber, ...(oem.alternateNumbers || [])]),
+  }))).filter((reference) => {
+    const haystack = [reference.referencedPartId, reference.partId, reference.manufacturerId, reference.description, ...reference.numbers].join(' ');
+    return normalizeSearchText(haystack).includes(normalized);
+  });
+}
 
 export function searchByAnyReference(query: string) {
   const normalized = query.trim();
