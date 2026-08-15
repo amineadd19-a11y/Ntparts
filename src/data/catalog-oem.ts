@@ -116,7 +116,7 @@ export const VERIFIED_OEM_REFERENCES: Array<{
   },
   {
     manufacturerId: 'man-truck-bus', partTemplateSlug: 'brake-pad', referenceNumber: 'K059965K50',
-    alternateNumbers: ['TEXTAR'],
+    alternateNumbers: [],
     sourceUrl: 'https://www.knorr-bremse.com/',
   },
   {
