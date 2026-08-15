@@ -1,7 +1,25 @@
 'use client';
 
+import Image from 'next/image';
 import Link from 'next/link';
 import { ArrowUpRight, Truck } from 'lucide-react';
+
+const LOGO_SLUGS: Record<string, string> = {
+  'volvo-trucks': 'volvo',
+  'daf-trucks': 'daf',
+  'mercedes-benz-trucks': 'mercedes',
+  scania: 'scania',
+  'man-truck-bus': 'man',
+  'renault-trucks': 'renault',
+  iveco: 'iveco',
+  kenworth: 'kenworth',
+  peterbilt: 'peterbilt',
+  freightliner: 'freightliner',
+  mack: 'mack',
+  'western-star': 'westernstar',
+  hino: 'hino',
+  isuzu: 'isuzu',
+};
 
 interface ManufacturerCardProps {
   manufacturer: {
@@ -13,14 +31,27 @@ interface ManufacturerCardProps {
 }
 
 export default function ManufacturerCard({ manufacturer }: ManufacturerCardProps) {
+  const logoSlug = LOGO_SLUGS[manufacturer.id];
+  const logoUrl = logoSlug ? `https://cdn.simpleicons.org/${logoSlug}` : null;
+
   return (
     <Link href={`/trucks/${manufacturer.id}`} className="block h-full">
       <div className="nt-card nt-card-hover group flex h-full flex-col rounded-xl p-5">
         <div className="mb-4 flex items-start justify-between">
-          <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-gradient-to-br from-slate-800 to-slate-950 text-sky-400 shadow-md shadow-slate-900/20">
-            <span className="text-sm font-black tracking-tight">
-              {manufacturer.name.slice(0, 2).toUpperCase()}
-            </span>
+          <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-white p-2 shadow-md shadow-slate-900/10 ring-1 ring-slate-200">
+            {logoUrl ? (
+              <Image
+                src={logoUrl}
+                alt={`${manufacturer.name} logo`}
+                width={44}
+                height={44}
+                className="h-full w-full object-contain"
+              />
+            ) : (
+              <span className="text-sm font-black tracking-tight text-sky-600">
+                {manufacturer.name.slice(0, 2).toUpperCase()}
+              </span>
+            )}
           </div>
           <div className="rounded-lg bg-slate-100 p-1.5 text-slate-400 transition group-hover:bg-sky-50 group-hover:text-sky-600">
             <ArrowUpRight size={15} />
