@@ -1,14 +1,14 @@
 'use client';
 
-import { FormEvent, useState } from 'react';
+import { FormEvent, useRef, useState } from 'react';
 import { Bot, ExternalLink, Loader2, Send, ShieldCheck, X } from 'lucide-react';
 
 type Source = { title: string; url: string };
 type Message = { role: 'user' | 'assistant'; text: string; sources?: Source[] };
 
 function detectLanguage(text: string): 'darija' | 'ar' | 'fr' | 'en' {
-  if (/[\u0600-\u06FF]/.test(text)) return 'ar';
   if (/\b(bghit|wach|fin|chno|kifach|m3a|3lach|kayen|l9it|sift|shnu)\b/i.test(text)) return 'darija';
+  if (/[\u0600-\u06FF]/.test(text)) return 'ar';
   if (/\b(je|vous|avec|pour|pi[eè]ce|camion|r[eé]f[eé]rence|bonjour|cherche)\b/i.test(text)) return 'fr';
   return 'en';
 }
@@ -22,36 +22,50 @@ const placeholders = {
 
 export default function PartMindFloating() {
   const [open, setOpen] = useState(false);
-  const [question, setQuestion] = useState('');
+  const draftRef = useRef('');
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const language = detectLanguage(question);
+  const [language, setLanguage] = useState<'darija' | 'ar' | 'fr' | 'en'>('en');
 
   async function submit(event?: FormEvent) {
     event?.preventDefault();
-    const value = question.trim();
+    const value = draftRef.current.trim();
     if (!value || loading) return;
-    setQuestion(''); setError('');
+    draftRef.current = '';
+    if (textareaRef.current) textareaRef.current.value = '';
+    setError('');
     setMessages((m) => [...m, { role: 'user', text: value }]);
     setLoading(true);
     try {
-      const response = await fetch('/api/ai', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ question: value }) });
+      const response = await fetch('/api/ai', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ question: value }),
+      });
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || 'PartMind is temporarily unavailable.');
       setMessages((m) => [...m, { role: 'assistant', text: data.answer || 'No verified answer was returned.', sources: data.sources }]);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'PartMind is temporarily unavailable.');
-    } finally { setLoading(false); }
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  function handleChange(value: string) {
+    draftRef.current = value;
+    setLanguage(detectLanguage(value));
   }
 
   return <>
     {!open && <button type="button" onClick={() => setOpen(true)} aria-label="Open PartMind" className="fixed bottom-5 right-5 z-[100] flex h-14 w-14 items-center justify-center rounded-full border border-sky-300/30 bg-sky-500 text-slate-950 shadow-2xl shadow-sky-500/30 transition hover:scale-105 hover:bg-sky-400"><Bot size={25} /><span className="absolute -right-1 -top-1 h-3 w-3 rounded-full border-2 border-slate-950 bg-emerald-400" /></button>}
     {open && <section className="fixed inset-0 z-[100] flex items-end justify-end bg-black/45 backdrop-blur-[2px] sm:bg-transparent sm:p-5">
-      <div className="flex h-[100dvh] w-full flex-col overflow-hidden border border-slate-700 bg-slate-950 text-white shadow-2xl sm:h-[min(720px,calc(100vh-40px))] sm:w-[430px] sm:rounded-3xl">
-        <header className="flex items-center justify-between border-b border-slate-800 px-4 py-3"><div className="flex items-center gap-3"><div className="flex h-10 w-10 items-center justify-center rounded-xl bg-sky-500/15 text-sky-400"><Bot size={19} /></div><div><div className="text-sm font-black">PartMind</div><div className="flex items-center gap-1 text-[10px] font-semibold text-emerald-400"><ShieldCheck size={11} /> Research assistant</div></div></div><button onClick={() => setOpen(false)} aria-label="Close PartMind" className="rounded-xl p-2 text-slate-400 hover:bg-slate-800 hover:text-white"><X size={18} /></button></header>
-        <div className="flex-1 overflow-y-auto p-4">{messages.length === 0 ? <div className="flex min-h-full flex-col justify-center"><div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-sky-500/10 text-sky-300"><Bot size={22} /></div><h2 className="text-2xl font-black">Ask PartMind</h2><p className="mt-2 text-sm leading-6 text-slate-400">سولني على OEM، référence، compatibilité أو أي قطعة ديال camion. تقدر تهضر بالدارجة، العربية، الفرنسية أو English.</p></div> : <div className="space-y-4">{messages.map((m, i) => <div key={i} className={m.role === 'user' ? 'flex justify-end' : 'flex justify-start'}><div className={m.role === 'user' ? 'max-w-[88%] rounded-2xl rounded-br-md bg-sky-500 px-3.5 py-2.5 text-sm font-medium text-slate-950' : 'max-w-[95%] rounded-2xl rounded-bl-md border border-slate-800 bg-slate-900 p-3.5'}>{m.role === 'assistant' && <div className="mb-1.5 flex items-center gap-1.5 text-[10px] font-black text-sky-300"><Bot size={12} /> PartMind</div>}<div className="whitespace-pre-wrap text-sm leading-6">{m.text}</div>{m.sources?.length ? <div className="mt-3 border-t border-slate-800 pt-3">{m.sources.slice(0, 4).map((s) => <a key={s.url} href={s.url} target="_blank" rel="noreferrer" className="mb-1 flex items-center justify-between gap-2 rounded-lg bg-slate-950 p-2 text-[10px]"><span className="truncate">{s.title}</span><ExternalLink size={11} /></a>)}</div> : null}</div></div>)}{loading && <div className="flex items-center gap-2 text-xs text-slate-500"><Loader2 size={14} className="animate-spin" /> PartMind is researching...</div>}</div>}</div>
-        <div className="border-t border-slate-800 p-3">{error && <div className="mb-2 rounded-lg border border-rose-500/30 bg-rose-500/10 p-2 text-[10px] text-rose-300">{error}</div>}<form onSubmit={submit} className="rounded-2xl border border-slate-700 bg-slate-900 p-1.5"><div className="flex items-end gap-1.5"><textarea value={question} onChange={(e) => setQuestion(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); submit(); } }} rows={1} maxLength={1500} placeholder={placeholders[language]} className="min-h-11 flex-1 resize-none bg-transparent px-2.5 py-2.5 text-sm text-white outline-none placeholder:text-slate-600" /><button type="submit" disabled={loading || !question.trim()} className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-sky-500 text-slate-950 disabled:opacity-40"><Send size={16} /></button></div></form></div>
+      <div className="flex h-[100dvh] w-full flex-col overflow-hidden border border-slate-700 bg-slate-950 text-white shadow-2xl sm:h-[min(760px,calc(100vh-40px))] sm:w-[560px] sm:rounded-3xl">
+        <header className="flex items-center justify-between border-b border-slate-800 px-5 py-4"><div className="flex items-center gap-3"><div className="flex h-11 w-11 items-center justify-center rounded-xl bg-sky-500/15 text-sky-400"><Bot size={20} /></div><div><div className="text-sm font-black">PartMind</div><div className="flex items-center gap-1 text-[10px] font-semibold text-emerald-400"><ShieldCheck size={11} /> Research assistant</div></div></div><button onClick={() => setOpen(false)} aria-label="Close PartMind" className="rounded-xl p-2 text-slate-400 hover:bg-slate-800 hover:text-white"><X size={19} /></button></header>
+        <div className="flex-1 overflow-y-auto p-5">{messages.length === 0 ? <div className="flex min-h-full flex-col justify-center"><div className="mb-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-sky-500/10 text-sky-300"><Bot size={25} /></div><h2 className="text-2xl font-black">Ask PartMind</h2><p className="mt-2 max-w-lg text-sm leading-6 text-slate-400">سولني على OEM، référence، compatibilité أو أي قطعة ديال camion. تقدر تهضر بالدارجة، العربية، الفرنسية أو English.</p></div> : <div className="space-y-4">{messages.map((m, i) => <div key={i} className={m.role === 'user' ? 'flex justify-end' : 'flex justify-start'}><div className={m.role === 'user' ? 'max-w-[88%] rounded-2xl rounded-br-md bg-sky-500 px-3.5 py-2.5 text-sm font-medium text-slate-950' : 'max-w-[95%] rounded-2xl rounded-bl-md border border-slate-800 bg-slate-900 p-3.5'}>{m.role === 'assistant' && <div className="mb-1.5 flex items-center gap-1.5 text-[10px] font-black text-sky-300"><Bot size={12} /> PartMind</div>}<div className="whitespace-pre-wrap text-sm leading-6">{m.text}</div>{m.sources?.length ? <div className="mt-3 border-t border-slate-800 pt-3">{m.sources.slice(0, 4).map((s) => <a key={s.url} href={s.url} target="_blank" rel="noreferrer" className="mb-1 flex items-center justify-between gap-2 rounded-lg bg-slate-950 p-2 text-[10px]"><span className="truncate">{s.title}</span><ExternalLink size={11} /></a>)}</div> : null}</div></div>)}{loading && <div className="flex items-center gap-2 text-xs text-slate-500"><Loader2 size={14} className="animate-spin" /> PartMind is researching...</div>}</div>}</div>
+        <div className="border-t border-slate-800 p-4">{error && <div className="mb-2 rounded-lg border border-rose-500/30 bg-rose-500/10 p-2 text-[10px] text-rose-300">{error}</div>}<form onSubmit={submit} className="rounded-2xl border border-slate-700 bg-slate-900 p-1.5"><div className="flex items-end gap-1.5"><textarea ref={textareaRef} defaultValue="" onChange={(e) => handleChange(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); submit(); } }} rows={2} maxLength={1500} placeholder={placeholders[language]} className="min-h-11 flex-1 resize-none bg-transparent px-2.5 py-2.5 text-sm text-white outline-none placeholder:text-slate-600" /><button type="submit" disabled={loading} className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-sky-500 text-slate-950 disabled:opacity-40"><Send size={16} /></button></div></form></div>
       </div>
     </section>}
   </>;
