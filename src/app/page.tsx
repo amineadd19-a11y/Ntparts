@@ -26,62 +26,67 @@ export default function Home() {
   const t = (key: string) => getTranslation(key, language);
 
   return (
-    <main className="min-h-screen bg-[#f4f7fa] text-slate-900">
-      {/* Hero */}
-      <section className="nt-hero-grid border-b border-slate-200/80">
-        <div className="mx-auto max-w-7xl px-4 pb-16 pt-12 sm:px-6 lg:px-8 lg:pb-20 lg:pt-16">
-          <div className="grid items-center gap-12 lg:grid-cols-[1.15fr_0.85fr]">
+    <main className="min-h-screen bg-slate-100 text-slate-900">
+      {/* Hero — Dark industrial */}
+      <section className="nt-hero-grid border-b border-slate-800">
+        <div className="mx-auto max-w-7xl px-4 pb-16 pt-14 sm:px-6 lg:px-8 lg:pb-20 lg:pt-18">
+          <div className="grid items-center gap-12 lg:grid-cols-[1.2fr_0.8fr]">
             <div className="animate-fade-up">
-              <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-blue-100 bg-blue-50/80 px-3.5 py-1.5 text-xs font-bold text-blue-700">
-                <FileCheck size={14} />
+              <div className="nt-badge mb-6">
+                <FileCheck size={13} />
                 Professional truck parts catalogue
               </div>
 
-              <h1 className="max-w-3xl text-4xl font-black tracking-tight text-slate-950 sm:text-5xl lg:text-[3.4rem] lg:leading-[1.08]">
+              <h1 className="max-w-3xl text-4xl font-black tracking-tight text-white sm:text-5xl lg:text-[3.5rem] lg:leading-[1.08]">
                 Find the right part for your{' '}
                 <span className="nt-gradient-text">truck.</span>
               </h1>
 
-              <p className="mt-5 max-w-2xl text-base leading-7 text-slate-500 sm:text-lg">
+              <p className="mt-5 max-w-xl text-base leading-7 text-slate-400 sm:text-lg">
                 Search OEM references, part numbers, truck models and aftermarket equivalents in one
-                structured professional catalogue built for real workshop workflows.
+                structured industrial catalogue built for workshop workflows.
               </p>
 
               <div className="mt-8 max-w-2xl">
                 <SearchBar placeholder={t('home.searchPlaceholder')} />
               </div>
 
-              <div className="mt-4 flex flex-wrap gap-2 text-xs font-semibold text-slate-500">
-                <span className="rounded-lg border border-slate-200 bg-white px-3 py-1.5">OEM number</span>
-                <span className="rounded-lg border border-slate-200 bg-white px-3 py-1.5">Part number</span>
-                <span className="rounded-lg border border-slate-200 bg-white px-3 py-1.5">Truck model</span>
-                <span className="rounded-lg border border-slate-200 bg-white px-3 py-1.5">Manufacturer</span>
+              <div className="mt-4 flex flex-wrap gap-2 text-xs font-semibold">
+                {['OEM number', 'Part number', 'Truck model', 'Manufacturer'].map((label) => (
+                  <span
+                    key={label}
+                    className="rounded-md border border-slate-700/80 bg-slate-900/60 px-3 py-1.5 text-slate-400"
+                  >
+                    {label}
+                  </span>
+                ))}
               </div>
 
               <div className="mt-8 flex flex-wrap gap-3">
                 <Link
                   href="/search"
-                  className="inline-flex items-center gap-2 rounded-xl bg-slate-950 px-5 py-3 text-sm font-bold text-white shadow-lg shadow-slate-900/15 transition hover:-translate-y-0.5 hover:bg-slate-800"
+                  className="inline-flex items-center gap-2 rounded-lg bg-sky-500 px-5 py-3 text-sm font-bold text-slate-950 shadow-lg shadow-sky-500/25 transition hover:-translate-y-0.5 hover:bg-sky-400"
                 >
                   Advanced search <ArrowRight size={16} />
                 </Link>
                 <Link
                   href="/trucks"
-                  className="inline-flex items-center gap-2 rounded-xl border border-slate-300 bg-white px-5 py-3 text-sm font-bold text-slate-700 transition hover:border-blue-300 hover:text-blue-700"
+                  className="inline-flex items-center gap-2 rounded-lg border border-slate-600 bg-slate-900/60 px-5 py-3 text-sm font-bold text-slate-200 transition hover:border-sky-500/40 hover:text-sky-300"
                 >
-                  <Truck size={17} /> Select truck
+                  <Truck size={16} /> Select truck
                 </Link>
               </div>
             </div>
 
-            <div className="animate-fade-up rounded-3xl border border-slate-200 bg-white/90 p-6 shadow-[0_20px_60px_rgba(15,23,42,0.08)] backdrop-blur">
+            {/* Catalogue overview card */}
+            <div className="animate-fade-up rounded-2xl border border-slate-700/80 bg-slate-900/80 p-6 shadow-2xl shadow-black/30 backdrop-blur">
               <div className="mb-5 flex items-center justify-between">
                 <div>
-                  <div className="font-extrabold text-slate-950">Catalogue overview</div>
-                  <div className="mt-1 text-xs text-slate-500">Structured parts data</div>
+                  <div className="font-extrabold text-white">Catalogue overview</div>
+                  <div className="mt-1 text-xs text-slate-500">Structured industrial data</div>
                 </div>
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
-                  <Database size={20} />
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-sky-500/15 text-sky-400">
+                  <Database size={18} />
                 </div>
               </div>
 
@@ -92,10 +97,10 @@ export default function Home() {
                 <Stat value={CATALOG_STATS.aftermarketBrands} label="Aftermarket brands" />
               </div>
 
-              <div className="mt-4 flex items-start gap-2.5 rounded-2xl border border-emerald-200 bg-emerald-50/80 p-3.5 text-xs leading-5 text-emerald-900">
-                <ShieldCheck size={16} className="mt-0.5 shrink-0 text-emerald-600" />
+              <div className="mt-4 flex items-start gap-2.5 rounded-xl border border-emerald-500/20 bg-emerald-500/10 p-3.5 text-xs leading-5 text-emerald-300">
+                <ShieldCheck size={15} className="mt-0.5 shrink-0 text-emerald-400" />
                 <span>
-                  <b>Verification-aware:</b> OEM references are separated from unverified fitment data.
+                  <b className="text-emerald-200">Verification-aware:</b> OEM references are separated from unverified fitment data.
                 </span>
               </div>
             </div>
@@ -117,13 +122,13 @@ export default function Home() {
       <section className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
         <div className="mb-8 flex items-end justify-between gap-4">
           <div>
-            <p className="text-xs font-black uppercase tracking-[0.2em] text-blue-600">Browse by vehicle</p>
-            <h2 className="mt-2 text-3xl font-black tracking-tight text-slate-950">Truck manufacturers</h2>
+            <p className="text-[11px] font-black uppercase tracking-[0.2em] text-sky-600">Browse by vehicle</p>
+            <h2 className="mt-2 text-3xl font-black tracking-tight text-slate-900">Truck manufacturers</h2>
             <p className="mt-2 max-w-xl text-sm text-slate-500">
               Select a manufacturer to explore models and compatible parts.
             </p>
           </div>
-          <Link href="/trucks" className="hidden items-center gap-1 text-sm font-bold text-blue-700 sm:flex">
+          <Link href="/trucks" className="hidden items-center gap-1 text-sm font-bold text-sky-700 sm:flex">
             View all <ChevronRight size={16} />
           </Link>
         </div>
@@ -135,7 +140,7 @@ export default function Home() {
         </div>
 
         <div className="mt-8 text-center sm:hidden">
-          <Link href="/trucks" className="inline-flex items-center gap-1 text-sm font-bold text-blue-700">
+          <Link href="/trucks" className="inline-flex items-center gap-1 text-sm font-bold text-sky-700">
             View all manufacturers <ChevronRight size={16} />
           </Link>
         </div>
@@ -145,23 +150,23 @@ export default function Home() {
       <section className="border-y border-slate-200 bg-white py-16">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="mb-10 max-w-2xl">
-            <p className="text-xs font-black uppercase tracking-[0.2em] text-blue-600">Why NTParts</p>
-            <h2 className="mt-2 text-3xl font-black tracking-tight text-slate-950">Built for professional workflows</h2>
+            <p className="text-[11px] font-black uppercase tracking-[0.2em] text-sky-600">Why NTParts</p>
+            <h2 className="mt-2 text-3xl font-black tracking-tight text-slate-900">Built for professional workflows</h2>
           </div>
 
           <div className="grid gap-5 md:grid-cols-3">
             <InfoCard
-              icon={<PackageSearch size={22} />}
+              icon={<PackageSearch size={20} />}
               title="Search by OEM or part number"
-              text="Find exact references, names and cross references quickly with a structured search experience."
+              text="Find exact references, names and cross references quickly with a structured industrial search experience."
             />
             <InfoCard
-              icon={<Settings2 size={22} />}
+              icon={<Settings2 size={20} />}
               title="Choose your vehicle"
               text="Filter by manufacturer, model and system so you only review relevant catalogue entries."
             />
             <InfoCard
-              icon={<ShieldCheck size={22} />}
+              icon={<ShieldCheck size={20} />}
               title="Know what is verified"
               text="Keep verified OEM references separate from data that still needs confirmation before ordering."
             />
@@ -169,40 +174,40 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Categories teaser */}
+      {/* Categories teaser — Dark industrial block */}
       <section className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
-        <div className="overflow-hidden rounded-3xl border border-slate-200 bg-slate-950 text-white shadow-xl">
-          <div className="grid gap-8 p-8 md:grid-cols-[1.2fr_0.8fr] md:p-12">
+        <div className="overflow-hidden rounded-2xl border border-slate-800 bg-slate-950 text-white shadow-2xl shadow-slate-900/20">
+          <div className="grid gap-8 p-8 md:grid-cols-[1.25fr_0.75fr] md:p-12">
             <div>
-              <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-xs font-bold text-sky-300">
-                <Layers size={14} /> Systems coverage
+              <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-sky-500/20 bg-sky-500/10 px-3 py-1 text-xs font-bold text-sky-300">
+                <Layers size={13} /> Systems coverage
               </div>
               <h2 className="text-3xl font-black tracking-tight">From brakes to injectors</h2>
-              <p className="mt-3 max-w-lg text-sm leading-6 text-slate-300">
+              <p className="mt-3 max-w-lg text-sm leading-6 text-slate-400">
                 Explore catalogue templates across braking, engine, cooling, transmission, electrical,
                 suspension and cabin systems for major European and North American trucks.
               </p>
               <div className="mt-6 flex flex-wrap gap-3">
                 <Link
                   href="/parts"
-                  className="inline-flex items-center gap-2 rounded-xl bg-white px-5 py-3 text-sm font-bold text-slate-950 transition hover:bg-slate-100"
+                  className="inline-flex items-center gap-2 rounded-lg bg-sky-500 px-5 py-3 text-sm font-bold text-slate-950 transition hover:bg-sky-400"
                 >
-                  Browse all parts <ArrowRight size={16} />
+                  Browse all parts <ArrowRight size={15} />
                 </Link>
                 <Link
                   href="/search"
-                  className="inline-flex items-center gap-2 rounded-xl border border-white/20 px-5 py-3 text-sm font-bold text-white transition hover:bg-white/10"
+                  className="inline-flex items-center gap-2 rounded-lg border border-slate-600 px-5 py-3 text-sm font-bold text-white transition hover:border-sky-500/40 hover:bg-slate-900"
                 >
-                  <Search size={16} /> Start searching
+                  <Search size={15} /> Start searching
                 </Link>
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-3 self-center">
+            <div className="grid grid-cols-2 gap-2.5 self-center">
               {['Brakes', 'Engine', 'Filters', 'Cooling', 'Transmission', 'Electrical'].map((label) => (
                 <div
                   key={label}
-                  className="rounded-2xl border border-white/10 bg-white/5 px-4 py-4 text-sm font-semibold text-slate-200"
+                  className="rounded-lg border border-slate-700/80 bg-slate-900/80 px-4 py-3.5 text-sm font-semibold text-slate-300"
                 >
                   {label}
                 </div>
@@ -221,18 +226,18 @@ export default function Home() {
 
 function Stat({ value, label }: { value: number | string; label: string }) {
   return (
-    <div className="rounded-2xl border border-slate-200 bg-slate-50/80 p-4">
-      <div className="text-2xl font-black text-slate-950">{value}</div>
-      <div className="mt-1 text-xs font-semibold text-slate-500">{label}</div>
+    <div className="rounded-xl border border-slate-700/60 bg-slate-800/50 p-3.5">
+      <div className="text-xl font-black text-white">{value}</div>
+      <div className="mt-0.5 text-[11px] font-semibold text-slate-500">{label}</div>
     </div>
   );
 }
 
 function MiniStat({ value, label }: { value: number | string; label: string }) {
   return (
-    <div className="px-4 py-6 first:pl-0 sm:px-6">
-      <div className="text-xl font-black text-slate-950 sm:text-2xl">{value}</div>
-      <div className="mt-1 text-[10px] font-bold uppercase tracking-wider text-slate-400">{label}</div>
+    <div className="px-4 py-5 first:pl-0 sm:px-6">
+      <div className="text-xl font-black text-slate-900 sm:text-2xl">{value}</div>
+      <div className="mt-0.5 text-[10px] font-bold uppercase tracking-wider text-slate-400">{label}</div>
     </div>
   );
 }
@@ -247,11 +252,11 @@ function InfoCard({
   text: string;
 }) {
   return (
-    <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition hover:border-blue-200 hover:shadow-md">
-      <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
+    <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm transition hover:border-sky-200 hover:shadow-md">
+      <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-lg bg-slate-900 text-sky-400">
         {icon}
       </div>
-      <h3 className="font-extrabold text-slate-950">{title}</h3>
+      <h3 className="font-extrabold text-slate-900">{title}</h3>
       <p className="mt-2 text-sm leading-6 text-slate-500">{text}</p>
     </div>
   );

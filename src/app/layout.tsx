@@ -7,7 +7,7 @@ import Footer from '@/components/layout/Footer';
 export const metadata: Metadata = {
   title: 'NTParts — Professional Truck Parts Catalogue & OEM Reference',
   description:
-    'Search OEM references, part numbers and compatibility across major truck manufacturers. A professional catalogue for technicians and parts specialists.',
+    'Search OEM references, part numbers and compatibility across major truck manufacturers. A professional industrial catalogue for technicians and parts specialists.',
   keywords: [
     'truck parts',
     'OEM references',
@@ -28,7 +28,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <meta name="theme-color" content="#0e74c8" />
+        <meta name="theme-color" content="#0f172a" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link
@@ -36,7 +36,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           rel="stylesheet"
         />
       </head>
-      <body className="bg-[#f4f7fa] text-slate-900 antialiased">
+      <body className="bg-slate-100 text-slate-900 antialiased">
         <Header />
         <main className="min-h-screen">{children}</main>
         <Footer />
