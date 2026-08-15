@@ -1,16 +1,16 @@
 'use client';
 
-import Image from 'next/image';
+import { useState } from 'react';
 import Link from 'next/link';
 import { ArrowUpRight, Truck } from 'lucide-react';
 
 const LOGO_SLUGS: Record<string, string> = {
-  'volvo-trucks': 'volvo',
+  'volvo-trucks': 'volvotrucks',
   'daf-trucks': 'daf',
   'mercedes-benz-trucks': 'mercedes',
   scania: 'scania',
   'man-truck-bus': 'man',
-  'renault-trucks': 'renault',
+  'renault-trucks': 'renaulttrucks',
   iveco: 'iveco',
   kenworth: 'kenworth',
   peterbilt: 'peterbilt',
@@ -33,19 +33,23 @@ interface ManufacturerCardProps {
 export default function ManufacturerCard({ manufacturer }: ManufacturerCardProps) {
   const logoSlug = LOGO_SLUGS[manufacturer.id];
   const logoUrl = logoSlug ? `https://cdn.simpleicons.org/${logoSlug}` : null;
+  const [logoFailed, setLogoFailed] = useState(false);
 
   return (
     <Link href={`/trucks/${manufacturer.id}`} className="block h-full">
       <div className="nt-card nt-card-hover group flex h-full flex-col rounded-xl p-5">
         <div className="mb-4 flex items-start justify-between">
-          <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-white p-2 shadow-md shadow-slate-900/10 ring-1 ring-slate-200">
-            {logoUrl ? (
-              <Image
+          <div className="flex h-14 w-14 items-center justify-center overflow-hidden rounded-lg bg-white p-2 shadow-md shadow-slate-900/10 ring-1 ring-slate-200">
+            {logoUrl && !logoFailed ? (
+              <img
                 src={logoUrl}
                 alt={`${manufacturer.name} logo`}
-                width={44}
-                height={44}
+                width={48}
+                height={48}
+                loading="lazy"
+                decoding="async"
                 className="h-full w-full object-contain"
+                onError={() => setLogoFailed(true)}
               />
             ) : (
               <span className="text-sm font-black tracking-tight text-sky-600">
