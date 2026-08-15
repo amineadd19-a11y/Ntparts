@@ -2,7 +2,12 @@ import type { AIAnalysisResponse, AISource, EvidenceLevel, CatalogMatch } from '
 import { AI_TOOL_DEFINITIONS, executeCatalogTool } from './catalog-tools';
 
 const GEMINI_API_BASE = 'https://generativelanguage.googleapis.com/v1beta/models';
-const DEFAULT_MODEL = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
+const configuredModel = process.env.GEMINI_MODEL?.trim();
+// Gemini 2.5 Flash/Flash-Lite direct endpoints are unavailable to some new API users.
+// Use the current stable Flash model unless an explicit non-deprecated model is configured.
+const DEFAULT_MODEL = configuredModel && !/^(gemini-2\.5-flash|gemini-2\.5-flash-lite)$/i.test(configuredModel)
+  ? configuredModel
+  : 'gemini-3.6-flash';
 const GEMINI_TIMEOUT_MS = 30_000;
 const MAX_ROUNDS = 4;
 const MAX_INTERNAL_CALLS = 8;
@@ -156,8 +161,6 @@ export async function analyzeParts(question: string): Promise<AIAnalysisResponse
   if (trimmed.length > 1500) throw new Error('Question is too long.');
 
   const contents: Array<Record<string, unknown>> = [{ role: 'user', parts: [{ text: trimmed }] }];
-  // Gemini REST uses camelCase tool declarations. Google Search grounding and
-  // internal functions are intentionally supplied as separate tools.
   const tools = [
     { googleSearch: {} },
     { functionDeclarations: AI_TOOL_DEFINITIONS },
