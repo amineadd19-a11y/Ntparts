@@ -4,7 +4,7 @@ import { URL } from 'node:url';
 const file = fs.readFileSync(new URL('../src/data/catalog.ts', import.meta.url), 'utf8');
 const errors = [];
 const warnings = [];
-const registryMatch = file.match(/const OEM_REFERENCE_REGISTRY:[\s\S]*?= \[[\s\S]*?\n\];/);
+const registryMatch = file.match(/const OEM_REFERENCE_REGISTRY(?:\s*:\s*[^=]+)?\s*=\s*\[[\s\S]*?\n\];/);
 if (!registryMatch) errors.push('OEM reference registry not found.');
 const registryBody = registryMatch?.[0].split('= [', 2)[1] || '';
 const registryRecords = registryBody.match(/\{[\s\S]*?\}/g) || [];
