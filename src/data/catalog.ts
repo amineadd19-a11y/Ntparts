@@ -1,4 +1,5 @@
 import { Part, OEMReference, Source, PartImage } from '@/types';
+import { resolveProductImages } from '@/data/catalog-images';
 
 const now = '2026-08-15T00:00:00.000Z';
 
@@ -34,32 +35,6 @@ const SOURCES: Record<string, SourceDefinition> = {
 
 const FILTER_BRANDS = ['MANN-FILTER', 'MAHLE', 'HENGST', 'DONALDSON', 'UFI', 'PURFLUX', 'FEBI', 'SAMPA'];
 const BRAKE_BRANDS = ['KNORR-BREMSE', 'WABCO', 'HALDEX', 'TRW', 'BREMBO', 'TEXTAR', 'FEBI', 'SAMPA', 'VADEN', 'COJALI'];
-
-/** Reliable Unsplash industrial / auto-part photos (HTTPS, stable) */
-const PRODUCT_PHOTO: Record<string, string> = {
-  'brake-disc': 'https://images.unsplash.com/photo-1486262715619-67b85e0b08d3?w=900&q=80&auto=format&fit=crop',
-  'brake-pad': 'https://images.unsplash.com/photo-1625047509248-ec889cbff17f?w=900&q=80&auto=format&fit=crop',
-  'brake-caliper': 'https://images.unsplash.com/photo-1619642751034-765dfdf7c58e?w=900&q=80&auto=format&fit=crop',
-  'brake-chamber': 'https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?w=900&q=80&auto=format&fit=crop',
-  'brake-valve': 'https://images.unsplash.com/photo-1487754180451-c456f541f709?w=900&q=80&auto=format&fit=crop',
-  'air-dryer': 'https://images.unsplash.com/photo-1503376780353-7e6692767b70?w=900&q=80&auto=format&fit=crop',
-  'oil-filter': 'https://images.unsplash.com/photo-1486262715619-67b85e0b08d3?w=900&q=80&auto=format&fit=crop',
-  'air-filter': 'https://images.unsplash.com/photo-1625047509248-ec889cbff17f?w=900&q=80&auto=format&fit=crop',
-  'fuel-filter': 'https://images.unsplash.com/photo-1619642751034-765dfdf7c58e?w=900&q=80&auto=format&fit=crop',
-  'cabin-filter': 'https://images.unsplash.com/photo-1503376780353-7e6692767b70?w=900&q=80&auto=format&fit=crop',
-  'water-pump': 'https://images.unsplash.com/photo-1487754180451-c456f541f709?w=900&q=80&auto=format&fit=crop',
-  'thermostat': 'https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?w=900&q=80&auto=format&fit=crop',
-  'radiator': 'https://images.unsplash.com/photo-1486262715619-67b85e0b08d3?w=900&q=80&auto=format&fit=crop',
-  'clutch-kit': 'https://images.unsplash.com/photo-1619642751034-765dfdf7c58e?w=900&q=80&auto=format&fit=crop',
-  'shock-absorber': 'https://images.unsplash.com/photo-1625047509248-ec889cbff17f?w=900&q=80&auto=format&fit=crop',
-  'air-spring': 'https://images.unsplash.com/photo-1503376780353-7e6692767b70?w=900&q=80&auto=format&fit=crop',
-  'starter-motor': 'https://images.unsplash.com/photo-1487754180451-c456f541f709?w=900&q=80&auto=format&fit=crop',
-  'alternator': 'https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?w=900&q=80&auto=format&fit=crop',
-  'turbocharger': 'https://images.unsplash.com/photo-1486262715619-67b85e0b08d3?w=900&q=80&auto=format&fit=crop',
-  'injector': 'https://images.unsplash.com/photo-1619642751034-765dfdf7c58e?w=900&q=80&auto=format&fit=crop',
-  'drive-belt': 'https://images.unsplash.com/photo-1625047509248-ec889cbff17f?w=900&q=80&auto=format&fit=crop',
-  'mirror': 'https://images.unsplash.com/photo-1503376780353-7e6692767b70?w=900&q=80&auto=format&fit=crop',
-};
 
 const PART_TEMPLATES: PartTemplate[] = [
   { slug: 'brake-disc', name: 'Brake Disc', category: 'Brakes', systemId: 'brake-system', tags: ['brake', 'disc'], aftermarketBrands: BRAKE_BRANDS.slice(0, 6) },
@@ -141,22 +116,22 @@ const VERIFIED_OEM_REFERENCES: Array<{
   {
     manufacturerId: 'volvo-trucks', partTemplateSlug: 'oil-filter', referenceNumber: '21707134',
     alternateNumbers: ['21707136', '21170569', 'MANN W 11 025', 'FEBI 35425', 'HENGST H200W04', 'MAHLE OC 370', 'SAMPA'],
-    sourceUrl: 'https://www.mann-filter.com/',
+    sourceUrl: 'https://www.mann-filter.com/en/catalog/search-results/product.html/w11025_mann-filter.html',
   },
   {
     manufacturerId: 'volvo-trucks', partTemplateSlug: 'air-filter', referenceNumber: '21377915',
     alternateNumbers: ['21914608', 'MANN C 25 990/1'],
-    sourceUrl: 'https://partsandfilters.co.uk/volvo/',
+    sourceUrl: 'https://www.mann-filter.com/',
   },
   {
     manufacturerId: 'volvo-trucks', partTemplateSlug: 'fuel-filter', referenceNumber: '20924422',
     alternateNumbers: ['SAMPA 033.141', 'MANN WDK 11 102/13', 'BOSCH F026402017'],
-    sourceUrl: 'https://www.sampa.com/',
+    sourceUrl: 'https://www.mann-filter.com/',
   },
   {
     manufacturerId: 'volvo-trucks', partTemplateSlug: 'cabin-filter', referenceNumber: '11007388',
     alternateNumbers: ['MANN CU 2785', 'FEBI'],
-    sourceUrl: 'https://partsandfilters.co.uk/volvo/',
+    sourceUrl: 'https://www.mann-filter.com/en/catalog/search-results/product.html/cu2785_mann-filter.html',
   },
   {
     manufacturerId: 'scania', partTemplateSlug: 'brake-pad', referenceNumber: '2325212',
@@ -186,17 +161,17 @@ const VERIFIED_OEM_REFERENCES: Array<{
   {
     manufacturerId: 'daf-trucks', partTemplateSlug: 'fuel-filter', referenceNumber: '1699168',
     alternateNumbers: ['MANN PU 966/1 X', 'FEBI 108791', 'HENGST E82KP D36'],
-    sourceUrl: 'https://www.mahle-aftermarket.com/',
+    sourceUrl: 'https://www.mann-filter.com/',
   },
   {
     manufacturerId: 'daf-trucks', partTemplateSlug: 'oil-filter', referenceNumber: '2142288',
     alternateNumbers: ['MAHLE OX 1059D', 'MANN', 'FEBI'],
-    sourceUrl: 'https://www.mahle-aftermarket.com/',
+    sourceUrl: 'https://www.mann-filter.com/',
   },
   {
     manufacturerId: 'renault-trucks', partTemplateSlug: 'oil-filter', referenceNumber: '5001846641',
     alternateNumbers: ['MANN W 11 025', 'FEBI 35425'],
-    sourceUrl: 'https://www.mann-filter.com/',
+    sourceUrl: 'https://www.mann-filter.com/en/catalog/search-results/product.html/w11025_mann-filter.html',
   },
   {
     manufacturerId: 'renault-trucks', partTemplateSlug: 'air-dryer', referenceNumber: '5001874313',
@@ -211,7 +186,7 @@ const VERIFIED_OEM_REFERENCES: Array<{
   {
     manufacturerId: 'mack', partTemplateSlug: 'oil-filter', referenceNumber: '21707136',
     alternateNumbers: ['MANN W 11 025', 'FEBI 35425'],
-    sourceUrl: 'https://www.mann-filter.com/',
+    sourceUrl: 'https://www.mann-filter.com/en/catalog/search-results/product.html/w11025_mann-filter.html',
   },
 ];
 
@@ -230,18 +205,7 @@ function createSource(source: SourceDefinition, partId: string): Source {
 }
 
 function createImages(partId: string, template: PartTemplate): PartImage[] {
-  const url = PRODUCT_PHOTO[template.slug] || PRODUCT_PHOTO['oil-filter'];
-  return [
-    {
-      id: `${partId}-img-1`,
-      partId,
-      url,
-      title: template.name,
-      alt: template.name,
-      isPrimary: true,
-      source: 'unsplash',
-    },
-  ];
+  return resolveProductImages(template.slug, partId, template.name) as PartImage[];
 }
 
 function createVerifiedOEMReferences(
