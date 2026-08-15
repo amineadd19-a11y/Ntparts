@@ -46,19 +46,19 @@ export default function SearchBar({ placeholder = 'Search...', onSearch }: Searc
           value={query}
           onChange={handleChange}
           placeholder={placeholder}
-          className="w-full rounded-2xl border border-slate-200 bg-white px-5 py-4 pl-12 pr-14 text-base font-medium text-slate-900 shadow-[0_10px_40px_rgba(15,23,42,0.06)] outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10"
+          className="w-full rounded-xl border border-slate-600/60 bg-slate-900/80 px-5 py-4 pl-12 pr-14 text-base font-medium text-white shadow-[0_8px_32px_rgba(0,0,0,0.3)] outline-none transition placeholder:text-slate-500 focus:border-sky-500/60 focus:ring-4 focus:ring-sky-500/15"
           aria-label="Search parts"
         />
-        <Search className="absolute left-4 text-slate-400" size={20} />
+        <Search className="absolute left-4 text-slate-500" size={20} />
         {isLoading ? (
-          <Loader2 className="absolute right-4 animate-spin text-blue-600" size={20} />
+          <Loader2 className="absolute right-4 animate-spin text-sky-400" size={20} />
         ) : (
           <button
             type="submit"
-            className="absolute right-2 flex h-10 w-10 items-center justify-center rounded-xl bg-slate-950 text-white transition hover:bg-slate-800"
+            className="absolute right-2 flex h-10 w-10 items-center justify-center rounded-lg bg-sky-500 text-slate-950 transition hover:bg-sky-400"
             aria-label="Search"
           >
-            <Search size={18} />
+            <Search size={17} />
           </button>
         )}
       </div>

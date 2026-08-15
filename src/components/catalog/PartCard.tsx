@@ -19,8 +19,8 @@ export default function PartCard({ part, showFavorite = true }: PartCardProps) {
 
   return (
     <Link href={`/parts/${encodeURIComponent(part.id)}`} className="block h-full">
-      <div className="nt-card nt-card-hover group flex h-full flex-col overflow-hidden rounded-2xl">
-        <div className="relative h-44 w-full flex-shrink-0 overflow-hidden bg-gradient-to-br from-slate-100 to-slate-50">
+      <div className="nt-card nt-card-hover group flex h-full flex-col overflow-hidden rounded-xl">
+        <div className="relative h-40 w-full flex-shrink-0 overflow-hidden bg-gradient-to-br from-slate-100 to-slate-50">
           {primaryImage ? (
             <Image
               src={primaryImage.url}
@@ -30,40 +30,40 @@ export default function PartCard({ part, showFavorite = true }: PartCardProps) {
             />
           ) : (
             <div className="flex h-full w-full flex-col items-center justify-center gap-2 text-slate-400">
-              <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-white shadow-sm">
-                <Package size={26} className="text-slate-400" />
+              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-white shadow-sm border border-slate-200">
+                <Package size={22} className="text-slate-400" />
               </div>
-              <span className="text-xs font-semibold uppercase tracking-wider">{part.category}</span>
+              <span className="text-[10px] font-bold uppercase tracking-wider">{part.category}</span>
             </div>
           )}
           {showFavorite && (
-            <div className="absolute right-3 top-3" onClick={(e) => e.preventDefault()}>
+            <div className="absolute right-2.5 top-2.5" onClick={(e) => e.preventDefault()}>
               <FavoriteButton partId={part.id} />
             </div>
           )}
         </div>
 
-        <div className="flex flex-grow flex-col p-5">
-          <div className="mb-2 flex items-center gap-2 text-xs font-semibold text-slate-400">
-            <span className="rounded-md bg-slate-100 px-2 py-1 text-slate-600">{part.category}</span>
+        <div className="flex flex-grow flex-col p-4">
+          <div className="mb-2 flex items-center gap-2 text-[11px] font-semibold text-slate-400">
+            <span className="rounded bg-slate-100 px-1.5 py-0.5 text-slate-600">{part.category}</span>
             {manufacturer && <span className="truncate">{manufacturer}{model ? ` · ${model}` : ''}</span>}
           </div>
 
-          <h3 className="mb-2 line-clamp-2 text-base font-extrabold leading-snug text-slate-950">
+          <h3 className="mb-1.5 line-clamp-2 text-[15px] font-extrabold leading-snug text-slate-900">
             {part.name}
           </h3>
 
           {part.oemReferences?.length ? (
-            <p className="mb-4 text-xs text-slate-500">
-              OEM: <span className="font-semibold text-slate-700">{part.oemReferences[0].referenceNumber}</span>
+            <p className="mb-3 text-[11px] text-slate-500">
+              OEM: <span className="font-mono font-semibold text-slate-700">{part.oemReferences[0].referenceNumber}</span>
             </p>
           ) : (
-            <p className="mb-4 text-xs text-slate-400">OEM reference pending verification</p>
+            <p className="mb-3 text-[11px] text-slate-400">OEM reference pending</p>
           )}
 
           <div className="mt-auto flex items-center justify-between">
             <VerificationBadge status={part.verificationStatus} size="sm" />
-            <span className="text-xs font-bold text-blue-700 transition group-hover:text-blue-800">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-sky-700 transition group-hover:text-sky-800">
               Details →
             </span>
           </div>

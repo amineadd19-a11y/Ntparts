@@ -31,57 +31,58 @@ export default function Header() {
   ];
 
   return (
-    <header className="sticky top-0 z-50 border-b border-slate-200/80 bg-white/90 backdrop-blur-xl shadow-[0_8px_30px_rgba(15,23,42,0.05)]">
-      <div className="mx-auto flex h-[74px] max-w-7xl items-center justify-between gap-6 px-4 sm:px-6 lg:px-8">
+    <header className="sticky top-0 z-50 border-b border-slate-800/80 bg-slate-950/95 backdrop-blur-xl shadow-[0_8px_32px_rgba(0,0,0,0.25)]">
+      <div className="mx-auto flex h-[72px] max-w-7xl items-center justify-between gap-6 px-4 sm:px-6 lg:px-8">
         <Link href="/" className="flex shrink-0 items-center gap-3" onClick={() => setMobileMenuOpen(false)}>
-          <div className="relative flex h-11 w-11 items-center justify-center overflow-hidden rounded-2xl text-white shadow-lg shadow-blue-900/20">
-            <div className="absolute inset-0 bg-gradient-to-br from-sky-500 via-blue-600 to-slate-950" />
+          <div className="relative flex h-10 w-10 items-center justify-center overflow-hidden rounded-xl text-white shadow-lg shadow-sky-900/40">
+            <div className="absolute inset-0 bg-gradient-to-br from-sky-400 via-sky-600 to-slate-900" />
+            <div className="absolute inset-0 bg-[linear-gradient(135deg,transparent_40%,rgba(255,255,255,0.15)_50%,transparent_60%)]" />
             <span className="relative text-sm font-black tracking-tight">NT</span>
           </div>
           <div className="hidden sm:block leading-none">
-            <div className="text-[17px] font-black tracking-tight text-slate-950">NTPARTS</div>
-            <div className="mt-1.5 text-[9px] font-bold uppercase tracking-[0.22em] text-slate-400">
-              Truck Parts Intelligence
+            <div className="text-[16px] font-black tracking-tight text-white">NTPARTS</div>
+            <div className="mt-1 text-[9px] font-bold uppercase tracking-[0.2em] text-slate-400">
+              Industrial Parts Intelligence
             </div>
           </div>
         </Link>
 
-        <nav className="hidden items-center gap-1 rounded-2xl border border-slate-200 bg-slate-50/80 p-1 md:flex">
+        <nav className="hidden items-center gap-0.5 rounded-xl border border-slate-700/80 bg-slate-900/80 p-1 md:flex">
           {links.map(([href, key]) => (
             <Link
               key={href}
               href={href}
-              className="rounded-xl px-3.5 py-2 text-sm font-semibold text-slate-600 transition hover:bg-white hover:text-slate-950 hover:shadow-sm"
+              className="rounded-lg px-3.5 py-2 text-sm font-semibold text-slate-300 transition hover:bg-slate-800 hover:text-white"
             >
               {t(key)}
             </Link>
           ))}
         </nav>
 
-        <div className="flex items-center gap-2 sm:gap-3">
+        <div className="flex items-center gap-2 sm:gap-2.5">
           <Link
             href="/search"
-            className="hidden h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 transition hover:border-sky-300 hover:text-sky-600 sm:flex"
+            className="hidden h-9 w-9 items-center justify-center rounded-lg border border-slate-700 bg-slate-900 text-slate-300 transition hover:border-sky-500/50 hover:text-sky-400 sm:flex"
             aria-label="Search"
           >
-            <Search size={18} />
+            <Search size={17} />
           </Link>
           <Link
             href="/favorites"
-            className="hidden h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 transition hover:border-sky-300 hover:text-sky-600 sm:flex"
+            className="hidden h-9 w-9 items-center justify-center rounded-lg border border-slate-700 bg-slate-900 text-slate-300 transition hover:border-sky-500/50 hover:text-sky-400 sm:flex"
             aria-label="Favorites"
           >
-            <Heart size={18} />
+            <Heart size={17} />
           </Link>
-          <div className="hidden h-10 items-center gap-1 rounded-xl border border-slate-200 bg-slate-50 px-2.5 sm:flex">
-            <Globe size={15} className="text-slate-400" />
+          <div className="hidden h-9 items-center gap-1.5 rounded-lg border border-slate-700 bg-slate-900 px-2.5 sm:flex">
+            <Globe size={14} className="text-slate-500" />
             <select
               value={language}
               onChange={(e) => setLanguage(e.target.value as 'en' | 'fr' | 'ar')}
-              className="cursor-pointer bg-transparent text-xs font-bold text-slate-600 outline-none"
+              className="cursor-pointer bg-transparent text-xs font-bold text-slate-300 outline-none"
             >
               {languages.map((lang) => (
-                <option key={lang.code} value={lang.code}>
+                <option key={lang.code} value={lang.code} className="bg-slate-900 text-slate-200">
                   {lang.label}
                 </option>
               ))}
@@ -89,52 +90,52 @@ export default function Header() {
           </div>
           <Link
             href="/search"
-            className="hidden items-center gap-2 rounded-xl bg-slate-950 px-4 py-2.5 text-sm font-bold text-white shadow-lg shadow-slate-900/20 transition hover:-translate-y-0.5 hover:bg-slate-800 lg:flex"
+            className="hidden items-center gap-2 rounded-lg bg-sky-500 px-4 py-2 text-sm font-bold text-slate-950 shadow-lg shadow-sky-500/25 transition hover:-translate-y-0.5 hover:bg-sky-400 lg:flex"
           >
-            <Search size={16} /> {t('nav.search')}
+            <Search size={15} /> {t('nav.search')}
           </Link>
           <button
-            className="flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-700 md:hidden"
+            className="flex h-9 w-9 items-center justify-center rounded-lg border border-slate-700 bg-slate-900 text-slate-200 md:hidden"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             aria-label="Toggle menu"
           >
-            {mobileMenuOpen ? <X size={21} /> : <Menu size={21} />}
+            {mobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
           </button>
         </div>
       </div>
 
       {mobileMenuOpen && (
-        <nav className="border-t border-slate-200 bg-white px-4 pb-5 pt-3 md:hidden">
+        <nav className="border-t border-slate-800 bg-slate-950 px-4 pb-5 pt-3 md:hidden">
           <div className="grid gap-1">
             {links.map(([href, key]) => (
               <Link
                 key={href}
                 href={href}
                 onClick={() => setMobileMenuOpen(false)}
-                className="flex items-center gap-3 rounded-xl px-4 py-3 font-semibold text-slate-700 hover:bg-slate-50"
+                className="flex items-center gap-3 rounded-lg px-4 py-3 font-semibold text-slate-300 hover:bg-slate-900 hover:text-white"
               >
-                <Package size={17} className="text-slate-400" />
+                <Package size={16} className="text-slate-500" />
                 {t(key)}
               </Link>
             ))}
             <Link
               href="/favorites"
               onClick={() => setMobileMenuOpen(false)}
-              className="flex items-center gap-3 rounded-xl px-4 py-3 font-semibold text-slate-700 hover:bg-slate-50"
+              className="flex items-center gap-3 rounded-lg px-4 py-3 font-semibold text-slate-300 hover:bg-slate-900 hover:text-white"
             >
-              <Heart size={17} className="text-slate-400" />
+              <Heart size={16} className="text-slate-500" />
               {t('nav.favorites')}
             </Link>
           </div>
-          <div className="mt-3 flex items-center gap-2 rounded-xl bg-slate-50 px-4 py-3">
-            <Globe size={16} className="text-slate-400" />
+          <div className="mt-3 flex items-center gap-2 rounded-lg border border-slate-800 bg-slate-900 px-4 py-3">
+            <Globe size={15} className="text-slate-500" />
             <select
               value={language}
               onChange={(e) => setLanguage(e.target.value as 'en' | 'fr' | 'ar')}
-              className="bg-transparent text-sm font-semibold outline-none"
+              className="bg-transparent text-sm font-semibold text-slate-300 outline-none"
             >
               {languages.map((lang) => (
-                <option key={lang.code} value={lang.code}>
+                <option key={lang.code} value={lang.code} className="bg-slate-900">
                   {lang.label}
                 </option>
               ))}
