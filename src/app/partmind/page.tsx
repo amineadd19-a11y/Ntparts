@@ -2,7 +2,7 @@
 
 import { FormEvent, useState } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, Bot, ExternalLink, Loader2, Send, ShieldCheck, Sparkles } from 'lucide-react';
+import { ArrowLeft, Bot, ExternalLink, Loader2, Send, ShieldCheck, X } from 'lucide-react';
 import type { AIAnalysisResponse } from '@/lib/ai/types';
 
 const suggestions = [
@@ -12,11 +12,27 @@ const suggestions = [
   'Find verified applications for a Volvo truck oil filter',
 ];
 
+function detectLanguage(text: string): 'darija' | 'ar' | 'fr' | 'en' {
+  if (/[\u0600-\u06FF]/.test(text)) return 'ar';
+  if (/\b(je|vous|avec|pour|pi[eè]ce|camion|r[eé]f[eé]rence|bonjour|cherche)\b/i.test(text)) return 'fr';
+  if (/\b(bghit|wach|fin|chno|kifach|m3a|3lach|kayen|l9it|sift|shnu)\b/i.test(text)) return 'darija';
+  return 'en';
+}
+
+const placeholders = {
+  darija: 'كتب سؤالك على قطعة، OEM، شاحنة أو compatibilité...',
+  ar: 'اكتب سؤالك عن قطعة أو رقم OEM أو شاحنة...',
+  fr: 'Écrivez votre question sur une pièce, un OEM ou un camion...',
+  en: 'Ask about an OEM, part number, truck or fitment...',
+};
+
 export default function PartMindPage() {
+  const [open, setOpen] = useState(false);
   const [question, setQuestion] = useState('');
   const [messages, setMessages] = useState<{ role: 'user' | 'assistant'; text: string; result?: AIAnalysisResponse }[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const language = detectLanguage(question);
 
   async function submit(event?: FormEvent) {
     event?.preventDefault();
@@ -43,57 +59,73 @@ export default function PartMindPage() {
   }
 
   return (
-    <main className="min-h-screen bg-slate-950 text-white">
-      <header className="sticky top-0 z-20 border-b border-slate-800/90 bg-slate-950/95 backdrop-blur">
-        <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-3 sm:px-6">
-          <Link href="/" className="inline-flex items-center gap-2 text-sm font-bold text-slate-300 hover:text-white">
-            <ArrowLeft size={16} /> NTParts
-          </Link>
-          <div className="flex items-center gap-2">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-sky-500/15 text-sky-400"><Bot size={18} /></div>
-            <div><div className="text-sm font-black">PartMind</div><div className="text-[10px] font-semibold text-emerald-400">Parts Intelligence</div></div>
-          </div>
-          <div className="hidden items-center gap-1.5 text-[10px] font-bold text-slate-500 sm:flex"><ShieldCheck size={13} /> Evidence-aware</div>
-        </div>
-      </header>
+    <>
+      <Link href="/" className="fixed bottom-4 left-4 z-40 inline-flex items-center gap-2 text-xs font-bold text-slate-400 hover:text-white">
+        <ArrowLeft size={14} /> NTParts
+      </Link>
 
-      <div className="mx-auto flex min-h-[calc(100vh-61px)] max-w-5xl flex-col px-4 sm:px-6">
-        <div className="flex-1 py-8 sm:py-10">
-          {messages.length === 0 ? (
-            <div className="mx-auto flex max-w-3xl flex-col items-center pt-10 text-center sm:pt-16">
-              <div className="mb-5 flex h-16 w-16 items-center justify-center rounded-2xl border border-sky-400/20 bg-sky-400/10 text-sky-300 shadow-xl shadow-sky-500/10"><Sparkles size={28} /></div>
-              <h1 className="text-3xl font-black tracking-tight sm:text-5xl">Ask PartMind</h1>
-              <p className="mt-4 max-w-2xl text-sm leading-6 text-slate-400 sm:text-base">Research truck parts, OEM references, cross-references, fitment and technical differences using NTParts and verified global evidence.</p>
-              <div className="mt-8 grid w-full gap-2 sm:grid-cols-2">
-                {suggestions.map((item) => <button key={item} onClick={() => setQuestion(item)} className="rounded-xl border border-slate-800 bg-slate-900/70 p-3 text-left text-xs font-semibold text-slate-300 transition hover:border-sky-500/40 hover:text-white">{item}</button>)}
+      {!open && (
+        <button
+          type="button"
+          onClick={() => setOpen(true)}
+          aria-label="Open PartMind"
+          className="fixed bottom-5 right-5 z-50 flex h-14 w-14 items-center justify-center rounded-full border border-sky-300/30 bg-sky-500 text-slate-950 shadow-2xl shadow-sky-500/30 transition hover:scale-105 hover:bg-sky-400"
+        >
+          <Bot size={25} />
+          <span className="absolute -right-1 -top-1 h-3 w-3 rounded-full border-2 border-slate-950 bg-emerald-400" />
+        </button>
+      )}
+
+      {open && (
+        <section className="fixed inset-0 z-50 flex items-end justify-center bg-black/45 p-0 backdrop-blur-[2px] sm:items-end sm:justify-end sm:bg-transparent sm:p-5">
+          <div className="flex h-[100dvh] w-full flex-col overflow-hidden border border-slate-700 bg-slate-950 text-white shadow-2xl sm:h-[min(720px,calc(100vh-40px))] sm:w-[430px] sm:rounded-3xl">
+            <header className="flex items-center justify-between border-b border-slate-800 bg-slate-950/95 px-4 py-3 backdrop-blur">
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-sky-500/15 text-sky-400"><Bot size={19} /></div>
+                <div><div className="text-sm font-black">PartMind</div><div className="flex items-center gap-1 text-[10px] font-semibold text-emerald-400"><ShieldCheck size={11} /> Research assistant</div></div>
               </div>
-            </div>
-          ) : (
-            <div className="mx-auto max-w-3xl space-y-6">
-              {messages.map((message, index) => <div key={`${message.role}-${index}`} className={message.role === 'user' ? 'flex justify-end' : 'flex justify-start'}>
-                <div className={message.role === 'user' ? 'max-w-[85%] rounded-2xl rounded-br-md bg-sky-500 px-4 py-3 text-sm font-medium text-slate-950' : 'w-full rounded-2xl rounded-bl-md border border-slate-800 bg-slate-900/80 p-5'}>
-                  {message.role === 'assistant' ? <div className="mb-2 flex items-center gap-2 text-xs font-black text-sky-300"><Bot size={14} /> PartMind</div> : null}
-                  <div className="whitespace-pre-wrap text-sm leading-7 text-slate-200">{message.text}</div>
-                  {message.result?.sources?.length ? <div className="mt-5 border-t border-slate-800 pt-4"><div className="mb-2 text-[10px] font-black uppercase tracking-[0.16em] text-slate-500">Sources</div><div className="grid gap-2 sm:grid-cols-2">{message.result.sources.map((source) => <a key={source.url} href={source.url} target="_blank" rel="noreferrer" className="flex items-center justify-between gap-2 rounded-lg border border-slate-800 bg-slate-950 p-3 text-xs hover:border-sky-500/40"><span className="min-w-0 truncate font-semibold text-slate-300">{source.title}</span><ExternalLink size={13} className="shrink-0 text-slate-600" /></a>)}</div></div> : null}
-                  {message.result ? <div className="mt-4 text-right text-[10px] font-bold text-slate-500">Confidence: {message.result.confidence}%</div> : null}
-                </div>
-              </div>)}
-              {loading && <div className="flex items-center gap-2 text-xs font-semibold text-slate-500"><Loader2 size={15} className="animate-spin" /> PartMind is researching...</div>}
-            </div>
-          )}
-        </div>
+              <button type="button" onClick={() => setOpen(false)} aria-label="Close PartMind" className="rounded-xl p-2 text-slate-400 hover:bg-slate-800 hover:text-white"><X size={18} /></button>
+            </header>
 
-        <div className="sticky bottom-0 pb-5 pt-3 sm:pb-7">
-          {error && <div className="mx-auto mb-2 max-w-3xl rounded-lg border border-rose-500/30 bg-rose-500/10 p-3 text-xs text-rose-300">{error}</div>}
-          <form onSubmit={submit} className="mx-auto max-w-3xl rounded-2xl border border-slate-700 bg-slate-900 p-2 shadow-2xl shadow-black/30">
-            <div className="flex items-end gap-2">
-              <textarea value={question} onChange={(e) => setQuestion(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); submit(); } }} rows={1} maxLength={1500} placeholder="Ask about an OEM, part number, truck, fitment or comparison..." className="min-h-12 flex-1 resize-none bg-transparent px-3 py-3 text-sm text-white outline-none placeholder:text-slate-600" />
-              <button type="submit" disabled={loading || !question.trim()} className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-sky-500 text-slate-950 transition hover:bg-sky-400 disabled:opacity-40"><Send size={17} /></button>
+            <div className="flex-1 overflow-y-auto p-4">
+              {messages.length === 0 ? (
+                <div className="flex min-h-full flex-col justify-center">
+                  <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-sky-500/10 text-sky-300"><Bot size={22} /></div>
+                  <h2 className="text-2xl font-black">Ask PartMind</h2>
+                  <p className="mt-2 text-sm leading-6 text-slate-400">سولني على OEM، référence، compatibilité أو أي قطعة ديال camion. يمكن تهضر بالدارجة، العربية، الفرنسية أو English.</p>
+                  <div className="mt-5 space-y-2">
+                    {suggestions.slice(0, 3).map((item) => <button key={item} type="button" onClick={() => setQuestion(item)} className="w-full rounded-xl border border-slate-800 bg-slate-900/70 p-3 text-left text-xs font-semibold text-slate-300 hover:border-sky-500/40 hover:text-white">{item}</button>)}
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {messages.map((message, index) => (
+                    <div key={`${message.role}-${index}`} className={message.role === 'user' ? 'flex justify-end' : 'flex justify-start'}>
+                      <div className={message.role === 'user' ? 'max-w-[88%] rounded-2xl rounded-br-md bg-sky-500 px-3.5 py-2.5 text-sm font-medium text-slate-950' : 'max-w-[95%] rounded-2xl rounded-bl-md border border-slate-800 bg-slate-900 p-3.5'}>
+                        {message.role === 'assistant' && <div className="mb-1.5 flex items-center gap-1.5 text-[10px] font-black text-sky-300"><Bot size={12} /> PartMind</div>}
+                        <div className="whitespace-pre-wrap text-sm leading-6">{message.text}</div>
+                        {message.result?.sources?.length ? <div className="mt-3 border-t border-slate-800 pt-3"><div className="mb-2 text-[9px] font-black uppercase tracking-widest text-slate-500">Sources</div>{message.result.sources.slice(0, 4).map((source) => <a key={source.url} href={source.url} target="_blank" rel="noreferrer" className="mb-1 flex items-center justify-between gap-2 rounded-lg bg-slate-950 p-2 text-[10px] hover:bg-slate-800"><span className="truncate text-slate-300">{source.title}</span><ExternalLink size={11} className="shrink-0 text-slate-500" /></a>)}</div> : null}
+                      </div>
+                    </div>
+                  ))}
+                  {loading && <div className="flex items-center gap-2 text-xs font-semibold text-slate-500"><Loader2 size={14} className="animate-spin" /> PartMind is researching...</div>}
+                </div>
+              )}
             </div>
-          </form>
-          <p className="mx-auto mt-2 max-w-3xl text-center text-[10px] text-slate-600">PartMind does not invent references. Unverified information is marked accordingly.</p>
-        </div>
-      </div>
-    </main>
+
+            <div className="border-t border-slate-800 bg-slate-950 p-3">
+              {error && <div className="mb-2 rounded-lg border border-rose-500/30 bg-rose-500/10 p-2 text-[10px] text-rose-300">{error}</div>}
+              <form onSubmit={submit} className="rounded-2xl border border-slate-700 bg-slate-900 p-1.5">
+                <div className="flex items-end gap-1.5">
+                  <textarea value={question} onChange={(e) => setQuestion(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); submit(); } }} rows={1} maxLength={1500} placeholder={placeholders[language]} className="min-h-11 flex-1 resize-none bg-transparent px-2.5 py-2.5 text-sm text-white outline-none placeholder:text-slate-600" />
+                  <button type="submit" disabled={loading || !question.trim()} className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-sky-500 text-slate-950 hover:bg-sky-400 disabled:opacity-40"><Send size={16} /></button>
+                </div>
+              </form>
+              <p className="mt-1.5 text-center text-[9px] text-slate-600">PartMind verifies evidence before presenting OEM information.</p>
+            </div>
+          </div>
+        </section>
+      )}
+    </>
   );
 }
