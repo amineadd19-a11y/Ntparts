@@ -1,0 +1,14 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root { --primary: 30 144 255; --primary-rgb: rgb(var(--primary)); --secondary: 124 58 237; --accent: 245 158 11; }
+html[dir='rtl'] { direction: rtl; text-align: right; }
+html[dir='rtl'] body { direction: rtl; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
+a { color: inherit; text-decoration: none; }
+* { box-sizing: border-box; }
+button:focus-visible, a:focus-visible, input:focus-visible { outline: 2px solid var(--primary-rgb); outline-offset: 2px; }
+@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: .5; } }
+.animate-pulse { animation: pulse 2s cubic-bezier(.4,0,.6,1) infinite; }
+.transition-all { transition-property: all; transition-timing-function: cubic-bezier(.4,0,.2,1); transition-duration: 200ms; }
