@@ -34,9 +34,6 @@ const SOURCES: Record<string, SourceDefinition> = {
 };
 
 const FILTER_BRANDS = ['MANN-FILTER', 'MAHLE', 'HENGST', 'DONALDSON', 'UFI', 'PURFLUX', 'FEBI', 'SAMPA', 'ELRING'];
-const BRAKE_BRANDS = [
-  'KNORR-BREMSE', 'WABCO', 'HALDEX', 'TRW', 'BREMBO', 'TEXTAR', 'FEBI', 'SAMPA', 'VADEN', 'COJALI', 'EBS',
-];
 const SUSP_BRANDS = ['SACHS', 'MONROE', 'ZF', 'SAMPA', 'FEBI', 'LEMA', 'COJALI', 'CONTINENTAL'];
 const ENGINE_SEAL_BRANDS = ['ELRING', 'REINZ', 'AJUSA', 'FEBI', 'LEMA'];
 
@@ -112,7 +109,7 @@ const MANUFACTURERS: ManufacturerDefinition[] = [
   ]},
 ];
 
-/** Public catalogue cross-refs only (COJALI, ELRING, EBS, LEMA, MANN, FEBI…). Deduped via uniqueRefs(). */
+/** Public catalogue cross-refs only. No bare brand tokens. Deduped via uniqueRefs(). */
 const VERIFIED_OEM_REFERENCES: Array<{
   manufacturerId: string;
   partTemplateSlug: string;
@@ -120,7 +117,7 @@ const VERIFIED_OEM_REFERENCES: Array<{
   alternateNumbers?: string[];
   sourceUrl: string;
 }> = [
-  // —— Filters (MANN family) ——
+  // —— Filters ——
   {
     manufacturerId: 'volvo-trucks', partTemplateSlug: 'oil-filter', referenceNumber: '21707134',
     alternateNumbers: ['21707136', '21170569', 'MANN W 11 025', 'FEBI 35425', 'HENGST H200W04', 'MAHLE OC 370'],
@@ -148,7 +145,7 @@ const VERIFIED_OEM_REFERENCES: Array<{
   },
   {
     manufacturerId: 'volvo-trucks', partTemplateSlug: 'cabin-filter', referenceNumber: '11007388',
-    alternateNumbers: ['MANN CU 2785', 'FEBI'],
+    alternateNumbers: ['MANN CU 2785'],
     sourceUrl: 'https://www.mann-filter.com/en/catalog/search-results/product.html/cu2785_mann-filter.html',
   },
   {
@@ -158,7 +155,7 @@ const VERIFIED_OEM_REFERENCES: Array<{
   },
   {
     manufacturerId: 'mercedes-benz-trucks', partTemplateSlug: 'oil-filter', referenceNumber: 'A5411800009',
-    alternateNumbers: ['MANN HU 12 140 x', 'FEBI'],
+    alternateNumbers: ['MANN HU 12 140 x'],
     sourceUrl: 'https://www.mann-filter.com/',
   },
   {
@@ -168,11 +165,11 @@ const VERIFIED_OEM_REFERENCES: Array<{
   },
   {
     manufacturerId: 'daf-trucks', partTemplateSlug: 'oil-filter', referenceNumber: '2142288',
-    alternateNumbers: ['MAHLE OX 1059D', 'MANN', 'FEBI'],
+    alternateNumbers: ['MAHLE OX 1059D'],
     sourceUrl: 'https://www.mann-filter.com/',
   },
 
-  // —— COJALI (pneumatic / brake) ——
+  // —— COJALI ——
   {
     manufacturerId: 'scania', partTemplateSlug: 'air-dryer', referenceNumber: '1774598',
     alternateNumbers: ['COJALI 6002007', 'FEBI 35304', 'WABCO 4329012282'],
@@ -198,40 +195,48 @@ const VERIFIED_OEM_REFERENCES: Array<{
     alternateNumbers: ['COJALI 2310529', 'SAMPA 096.453'],
     sourceUrl: 'https://www.recambioscamion.com/',
   },
+  // Fixed: 1607728 is air suspension valve, NOT service brake valve
   {
-    manufacturerId: 'volvo-trucks', partTemplateSlug: 'brake-valve', referenceNumber: '1607728',
+    manufacturerId: 'volvo-trucks', partTemplateSlug: 'air-spring', referenceNumber: '1607728',
     alternateNumbers: ['COJALI 2214400', 'FEBI 39335', 'WABCO 4640060000'],
     sourceUrl: 'https://plenty.parts/parts/cojali/all/2214400',
   },
   {
     manufacturerId: 'mercedes-benz-trucks', partTemplateSlug: 'brake-valve', referenceNumber: 'A0014300460',
-    alternateNumbers: ['COJALI 6012001', 'WABCO 4613150052', 'MAN 4613150052'],
+    alternateNumbers: ['COJALI 6012001', 'WABCO 4613150052'],
     sourceUrl: 'https://www.intercars24.ee/',
   },
 
-  // —— EBS (European Braking Systems) + disc/pad ecosystem ——
+  // —— Brakes ——
   {
     manufacturerId: 'scania', partTemplateSlug: 'brake-pad', referenceNumber: '2325212',
-    alternateNumbers: ['TEXTAR 2933101', 'WVA 29331', 'EBS', 'FEBI', 'SAMPA', 'VADEN'],
+    alternateNumbers: ['TEXTAR 2933101', 'WVA 29331'],
     sourceUrl: 'https://truckstopgroup.co.uk/',
   },
   {
     manufacturerId: 'scania', partTemplateSlug: 'brake-disc', referenceNumber: '1852817',
-    alternateNumbers: ['1889543', 'EBS', 'FEBI', 'SAMPA'],
+    alternateNumbers: ['1889543'],
     sourceUrl: 'https://www.scania.com/',
   },
   {
     manufacturerId: 'man-truck-bus', partTemplateSlug: 'brake-pad', referenceNumber: 'K059965K50',
-    alternateNumbers: ['TEXTAR', 'EBS', 'FEBI', 'SAMPA'],
+    alternateNumbers: ['TEXTAR 2917701'],
     sourceUrl: 'https://www.knorr-bremse.com/',
   },
   {
     manufacturerId: 'daf-trucks', partTemplateSlug: 'brake-chamber', referenceNumber: '1387439',
-    alternateNumbers: ['1726138', 'KNORR K034248', 'EBS'],
+    alternateNumbers: ['1726138', 'KNORR K034248'],
     sourceUrl: 'https://www.ebs.co.uk/',
   },
 
-  // —— ELRING (gaskets / seals) ——
+  // —— SAMPA (public Autodoc / listings) ——
+  {
+    manufacturerId: 'volvo-trucks', partTemplateSlug: 'radiator', referenceNumber: '033.487',
+    alternateNumbers: ['SAMPA 033.487'],
+    sourceUrl: 'https://trucks.autodoc.co.uk/spare-parts/hoses-pipes-flanges-200089/volvo/mf-sampa',
+  },
+
+  // —— ELRING ——
   {
     manufacturerId: 'volvo-trucks', partTemplateSlug: 'gasket-set', referenceNumber: '21539731',
     alternateNumbers: ['21768034', 'ELRING 899.340', 'AJUSA 52356300', 'REINZ 02-36855-02'],
@@ -244,7 +249,7 @@ const VERIFIED_OEM_REFERENCES: Array<{
   },
   {
     manufacturerId: 'scania', partTemplateSlug: 'gasket-set', referenceNumber: '1112908',
-    alternateNumbers: ['1114640', 'ELRING 832.619', 'MAN 81.11904-0020', 'VOLVO 6232208'],
+    alternateNumbers: ['1114640', 'ELRING 832.619'],
     sourceUrl: 'https://www.elring.com/',
   },
   {
@@ -253,7 +258,7 @@ const VERIFIED_OEM_REFERENCES: Array<{
     sourceUrl: 'https://www.elring.com/',
   },
 
-  // —— LEMA (silentblocks / rubber-metal) ——
+  // —— LEMA ——
   {
     manufacturerId: 'daf-trucks', partTemplateSlug: 'silentblock', referenceNumber: '1291233',
     alternateNumbers: ['LEMA 1003.01'],
@@ -280,7 +285,6 @@ function unique(values: string[]): string[] {
   return Array.from(new Set(values.filter(Boolean)));
 }
 
-/** Deduplicate refs ignoring spaces / dashes / dots (W 11 025 ≈ W11025). */
 function uniqueRefs(values: string[]): string[] {
   const seen = new Set<string>();
   const out: string[] = [];
@@ -346,7 +350,7 @@ function createPart(
     description:
       `${template.name} — ${manufacturer.name} ${model.name}. ` +
       (oemReferences.length
-        ? 'OEM and cross-references indexed (COJALI / ELRING / EBS / LEMA where applicable). Confirm fitment before ordering.'
+        ? 'OEM and cross-references indexed. Confirm fitment before ordering.'
         : 'Exact OEM requires manufacturer catalogue lookup.'),
     category: template.category,
     specifications: {
