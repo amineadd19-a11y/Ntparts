@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
-import { analyzeParts } from '@/lib/ai/gemini';
+import { analyzeWithProviders } from '@/lib/ai/orchestrator';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -9,8 +9,6 @@ const requestSchema = z.object({
   question: z.string().trim().min(2).max(1500),
 });
 
-// Defense-in-depth for serverless instances. This is intentionally small and
-// local; a shared rate limiter can be added later without changing the API.
 const WINDOW_MS = 60_000;
 const MAX_REQUESTS_PER_WINDOW = 10;
 const requestLog = new Map<string, number[]>();
@@ -48,7 +46,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Invalid AI query.' }, { status: 400 });
     }
 
-    const result = await analyzeParts(parsed.data.question);
+    const result = await analyzeWithProviders(parsed.data.question);
     return NextResponse.json(result, {
       headers: {
         'Cache-Control': 'no-store',
@@ -56,8 +54,8 @@ export async function POST(request: Request) {
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : 'AI service unavailable.';
-    const safeMessage = message.includes('GEMINI_API_KEY')
-      ? 'AI service is not configured yet. Add GEMINI_API_KEY to the server environment.'
+    const safeMessage = message.includes('No AI provider')
+      ? 'AI service is not configured yet. Add GEMINI_API_KEY or OPENAI_API_KEY to the server environment.'
       : 'AI service is temporarily unavailable. Please try again.';
     console.error('[NTParts AI]', message);
     return NextResponse.json({ error: safeMessage }, { status: 503 });
