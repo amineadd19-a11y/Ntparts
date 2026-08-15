@@ -16,11 +16,18 @@ export default function Header() {
     document.documentElement.dir = language === 'ar' ? 'rtl' : 'ltr';
   }, [language]);
 
-  const languages: Array<{ code: 'en' | 'fr' | 'ar'; label: string }> = [
-    { code: 'en', label: 'EN' },
+  const languages: Array<{ code: 'fr' | 'en' | 'ar'; label: string }> = [
     { code: 'fr', label: 'FR' },
+    { code: 'en', label: 'EN' },
     { code: 'ar', label: 'AR' },
   ];
+
+  const tagline =
+    language === 'fr'
+      ? 'Catalogue pièces industrielles'
+      : language === 'ar'
+        ? 'كتالوج القطع الصناعية'
+        : 'Industrial Parts Intelligence';
 
   const links = [
     ['/', 'nav.home'],
@@ -41,8 +48,8 @@ export default function Header() {
           </div>
           <div className="hidden sm:block leading-none">
             <div className="text-[16px] font-black tracking-tight text-white">NTPARTS</div>
-            <div className="mt-1 text-[9px] font-bold uppercase tracking-[0.2em] text-slate-400">
-              Industrial Parts Intelligence
+            <div className="mt-1 text-[9px] font-bold uppercase tracking-[0.14em] text-slate-400">
+              {tagline}
             </div>
           </div>
         </Link>
@@ -63,23 +70,23 @@ export default function Header() {
           <Link
             href="/search"
             className="hidden h-9 w-9 items-center justify-center rounded-lg border border-slate-700 bg-slate-900 text-slate-300 transition hover:border-sky-500/50 hover:text-sky-400 sm:flex"
-            aria-label="Search"
+            aria-label={t('nav.search')}
           >
             <Search size={17} />
           </Link>
           <Link
             href="/favorites"
             className="hidden h-9 w-9 items-center justify-center rounded-lg border border-slate-700 bg-slate-900 text-slate-300 transition hover:border-sky-500/50 hover:text-sky-400 sm:flex"
-            aria-label="Favorites"
+            aria-label={t('nav.favorites')}
           >
             <Heart size={17} />
           </Link>
-          <div className="hidden h-9 items-center gap-1.5 rounded-lg border border-slate-700 bg-slate-900 px-2.5 sm:flex">
-            <Globe size={14} className="text-slate-500" />
+          <div className="hidden h-9 items-center gap-1.5 rounded-lg border border-sky-500/40 bg-slate-900 px-2.5 sm:flex">
+            <Globe size={14} className="text-sky-400" />
             <select
               value={language}
               onChange={(e) => setLanguage(e.target.value as 'en' | 'fr' | 'ar')}
-              className="cursor-pointer bg-transparent text-xs font-bold text-slate-300 outline-none"
+              className="cursor-pointer bg-transparent text-xs font-bold text-sky-300 outline-none"
             >
               {languages.map((lang) => (
                 <option key={lang.code} value={lang.code} className="bg-slate-900 text-slate-200">
@@ -97,7 +104,7 @@ export default function Header() {
           <button
             className="flex h-9 w-9 items-center justify-center rounded-lg border border-slate-700 bg-slate-900 text-slate-200 md:hidden"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            aria-label="Toggle menu"
+            aria-label="Menu"
           >
             {mobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
           </button>
@@ -127,12 +134,12 @@ export default function Header() {
               {t('nav.favorites')}
             </Link>
           </div>
-          <div className="mt-3 flex items-center gap-2 rounded-lg border border-slate-800 bg-slate-900 px-4 py-3">
-            <Globe size={15} className="text-slate-500" />
+          <div className="mt-3 flex items-center gap-2 rounded-lg border border-sky-500/40 bg-slate-900 px-4 py-3">
+            <Globe size={15} className="text-sky-400" />
             <select
               value={language}
               onChange={(e) => setLanguage(e.target.value as 'en' | 'fr' | 'ar')}
-              className="bg-transparent text-sm font-semibold text-slate-300 outline-none"
+              className="bg-transparent text-sm font-semibold text-sky-300 outline-none"
             >
               {languages.map((lang) => (
                 <option key={lang.code} value={lang.code} className="bg-slate-900">

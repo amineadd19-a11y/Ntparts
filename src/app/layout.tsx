@@ -5,12 +5,13 @@ import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 
 export const metadata: Metadata = {
-  title: 'NTParts — كتالوج قطع الشاحنات وأرقام OEM',
+  title: 'NTParts — Catalogue professionnel de pièces poids lourds & références OEM',
   description:
-    'ابحث عن أرقام OEM وقطع غيار الشاحنات عبر أبرز الشركات. كتالوج صناعي للمحترفين.',
+    'Recherchez les références OEM, numéros de pièces et compatibilités pour les principaux constructeurs de camions. Catalogue industriel pour techniciens et spécialistes pièces.',
   keywords: [
-    'قطع شاحنات',
-    'OEM',
+    'pièces camion',
+    'références OEM',
+    'pièces poids lourds',
     'Volvo',
     'DAF',
     'Scania',
@@ -23,7 +24,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="ar" dir="rtl">
+    <html lang="fr" dir="ltr">
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -31,11 +32,11 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link
-          href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800;900&display=swap"
+          href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap"
           rel="stylesheet"
         />
       </head>
-      <body className="bg-slate-100 text-slate-900 antialiased" style={{ fontFamily: "'IBM Plex Sans Arabic', Inter, system-ui, sans-serif" }}>
+      <body className="bg-slate-100 text-slate-900 antialiased" style={{ fontFamily: 'Inter, system-ui, sans-serif' }}>
         <Header />
         <main className="min-h-screen">{children}</main>
         <Footer />

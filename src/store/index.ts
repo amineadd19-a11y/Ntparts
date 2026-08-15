@@ -25,7 +25,7 @@ interface AppStore {
 export const useAppStore = create<AppStore>()(
   persist(
     (set, get) => ({
-      language: 'ar',
+      language: 'fr',
       setLanguage: (lang) => set({ language: lang }),
       favorites: [],
       toggleFavorite: (partId) =>
@@ -51,6 +51,9 @@ export const useAppStore = create<AppStore>()(
       selectedModel: null,
       setSelectedModel: (id) => set({ selectedModel: id }),
     }),
-    { name: 'ntparts-store', partialize: (s) => ({ language: s.language, favorites: s.favorites }) }
+    {
+      name: 'ntparts-store-v2',
+      partialize: (s) => ({ language: s.language, favorites: s.favorites }),
+    }
   )
 );
