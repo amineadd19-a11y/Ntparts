@@ -3,6 +3,7 @@
  */
 
 import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
 
 interface AppStore {
   language: 'en' | 'fr' | 'ar';
@@ -21,30 +22,35 @@ interface AppStore {
   setSelectedModel: (id: string | null) => void;
 }
 
-export const useAppStore = create<AppStore>((set, get) => ({
-  language: 'en',
-  setLanguage: (lang) => set({ language: lang }),
-  favorites: [],
-  toggleFavorite: (partId) =>
-    set((state) => ({
-      favorites: state.favorites.includes(partId)
-        ? state.favorites.filter((id) => id !== partId)
-        : [...state.favorites, partId],
-    })),
-  isFavorite: (partId) => get().favorites.includes(partId),
-  searchHistory: [],
-  addToSearchHistory: (query) =>
-    set((state) => ({
-      searchHistory: [query, ...state.searchHistory.filter((q) => q !== query)].slice(0, 20),
-    })),
-  clearSearchHistory: () => set({ searchHistory: [] }),
-  recentParts: [],
-  addRecentPart: (partId) =>
-    set((state) => ({
-      recentParts: [partId, ...state.recentParts.filter((id) => id !== partId)].slice(0, 10),
-    })),
-  selectedManufacturer: null,
-  setSelectedManufacturer: (id) => set({ selectedManufacturer: id }),
-  selectedModel: null,
-  setSelectedModel: (id) => set({ selectedModel: id }),
-}));
+export const useAppStore = create<AppStore>()(
+  persist(
+    (set, get) => ({
+      language: 'ar',
+      setLanguage: (lang) => set({ language: lang }),
+      favorites: [],
+      toggleFavorite: (partId) =>
+        set((state) => ({
+          favorites: state.favorites.includes(partId)
+            ? state.favorites.filter((id) => id !== partId)
+            : [...state.favorites, partId],
+        })),
+      isFavorite: (partId) => get().favorites.includes(partId),
+      searchHistory: [],
+      addToSearchHistory: (query) =>
+        set((state) => ({
+          searchHistory: [query, ...state.searchHistory.filter((q) => q !== query)].slice(0, 20),
+        })),
+      clearSearchHistory: () => set({ searchHistory: [] }),
+      recentParts: [],
+      addRecentPart: (partId) =>
+        set((state) => ({
+          recentParts: [partId, ...state.recentParts.filter((id) => id !== partId)].slice(0, 10),
+        })),
+      selectedManufacturer: null,
+      setSelectedManufacturer: (id) => set({ selectedManufacturer: id }),
+      selectedModel: null,
+      setSelectedModel: (id) => set({ selectedModel: id }),
+    }),
+    { name: 'ntparts-store', partialize: (s) => ({ language: s.language, favorites: s.favorites }) }
+  )
+);
