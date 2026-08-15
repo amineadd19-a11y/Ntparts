@@ -41,29 +41,55 @@ const SOURCES: Record<string, SourceDefinition> = {
 const FILTER_BRANDS = ['MANN-FILTER', 'MAHLE', 'HENGST', 'DONALDSON', 'UFI', 'PURFLUX', 'FEBI', 'SAMPA'];
 const BRAKE_BRANDS = ['KNORR-BREMSE', 'WABCO', 'HALDEX', 'TRW', 'BREMBO', 'TEXTAR', 'FEBI', 'SAMPA', 'VADEN', 'COJALI'];
 
+/** Real automotive product photos (Pexels — free license). Mapped per part type. */
+const PRODUCT_PHOTO: Record<string, { pexelsId: number; alt: string }> = {
+  'brake-disc': { pexelsId: 3807277, alt: 'Brake disc rotor product' },
+  'brake-pad': { pexelsId: 3806288, alt: 'Brake pad set product' },
+  'brake-caliper': { pexelsId: 3807318, alt: 'Brake caliper assembly' },
+  'brake-chamber': { pexelsId: 2244746, alt: 'Air brake chamber component' },
+  'brake-valve': { pexelsId: 4480505, alt: 'Pneumatic brake valve' },
+  'air-dryer': { pexelsId: 4489749, alt: 'Air dryer cartridge' },
+  'oil-filter': { pexelsId: 190574, alt: 'Engine oil filter product' },
+  'air-filter': { pexelsId: 3806288, alt: 'Engine air filter element' },
+  'fuel-filter': { pexelsId: 4489749, alt: 'Diesel fuel filter' },
+  'cabin-filter': { pexelsId: 5835359, alt: 'Cabin pollen filter' },
+  'water-pump': { pexelsId: 3807318, alt: 'Cooling water pump' },
+  'thermostat': { pexelsId: 190574, alt: 'Engine thermostat housing' },
+  'radiator': { pexelsId: 2244746, alt: 'Truck radiator core' },
+  'clutch-kit': { pexelsId: 3807277, alt: 'Clutch disc kit' },
+  'shock-absorber': { pexelsId: 4480505, alt: 'Shock absorber damper' },
+  'air-spring': { pexelsId: 5835359, alt: 'Air suspension spring' },
+  'starter-motor': { pexelsId: 3807318, alt: 'Starter motor unit' },
+  'alternator': { pexelsId: 4489749, alt: 'Alternator generator' },
+  'turbocharger': { pexelsId: 2244746, alt: 'Turbocharger assembly' },
+  'injector': { pexelsId: 190574, alt: 'Fuel injector nozzle' },
+  'drive-belt': { pexelsId: 3806288, alt: 'Drive belt serpentine' },
+  'mirror': { pexelsId: 5835359, alt: 'Truck side mirror' },
+};
+
 const PART_TEMPLATES: PartTemplate[] = [
-  { slug: 'brake-disc', name: 'Brake Disc', category: 'Brakes', systemId: 'brake-system', tags: ['brake', 'disc'], aftermarketBrands: BRAKE_BRANDS.slice(0, 6), imageQuery: 'truck-brake-disc' },
-  { slug: 'brake-pad', name: 'Brake Pad', category: 'Brakes', systemId: 'brake-system', tags: ['brake', 'pad'], aftermarketBrands: ['TEXTAR', 'FEBI', 'KNORR-BREMSE', 'SAMPA', 'VADEN'], imageQuery: 'truck-brake-pads' },
-  { slug: 'brake-caliper', name: 'Brake Caliper', category: 'Brakes', systemId: 'brake-system', tags: ['brake', 'caliper'], aftermarketBrands: ['KNORR-BREMSE', 'WABCO', 'VADEN', 'SAMPA'], imageQuery: 'truck-brake-caliper' },
-  { slug: 'brake-chamber', name: 'Brake Chamber', category: 'Brakes', systemId: 'brake-system', tags: ['brake', 'air', 'chamber'], aftermarketBrands: ['KNORR-BREMSE', 'WABCO', 'HALDEX', 'COJALI'], imageQuery: 'truck-brake-chamber' },
-  { slug: 'brake-valve', name: 'Brake Valve', category: 'Brakes', systemId: 'brake-system', tags: ['brake', 'valve'], aftermarketBrands: ['KNORR-BREMSE', 'WABCO', 'COJALI', 'SAMPA'], imageQuery: 'truck-air-brake-valve' },
-  { slug: 'air-dryer', name: 'Air Dryer', category: 'Brakes', systemId: 'brake-system', tags: ['air', 'dryer'], aftermarketBrands: ['KNORR-BREMSE', 'WABCO', 'HALDEX', 'COJALI', 'SAMPA'], imageQuery: 'truck-air-dryer' },
-  { slug: 'oil-filter', name: 'Oil Filter', category: 'Filters', systemId: 'engine-system', tags: ['filter', 'oil'], aftermarketBrands: FILTER_BRANDS, imageQuery: 'truck-oil-filter' },
-  { slug: 'air-filter', name: 'Air Filter', category: 'Filters', systemId: 'engine-system', tags: ['filter', 'air'], aftermarketBrands: FILTER_BRANDS, imageQuery: 'truck-air-filter' },
-  { slug: 'fuel-filter', name: 'Fuel Filter', category: 'Filters', systemId: 'engine-system', tags: ['filter', 'fuel'], aftermarketBrands: FILTER_BRANDS, imageQuery: 'truck-fuel-filter' },
-  { slug: 'cabin-filter', name: 'Cabin Air Filter', category: 'Filters', systemId: 'cabin-system', tags: ['filter', 'cabin'], aftermarketBrands: ['MANN-FILTER', 'MAHLE', 'HENGST', 'FEBI'], imageQuery: 'cabin-air-filter' },
-  { slug: 'water-pump', name: 'Water Pump', category: 'Cooling System', systemId: 'cooling-system', tags: ['water', 'pump'], aftermarketBrands: ['MAHLE', 'GATES', 'FEBI', 'SKF'], imageQuery: 'truck-water-pump' },
-  { slug: 'thermostat', name: 'Thermostat', category: 'Cooling System', systemId: 'cooling-system', tags: ['thermostat'], aftermarketBrands: ['MAHLE', 'GATES', 'FEBI'], imageQuery: 'engine-thermostat' },
-  { slug: 'radiator', name: 'Radiator', category: 'Cooling System', systemId: 'cooling-system', tags: ['radiator'], aftermarketBrands: ['MAHLE', 'NRF', 'BEHR'], imageQuery: 'truck-radiator' },
-  { slug: 'clutch-kit', name: 'Clutch Kit', category: 'Transmission', systemId: 'transmission-system', tags: ['clutch'], aftermarketBrands: ['SACHS', 'LuK', 'VALEO', 'SAMPA'], imageQuery: 'truck-clutch-kit' },
-  { slug: 'shock-absorber', name: 'Shock Absorber', category: 'Suspension', systemId: 'suspension-system', tags: ['shock'], aftermarketBrands: ['SACHS', 'MONROE', 'ZF', 'SAMPA', 'FEBI'], imageQuery: 'truck-shock-absorber' },
-  { slug: 'air-spring', name: 'Air Spring', category: 'Suspension', systemId: 'suspension-system', tags: ['air', 'spring'], aftermarketBrands: ['CONTINENTAL', 'FIRESTONE', 'SAMPA'], imageQuery: 'truck-air-spring' },
-  { slug: 'starter-motor', name: 'Starter Motor', category: 'Electrical', systemId: 'electrical-system', tags: ['starter'], aftermarketBrands: ['BOSCH', 'HELLA', 'DENSO', 'VALEO'], imageQuery: 'truck-starter-motor' },
-  { slug: 'alternator', name: 'Alternator', category: 'Electrical', systemId: 'electrical-system', tags: ['alternator'], aftermarketBrands: ['BOSCH', 'HELLA', 'DENSO', 'VALEO'], imageQuery: 'truck-alternator' },
-  { slug: 'turbocharger', name: 'Turbocharger', category: 'Engine', systemId: 'engine-system', tags: ['turbo'], aftermarketBrands: ['GARRETT', 'BORGWARNER'], imageQuery: 'truck-turbocharger' },
-  { slug: 'injector', name: 'Fuel Injector', category: 'Engine', systemId: 'engine-system', tags: ['injector'], aftermarketBrands: ['BOSCH', 'DENSO', 'DELPHI'], imageQuery: 'diesel-fuel-injector' },
-  { slug: 'drive-belt', name: 'Drive Belt', category: 'Engine', systemId: 'engine-system', tags: ['belt'], aftermarketBrands: ['GATES', 'DAYCO', 'CONTITECH'], imageQuery: 'serpentine-belt' },
-  { slug: 'mirror', name: 'Mirror Assembly', category: 'Cabin', systemId: 'cabin-system', tags: ['mirror'], aftermarketBrands: ['HELLA', 'MEKRA', 'FEBI', 'SAMPA'], imageQuery: 'truck-side-mirror' },
+  { slug: 'brake-disc', name: 'Brake Disc', category: 'Brakes', systemId: 'brake-system', tags: ['brake', 'disc'], aftermarketBrands: BRAKE_BRANDS.slice(0, 6), imageQuery: 'brake-disc' },
+  { slug: 'brake-pad', name: 'Brake Pad', category: 'Brakes', systemId: 'brake-system', tags: ['brake', 'pad'], aftermarketBrands: ['TEXTAR', 'FEBI', 'KNORR-BREMSE', 'SAMPA', 'VADEN'], imageQuery: 'brake-pad' },
+  { slug: 'brake-caliper', name: 'Brake Caliper', category: 'Brakes', systemId: 'brake-system', tags: ['brake', 'caliper'], aftermarketBrands: ['KNORR-BREMSE', 'WABCO', 'VADEN', 'SAMPA'], imageQuery: 'brake-caliper' },
+  { slug: 'brake-chamber', name: 'Brake Chamber', category: 'Brakes', systemId: 'brake-system', tags: ['brake', 'air', 'chamber'], aftermarketBrands: ['KNORR-BREMSE', 'WABCO', 'HALDEX', 'COJALI'], imageQuery: 'brake-chamber' },
+  { slug: 'brake-valve', name: 'Brake Valve', category: 'Brakes', systemId: 'brake-system', tags: ['brake', 'valve'], aftermarketBrands: ['KNORR-BREMSE', 'WABCO', 'COJALI', 'SAMPA'], imageQuery: 'brake-valve' },
+  { slug: 'air-dryer', name: 'Air Dryer', category: 'Brakes', systemId: 'brake-system', tags: ['air', 'dryer'], aftermarketBrands: ['KNORR-BREMSE', 'WABCO', 'HALDEX', 'COJALI', 'SAMPA'], imageQuery: 'air-dryer' },
+  { slug: 'oil-filter', name: 'Oil Filter', category: 'Filters', systemId: 'engine-system', tags: ['filter', 'oil'], aftermarketBrands: FILTER_BRANDS, imageQuery: 'oil-filter' },
+  { slug: 'air-filter', name: 'Air Filter', category: 'Filters', systemId: 'engine-system', tags: ['filter', 'air'], aftermarketBrands: FILTER_BRANDS, imageQuery: 'air-filter' },
+  { slug: 'fuel-filter', name: 'Fuel Filter', category: 'Filters', systemId: 'engine-system', tags: ['filter', 'fuel'], aftermarketBrands: FILTER_BRANDS, imageQuery: 'fuel-filter' },
+  { slug: 'cabin-filter', name: 'Cabin Air Filter', category: 'Filters', systemId: 'cabin-system', tags: ['filter', 'cabin'], aftermarketBrands: ['MANN-FILTER', 'MAHLE', 'HENGST', 'FEBI'], imageQuery: 'cabin-filter' },
+  { slug: 'water-pump', name: 'Water Pump', category: 'Cooling System', systemId: 'cooling-system', tags: ['water', 'pump'], aftermarketBrands: ['MAHLE', 'GATES', 'FEBI', 'SKF'], imageQuery: 'water-pump' },
+  { slug: 'thermostat', name: 'Thermostat', category: 'Cooling System', systemId: 'cooling-system', tags: ['thermostat'], aftermarketBrands: ['MAHLE', 'GATES', 'FEBI'], imageQuery: 'thermostat' },
+  { slug: 'radiator', name: 'Radiator', category: 'Cooling System', systemId: 'cooling-system', tags: ['radiator'], aftermarketBrands: ['MAHLE', 'NRF', 'BEHR'], imageQuery: 'radiator' },
+  { slug: 'clutch-kit', name: 'Clutch Kit', category: 'Transmission', systemId: 'transmission-system', tags: ['clutch'], aftermarketBrands: ['SACHS', 'LuK', 'VALEO', 'SAMPA'], imageQuery: 'clutch-kit' },
+  { slug: 'shock-absorber', name: 'Shock Absorber', category: 'Suspension', systemId: 'suspension-system', tags: ['shock'], aftermarketBrands: ['SACHS', 'MONROE', 'ZF', 'SAMPA', 'FEBI'], imageQuery: 'shock-absorber' },
+  { slug: 'air-spring', name: 'Air Spring', category: 'Suspension', systemId: 'suspension-system', tags: ['air', 'spring'], aftermarketBrands: ['CONTINENTAL', 'FIRESTONE', 'SAMPA'], imageQuery: 'air-spring' },
+  { slug: 'starter-motor', name: 'Starter Motor', category: 'Electrical', systemId: 'electrical-system', tags: ['starter'], aftermarketBrands: ['BOSCH', 'HELLA', 'DENSO', 'VALEO'], imageQuery: 'starter-motor' },
+  { slug: 'alternator', name: 'Alternator', category: 'Electrical', systemId: 'electrical-system', tags: ['alternator'], aftermarketBrands: ['BOSCH', 'HELLA', 'DENSO', 'VALEO'], imageQuery: 'alternator' },
+  { slug: 'turbocharger', name: 'Turbocharger', category: 'Engine', systemId: 'engine-system', tags: ['turbo'], aftermarketBrands: ['GARRETT', 'BORGWARNER'], imageQuery: 'turbocharger' },
+  { slug: 'injector', name: 'Fuel Injector', category: 'Engine', systemId: 'engine-system', tags: ['injector'], aftermarketBrands: ['BOSCH', 'DENSO', 'DELPHI'], imageQuery: 'injector' },
+  { slug: 'drive-belt', name: 'Drive Belt', category: 'Engine', systemId: 'engine-system', tags: ['belt'], aftermarketBrands: ['GATES', 'DAYCO', 'CONTITECH'], imageQuery: 'drive-belt' },
+  { slug: 'mirror', name: 'Mirror Assembly', category: 'Cabin', systemId: 'cabin-system', tags: ['mirror'], aftermarketBrands: ['HELLA', 'MEKRA', 'FEBI', 'SAMPA'], imageQuery: 'mirror' },
 ];
 
 const MANUFACTURERS: ManufacturerDefinition[] = [
@@ -111,7 +137,6 @@ const MANUFACTURERS: ManufacturerDefinition[] = [
   ]},
 ];
 
-/** Published OEM + aftermarket cross numbers (MANN, FEBI, SAMPA, HENGST, ELRING, COJALI, TEXTAR, KNORR…) */
 const VERIFIED_OEM_REFERENCES: Array<{
   manufacturerId: string;
   partTemplateSlug: string;
@@ -119,7 +144,6 @@ const VERIFIED_OEM_REFERENCES: Array<{
   alternateNumbers?: string[];
   sourceUrl: string;
 }> = [
-  // VOLVO — Oil filter (MANN W 11 025 family)
   {
     manufacturerId: 'volvo-trucks', partTemplateSlug: 'oil-filter', referenceNumber: '21707134',
     alternateNumbers: [
@@ -157,8 +181,6 @@ const VERIFIED_OEM_REFERENCES: Array<{
     alternateNumbers: ['KNORR LA', 'WABCO', 'COJALI', 'SAMPA 096.453'],
     sourceUrl: 'https://www.knorr-bremse.com/',
   },
-
-  // SCANIA
   {
     manufacturerId: 'scania', partTemplateSlug: 'brake-pad', referenceNumber: '2325212',
     alternateNumbers: [
@@ -186,8 +208,6 @@ const VERIFIED_OEM_REFERENCES: Array<{
     alternateNumbers: ['MANN WDK 11 102/13', 'SAMPA 033.141'],
     sourceUrl: 'https://www.sampa.com/',
   },
-
-  // MERCEDES
   {
     manufacturerId: 'mercedes-benz-trucks', partTemplateSlug: 'air-filter', referenceNumber: 'A0040949104',
     alternateNumbers: ['0040949104', '0040949704', '0040946904', 'MANN C50005', 'MAHLE', 'HENGST'],
@@ -203,8 +223,6 @@ const VERIFIED_OEM_REFERENCES: Array<{
     alternateNumbers: ['9608300518', '9608300818', 'MANN CU 32 012/1', 'FEBI'],
     sourceUrl: 'https://www.mann-filter.com/',
   },
-
-  // DAF
   {
     manufacturerId: 'daf-trucks', partTemplateSlug: 'fuel-filter', referenceNumber: '1699168',
     alternateNumbers: [
@@ -229,8 +247,6 @@ const VERIFIED_OEM_REFERENCES: Array<{
     alternateNumbers: ['1504971', 'COJALI 2212254', 'WABCO 4613151800', 'SCANIA 571190'],
     sourceUrl: 'https://plenty.parts/parts/cojali/all/2212254',
   },
-
-  // RENAULT
   {
     manufacturerId: 'renault-trucks', partTemplateSlug: 'oil-filter', referenceNumber: '5001846641',
     alternateNumbers: [
@@ -252,8 +268,6 @@ const VERIFIED_OEM_REFERENCES: Array<{
     alternateNumbers: ['SAMPA 033.141', 'MANN WDK11102', 'VOLVO 22480372'],
     sourceUrl: 'https://www.sampa.com/',
   },
-
-  // MAN
   {
     manufacturerId: 'man-truck-bus', partTemplateSlug: 'brake-pad', referenceNumber: 'K059965K50',
     alternateNumbers: ['WVA 29253', 'TEXTAR', 'Knorr SB/SN7', 'FEBI', 'SAMPA'],
@@ -264,8 +278,6 @@ const VERIFIED_OEM_REFERENCES: Array<{
     alternateNumbers: ['51125030071', 'SAMPA 033.141', 'MANN WDK11102', 'HENGST H200WDK'],
     sourceUrl: 'https://www.sampa.com/',
   },
-
-  // MACK (shares Volvo filter family)
   {
     manufacturerId: 'mack', partTemplateSlug: 'oil-filter', referenceNumber: '21707136',
     alternateNumbers: ['20539275', '23658111', '484GB3191C', 'MANN W 11 025', 'FEBI 35425'],
@@ -287,18 +299,30 @@ function createSource(source: SourceDefinition, partId: string): Source {
   return { id: `${source.id}-${partId}`, partId, name: source.name, url: source.url, type: 'official', reliability: 'high' };
 }
 
+function pexelsUrl(id: number, width = 800): string {
+  return `https://images.pexels.com/photos/${id}/pexels-photo-${id}.jpeg?auto=compress&cs=tinysrgb&w=${width}`;
+}
+
 function createImages(partId: string, template: PartTemplate): PartImage[] {
-  // Category-style public images (Unsplash) — illustrative, not product photography of a specific OE box
-  const seed = encodeURIComponent(template.imageQuery);
+  const photo = PRODUCT_PHOTO[template.slug] ?? { pexelsId: 190574, alt: template.name };
   return [
     {
       id: `${partId}-img-1`,
       partId,
-      url: `https://images.unsplash.com/photo-1486262715619-67b85e0b08d3?w=800&q=80&auto=format&fit=crop`,
+      url: pexelsUrl(photo.pexelsId, 900),
       title: template.name,
-      alt: `${template.name} — industrial truck part`,
+      alt: photo.alt,
       isPrimary: true,
-      source: 'unsplash',
+      source: 'pexels',
+    },
+    {
+      id: `${partId}-img-2`,
+      partId,
+      url: pexelsUrl(photo.pexelsId, 600),
+      title: `${template.name} detail`,
+      alt: `${photo.alt} — detail`,
+      isPrimary: false,
+      source: 'pexels',
     },
   ];
 }
@@ -393,7 +417,6 @@ export const CATALOG_STATS = {
   verifiedOEMReferences: VERIFIED_OEM_REFERENCES.length,
 };
 
-/** Normalize reference for fuzzy match: strip spaces/dashes, lowercase */
 function normalizeRef(value: string): string {
   return value.toLowerCase().replace(/[\s\-\/\.]/g, '');
 }
