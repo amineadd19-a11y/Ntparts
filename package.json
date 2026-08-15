@@ -12,7 +12,8 @@
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
     "type-check": "tsc --noEmit",
-    "validate:catalog": "node scripts/validate-catalog.mjs"
+    "validate:catalog": "node scripts/validate-catalog.mjs",
+    "quality-gate": "npm run type-check && npm run lint && npm test -- --runInBand && npm run validate:catalog && npm run build"
   },
   "dependencies": {
     "react": "^18.2.0",
