@@ -1,4 +1,6 @@
-import { notFound } from 'next/navigation';
+'use client';
+
+import { notFound, useParams } from 'next/navigation';
 import Link from 'next/link';
 import { ArrowLeft, ShieldCheck, Database } from 'lucide-react';
 import PartCard from '@/components/catalog/PartCard';
@@ -8,18 +10,19 @@ import {
   CATALOG_MODELS,
   CATALOG_PARTS,
 } from '@/data/catalog';
+import { useAppStore } from '@/store';
+import { getTranslation, translateCategory } from '@/data/translations';
 
-export default function ManufacturerModelPage({
-  params,
-}: {
-  params: { manufacturer: string; modelId: string };
-}) {
-  const manufacturer = CATALOG_MANUFACTURERS.find(
-    (item) => item.id === params.manufacturer
-  );
+export default function ManufacturerModelPage() {
+  const params = useParams();
+  const manufacturerId = String(params.manufacturer);
+  const modelId = decodeURIComponent(String(params.modelId));
+  const { language } = useAppStore();
+  const t = (key: string) => getTranslation(key, language);
+
+  const manufacturer = CATALOG_MANUFACTURERS.find((item) => item.id === manufacturerId);
   if (!manufacturer) notFound();
 
-  const modelId = decodeURIComponent(params.modelId);
   const model = CATALOG_MODELS.find(
     (m) => m.id === modelId && m.manufacturerId === manufacturer.id
   );
@@ -41,7 +44,7 @@ export default function ManufacturerModelPage({
           href={`/trucks/${manufacturer.id}`}
           className="mb-6 inline-flex items-center gap-2 text-sm font-semibold text-sky-700 transition hover:text-sky-900"
         >
-          <ArrowLeft size={16} /> {manufacturer.name}
+          <ArrowLeft size={16} className="rtl:rotate-180" /> {manufacturer.name}
         </Link>
 
         <div className="mb-8 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
@@ -50,37 +53,39 @@ export default function ManufacturerModelPage({
               <Database size={14} />
               <span>{manufacturer.name}</span>
               <span className="text-slate-500">/</span>
-              <span>Model</span>
+              <span>{t('part.model')}</span>
             </div>
             <h1 className="mt-2 text-3xl font-black tracking-tight text-white sm:text-4xl">
               {model.name}
             </h1>
-            <p className="mt-2 max-w-2xl text-sm text-slate-300">
-              Complete part template index for this model line, including published OEM and
-              cross-reference numbers where available.
-            </p>
+            <p className="mt-2 max-w-2xl text-sm text-slate-300">{t('manufacturer.openModel')}</p>
           </div>
           <div className="grid grid-cols-2 gap-px bg-slate-100 sm:grid-cols-3">
             <div className="bg-white px-5 py-4">
-              <p className="text-[10px] font-bold uppercase text-slate-400">Parts</p>
+              <p className="text-[10px] font-bold uppercase text-slate-400">{t('common.parts')}</p>
               <p className="text-2xl font-black text-slate-900">{parts.length}</p>
             </div>
             <div className="bg-white px-5 py-4">
-              <p className="text-[10px] font-bold uppercase text-slate-400">With OEM</p>
+              <p className="text-[10px] font-bold uppercase text-slate-400">
+                {t('manufacturer.withOem')}
+              </p>
               <p className="flex items-center gap-1.5 text-2xl font-black text-emerald-700">
                 <ShieldCheck size={20} /> {withOem.length}
               </p>
             </div>
             <div className="col-span-2 bg-white px-5 py-4 sm:col-span-1">
-              <p className="text-[10px] font-bold uppercase text-slate-400">Systems</p>
-              <p className="text-sm font-bold text-slate-800">{categories.join(' · ')}</p>
+              <p className="text-[10px] font-bold uppercase text-slate-400">
+                {t('manufacturer.systems')}
+              </p>
+              <p className="text-sm font-bold text-slate-800">
+                {categories.map((c) => translateCategory(c, language)).join(' · ')}
+              </p>
             </div>
           </div>
         </div>
 
         <AdSlot placement="model-top" />
 
-        {/* Jump links by system */}
         <div className="mb-8 flex flex-wrap gap-2">
           {categories.map((cat) => (
             <Link
@@ -88,19 +93,18 @@ export default function ManufacturerModelPage({
               href={`/trucks/${manufacturer.id}/system/${encodeURIComponent(cat)}`}
               className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-700 shadow-sm transition hover:border-sky-300 hover:text-sky-800"
             >
-              {cat}
+              {translateCategory(cat, language)}
             </Link>
           ))}
         </div>
 
-        {/* OEM block */}
         {withOem.length > 0 && (
           <section className="mb-10">
             <h2 className="mb-4 text-lg font-black text-slate-900">
-              OEM numbers for {model.name}
+              {t('part.oemReferences')} — {model.name}
             </h2>
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-              {withOem.map((part) =>
+              {withOem.flatMap((part) =>
                 part.oemReferences.map((oem) => (
                   <Link
                     key={oem.id}
@@ -108,7 +112,7 @@ export default function ManufacturerModelPage({
                     className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm transition hover:border-sky-300 hover:shadow-md"
                   >
                     <p className="text-xs font-bold uppercase tracking-wider text-slate-400">
-                      {part.category} · {part.name}
+                      {translateCategory(part.category, language)} · {part.name}
                     </p>
                     <p className="mt-2 font-mono text-lg font-black text-slate-900">
                       {oem.referenceNumber}
@@ -133,7 +137,7 @@ export default function ManufacturerModelPage({
         )}
 
         <section>
-          <h2 className="mb-4 text-lg font-black text-slate-900">All parts</h2>
+          <h2 className="mb-4 text-lg font-black text-slate-900">{t('manufacturer.allParts')}</h2>
           <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {parts.map((part) => (
               <PartCard key={part.id} part={part} />
