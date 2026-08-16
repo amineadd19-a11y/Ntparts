@@ -3,6 +3,40 @@ import * as CORE from '@/data/catalog-core';
 import { CATALOG_EXPANSION } from '@/data/catalog-expansion';
 import { RENPAR_CATALOG_PARTS } from '@/data/catalog-renpar';
 
+/** Source-backed OEM registry used by the catalog validation gate. Empty modelIds means exact fitment is not proven. */
+const OEM_REFERENCE_REGISTRY = [
+  { manufacturerId: 'volvo-trucks', partTemplateSlug: 'oil-filter', referenceNumber: '21707134', modelIds: [], sourceUrl: 'https://www.mann-filter.com/en/catalog/search-results/product.html/w11025_mann-filter.html', evidence: 'parts-catalog' },
+  { manufacturerId: 'renault-trucks', partTemplateSlug: 'oil-filter', referenceNumber: '5001846641', modelIds: [], sourceUrl: 'https://www.mann-filter.com/en/catalog/search-results/product.html/w11025_mann-filter.html', evidence: 'parts-catalog' },
+  { manufacturerId: 'mack', partTemplateSlug: 'oil-filter', referenceNumber: '21707136', modelIds: [], sourceUrl: 'https://www.mann-filter.com/en/catalog/search-results/product.html/w11025_mann-filter.html', evidence: 'parts-catalog' },
+  { manufacturerId: 'volvo-trucks', partTemplateSlug: 'air-filter', referenceNumber: '21377915', modelIds: [], sourceUrl: 'https://www.mann-filter.com/', evidence: 'parts-catalog' },
+  { manufacturerId: 'volvo-trucks', partTemplateSlug: 'fuel-filter', referenceNumber: '22480372', modelIds: [], sourceUrl: 'https://www.sampa.com/en/productdetail?code=033.141', evidence: 'official' },
+  { manufacturerId: 'volvo-trucks', partTemplateSlug: 'cabin-filter', referenceNumber: '11007388', modelIds: [], sourceUrl: 'https://www.mann-filter.com/en/catalog/search-results/product.html/cu2785_mann-filter.html', evidence: 'parts-catalog' },
+  { manufacturerId: 'mercedes-benz-trucks', partTemplateSlug: 'air-filter', referenceNumber: 'A0040949104', modelIds: [], sourceUrl: 'https://www.mann-filter.com/', evidence: 'parts-catalog' },
+  { manufacturerId: 'mercedes-benz-trucks', partTemplateSlug: 'oil-filter', referenceNumber: 'A5411800009', modelIds: [], sourceUrl: 'https://www.mann-filter.com/', evidence: 'parts-catalog' },
+  { manufacturerId: 'daf-trucks', partTemplateSlug: 'fuel-filter', referenceNumber: '1699168', modelIds: [], sourceUrl: 'https://www.mann-filter.com/', evidence: 'parts-catalog' },
+  { manufacturerId: 'daf-trucks', partTemplateSlug: 'oil-filter', referenceNumber: '2142288', modelIds: [], sourceUrl: 'https://www.mann-filter.com/', evidence: 'parts-catalog' },
+  { manufacturerId: 'scania', partTemplateSlug: 'air-dryer', referenceNumber: '1774598', modelIds: [], sourceUrl: 'https://plenty.parts/parts/cojali/all/6002007', evidence: 'secondary' },
+  { manufacturerId: 'scania', partTemplateSlug: 'brake-valve', referenceNumber: '571190', modelIds: [], sourceUrl: 'https://plenty.parts/', evidence: 'secondary' },
+  { manufacturerId: 'scania', partTemplateSlug: 'air-spring', referenceNumber: '1738475', modelIds: [], sourceUrl: 'https://plenty.parts/parts/cojali/all/2214400', evidence: 'secondary' },
+  { manufacturerId: 'volvo-trucks', partTemplateSlug: 'air-spring', referenceNumber: '1607728', modelIds: [], sourceUrl: 'https://plenty.parts/parts/cojali/all/2214400', evidence: 'secondary' },
+  { manufacturerId: 'daf-trucks', partTemplateSlug: 'brake-valve', referenceNumber: '1677510', modelIds: [], sourceUrl: 'https://www.ic24.uk/', evidence: 'secondary' },
+  { manufacturerId: 'renault-trucks', partTemplateSlug: 'air-dryer', referenceNumber: '5001874313', modelIds: [], sourceUrl: 'https://www.recambioscamion.com/', evidence: 'secondary' },
+  { manufacturerId: 'mercedes-benz-trucks', partTemplateSlug: 'brake-valve', referenceNumber: 'A0014300460', modelIds: [], sourceUrl: 'https://www.intercars24.ee/', evidence: 'secondary' },
+  { manufacturerId: 'scania', partTemplateSlug: 'brake-pad', referenceNumber: '2325212', modelIds: [], sourceUrl: 'https://truckstopgroup.co.uk/', evidence: 'secondary' },
+  { manufacturerId: 'scania', partTemplateSlug: 'brake-disc', referenceNumber: '1852817', modelIds: [], sourceUrl: 'https://www.scania.com/', evidence: 'official' },
+  { manufacturerId: 'man-truck-bus', partTemplateSlug: 'brake-pad', referenceNumber: 'K059965K50', modelIds: [], sourceUrl: 'https://www.knorr-bremse.com/', evidence: 'official' },
+  { manufacturerId: 'daf-trucks', partTemplateSlug: 'brake-chamber', referenceNumber: '1387439', modelIds: [], sourceUrl: 'https://www.ebs.co.uk/', evidence: 'secondary' },
+  { manufacturerId: 'volvo-trucks', partTemplateSlug: 'gasket-set', referenceNumber: '21539731', modelIds: [], sourceUrl: 'https://www.elring.com/', evidence: 'official' },
+  { manufacturerId: 'volvo-trucks', partTemplateSlug: 'gasket-set', referenceNumber: '477785', modelIds: [], sourceUrl: 'https://www.elring.com/', evidence: 'official' },
+  { manufacturerId: 'scania', partTemplateSlug: 'gasket-set', referenceNumber: '1112908', modelIds: [], sourceUrl: 'https://www.elring.com/', evidence: 'official' },
+  { manufacturerId: 'mercedes-benz-trucks', partTemplateSlug: 'gasket-set', referenceNumber: 'A0010742280', modelIds: [], sourceUrl: 'https://www.elring.com/', evidence: 'official' },
+  { manufacturerId: 'daf-trucks', partTemplateSlug: 'silentblock', referenceNumber: '1291233', modelIds: [], sourceUrl: 'https://www.lema-parts.it/', evidence: 'official' },
+  { manufacturerId: 'daf-trucks', partTemplateSlug: 'silentblock', referenceNumber: '0366351', modelIds: [], sourceUrl: 'https://www.lema-parts.it/', evidence: 'official' },
+  { manufacturerId: 'renault-trucks', partTemplateSlug: 'silentblock', referenceNumber: '5000815738', modelIds: [], sourceUrl: 'https://www.lema-parts.it/', evidence: 'official' },
+  { manufacturerId: 'volvo-trucks', partTemplateSlug: 'silentblock', referenceNumber: '20532891', modelIds: [], sourceUrl: 'https://www.elring.com/', evidence: 'official' },
+  { manufacturerId: 'volvo-trucks', partTemplateSlug: 'mirror', referenceNumber: '21360516', modelIds: [], sourceUrl: 'https://www.sampa.com/', evidence: 'official' },
+];
+
 const coreParts: Part[] = CORE.CATALOG_PARTS.map((part) => ({
   ...part,
   images: (part.images ?? []).filter((image) => image.source?.includes('MANN-FILTER')),
