@@ -1,17 +1,24 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import React, { ReactNode } from 'react';
 import '@/styles/globals.css';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://ntparts.vercel.app';
+
 export const metadata: Metadata = {
-  title: 'NTParts — Catalogue professionnel de pièces poids lourds & références OEM',
+  metadataBase: new URL(siteUrl),
+  title: {
+    default: 'NTParts — Professional truck parts catalogue & OEM intelligence',
+    template: '%s | NTParts',
+  },
   description:
-    'Recherchez les références OEM, numéros de pièces et compatibilités pour les principaux constructeurs de camions. Catalogue industriel pour techniciens et spécialistes pièces.',
+    'Search OEM references, part numbers and compatibility for major truck manufacturers. Industrial catalogue built for workshops and parts specialists.',
   keywords: [
+    'truck parts',
+    'OEM references',
     'pièces camion',
-    'références OEM',
-    'pièces poids lourds',
+    'poids lourds',
     'Volvo',
     'DAF',
     'Scania',
@@ -19,16 +26,44 @@ export const metadata: Metadata = {
     'Mercedes-Benz',
     'Renault Trucks',
     'Iveco',
+    'Freightliner',
+    'Kenworth',
+    'cross reference',
   ],
+  authors: [{ name: 'NTParts' }],
+  openGraph: {
+    type: 'website',
+    locale: 'en_US',
+    url: siteUrl,
+    siteName: 'NTParts',
+    title: 'NTParts — Professional truck parts catalogue',
+    description:
+      'Find the right part. OEM references, cross-references and fitment data for European and North American trucks.',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'NTParts — Truck parts catalogue',
+    description: 'OEM and aftermarket truck parts intelligence.',
+  },
+  robots: {
+    index: true,
+    follow: true,
+  },
+  alternates: {
+    canonical: siteUrl,
+  },
+};
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  themeColor: '#0f172a',
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="fr" dir="ltr">
+    <html lang="en" dir="ltr" suppressHydrationWarning>
       <head>
-        <meta charSet="utf-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <meta name="theme-color" content="#0f172a" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link
@@ -38,7 +73,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
       </head>
       <body className="bg-slate-100 text-slate-900 antialiased" style={{ fontFamily: 'Inter, system-ui, sans-serif' }}>
         <Header />
-        <main className="min-h-screen">{children}</main>
+        {children}
         <Footer />
       </body>
     </html>
