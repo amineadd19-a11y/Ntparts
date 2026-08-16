@@ -1,56 +1,28 @@
 import type { Metadata, Viewport } from 'next';
-import React, { ReactNode } from 'react';
-import '@/styles/globals.css';
+import type { ReactNode } from 'react';
+import './globals.css';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://ntparts.vercel.app';
-
 export const metadata: Metadata = {
-  metadataBase: new URL(siteUrl),
-  title: {
-    default: 'NTParts — Professional truck parts catalogue & OEM intelligence',
-    template: '%s | NTParts',
-  },
-  description:
-    'Search OEM references, part numbers and compatibility for major truck manufacturers. Industrial catalogue built for workshops and parts specialists.',
-  keywords: [
-    'truck parts',
-    'OEM references',
-    'pièces camion',
-    'poids lourds',
-    'Volvo',
-    'DAF',
-    'Scania',
-    'MAN',
-    'Mercedes-Benz',
-    'Renault Trucks',
-    'Iveco',
-    'Freightliner',
-    'Kenworth',
-    'cross reference',
-  ],
+  title: 'NTParts — Professional truck parts catalogue & OEM intelligence',
+  description: 'Search OEM references, part numbers and compatibility for major truck manufacturers. Industrial catalogue built for workshops and parts specialists.',
   authors: [{ name: 'NTParts' }],
+  keywords: ['truck parts', 'OEM references', 'pièces camion', 'poids lourds', 'Volvo', 'DAF', 'Scania', 'MAN', 'Mercedes-Benz', 'Renault Trucks', 'Iveco', 'Freightliner', 'Kenworth', 'cross reference'],
+  robots: { index: true, follow: true },
+  alternates: { canonical: 'https://ntparts.vercel.app' },
   openGraph: {
-    type: 'website',
-    locale: 'en_US',
-    url: siteUrl,
-    siteName: 'NTParts',
     title: 'NTParts — Professional truck parts catalogue',
-    description:
-      'Find the right part. OEM references, cross-references and fitment data for European and North American trucks.',
+    description: 'Find the right part. OEM references, cross-references and fitment data for European and North American trucks.',
+    url: 'https://ntparts.vercel.app',
+    siteName: 'NTParts',
+    locale: 'en_US',
+    type: 'website',
   },
   twitter: {
     card: 'summary_large_image',
     title: 'NTParts — Truck parts catalogue',
     description: 'OEM and aftermarket truck parts intelligence.',
-  },
-  robots: {
-    index: true,
-    follow: true,
-  },
-  alternates: {
-    canonical: siteUrl,
   },
 };
 
@@ -63,15 +35,7 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en" dir="ltr" suppressHydrationWarning>
-      <head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link
-          href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap"
-          rel="stylesheet"
-        />
-      </head>
-      <body className="bg-slate-100 text-slate-900 antialiased" style={{ fontFamily: 'Inter, system-ui, sans-serif' }}>
+      <body className="bg-slate-100 text-slate-900 antialiased">
         <Header />
         {children}
         <Footer />
