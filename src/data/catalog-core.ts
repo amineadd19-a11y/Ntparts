@@ -48,6 +48,9 @@ const SOURCES: Record<string, SourceDefinition> = {
   'western-star': { id: 'source-western-star', name: 'Western Star', url: 'https://www.westernstartrucks.com/' },
   hino: { id: 'source-hino', name: 'Hino Trucks', url: 'https://www.hino.com/' },
   isuzu: { id: 'source-isuzu', name: 'Isuzu Trucks', url: 'https://www.isuzucv.com/' },
+  fuso: { id: 'source-fuso', name: 'FUSO', url: 'https://www.fuso-trucks.com/' },
+  international: { id: 'source-international', name: 'International', url: 'https://www.internationaltrucks.com/' },
+  'ud-trucks': { id: 'source-ud-trucks', name: 'UD Trucks', url: 'https://www.udtrucks.com/' },
 };
 
 const FILTER_BRANDS = ['MANN-FILTER', 'MAHLE', 'HENGST', 'DONALDSON', 'UFI', 'PURFLUX', 'FEBI', 'SAMPA', 'ELRING'];
@@ -95,6 +98,10 @@ const MANUFACTURERS: ManufacturerDefinition[] = [
   { id: 'western-star', name: 'Western Star', source: SOURCES['western-star'], models: [{ id: 'western-star-49x', name: '49X' }, { id: 'western-star-57x', name: '57X' }, { id: 'western-star-47x', name: '47X' }] },
   { id: 'hino', name: 'Hino Trucks', source: SOURCES.hino, models: [{ id: 'hino-xl', name: 'XL Series' }, { id: 'hino-l', name: 'L Series' }] },
   { id: 'isuzu', name: 'Isuzu Trucks', source: SOURCES.isuzu, models: [{ id: 'isuzu-n', name: 'N Series' }, { id: 'isuzu-f', name: 'F Series' }, { id: 'isuzu-g', name: 'G Series' }] },
+  // Structure-only expansion — parts generated with NOT VERIFIED OEM/fitment until source-backed evidence is added
+  { id: 'fuso', name: 'FUSO', source: SOURCES.fuso, models: [{ id: 'fuso-canter', name: 'Canter' }, { id: 'fuso-fighter', name: 'Fighter' }] },
+  { id: 'international', name: 'International', source: SOURCES.international, models: [{ id: 'international-lt', name: 'LT Series' }, { id: 'international-rh', name: 'RH Series' }, { id: 'international-hv', name: 'HV Series' }] },
+  { id: 'ud-trucks', name: 'UD Trucks', source: SOURCES['ud-trucks'], models: [{ id: 'ud-quon', name: 'Quon' }, { id: 'ud-condor', name: 'Condor' }] },
 ];
 
 const normalizeRef = (value: string): string => value.toLowerCase().replace(/[\s\-\/.]/g, '');
