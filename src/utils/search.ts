@@ -1,14 +1,27 @@
 /**
  * NTParts - Smart Search Utilities
+ * Ranking priority:
+ * 1. Exact verified OEM
+ * 2. Exact source-listed / source-backed reference
+ * 3. Exact aftermarket reference
+ * 4. Normalized / partial matches
+ * 5. Broader relevant matches
  */
 
 import { Part, SearchResult } from '@/types';
 import { CATALOG_PARTS } from '@/data/catalog';
 
 const normalizeSearchText = (value: string): string =>
-  value.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]/g, '');
+  value
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]/g, '');
 
-export const debounce = <T extends (...args: any[]) => any>(func: T, wait: number): ((...args: Parameters<T>) => void) => {
+export const debounce = <T extends (...args: any[]) => any>(
+  func: T,
+  wait: number,
+): ((...args: Parameters<T>) => void) => {
   let timeout: ReturnType<typeof setTimeout> | undefined;
   return (...args: Parameters<T>) => {
     if (timeout) clearTimeout(timeout);
@@ -18,46 +31,92 @@ export const debounce = <T extends (...args: any[]) => any>(func: T, wait: numbe
 
 const getSearchScore = (part: Part, query: string): number => {
   const normalizedQuery = normalizeSearchText(query);
-  if (!normalizedQuery) return 0;
+  if (!normalizedQuery || normalizedQuery.length < 2) return 0;
+
+  let score = 0;
   const name = normalizeSearchText(part.name);
   const description = normalizeSearchText(part.description || '');
   const category = normalizeSearchText(part.category);
-  let score = 0;
+  const aftermarket = normalizeSearchText(part.specifications?.aftermarketReference || '');
+
+  // Exact / strong name & category matches
   if (name === normalizedQuery) score += 100;
-  if (name.startsWith(normalizedQuery)) score += 70;
-  if (name.includes(normalizedQuery)) score += 50;
+  else if (name.startsWith(normalizedQuery)) score += 70;
+  else if (name.includes(normalizedQuery)) score += 45;
+
   if (category === normalizedQuery) score += 35;
-  else if (category.includes(normalizedQuery)) score += 20;
-  if (description.includes(normalizedQuery)) score += 15;
+  else if (category.includes(normalizedQuery)) score += 18;
+
+  if (description.includes(normalizedQuery)) score += 12;
+
+  // OEM references — highest weight for verified exact
   for (const oem of part.oemReferences || []) {
     const reference = normalizeSearchText(oem.referenceNumber);
-    if (reference === normalizedQuery) score += 200;
-    else if (reference.includes(normalizedQuery)) score += 120;
+    const isVerified = oem.verificationStatus === 'verified';
+    const isSourceListed = oem.verificationStatus === 'source-listed';
+
+    if (reference === normalizedQuery) {
+      if (isVerified) score += 320;
+      else if (isSourceListed) score += 260;
+      else score += 200;
+    } else if (reference.startsWith(normalizedQuery) || normalizedQuery.startsWith(reference)) {
+      score += isVerified ? 160 : isSourceListed ? 130 : 100;
+    } else if (reference.includes(normalizedQuery) || normalizedQuery.includes(reference)) {
+      score += isVerified ? 110 : isSourceListed ? 90 : 70;
+    }
+
     for (const alternate of oem.alternateNumbers || []) {
       const normalizedAlternate = normalizeSearchText(alternate);
-      if (normalizedAlternate === normalizedQuery) score += 180;
-      else if (normalizedAlternate.includes(normalizedQuery)) score += 110;
+      if (normalizedAlternate === normalizedQuery) {
+        score += isVerified ? 240 : isSourceListed ? 200 : 160;
+      } else if (
+        normalizedAlternate.includes(normalizedQuery) ||
+        normalizedQuery.includes(normalizedAlternate)
+      ) {
+        score += isVerified ? 100 : 80;
+      }
     }
   }
+
+  // Aftermarket reference exact / partial
+  if (aftermarket) {
+    if (aftermarket === normalizedQuery) score += 180;
+    else if (aftermarket.includes(normalizedQuery) || normalizedQuery.includes(aftermarket)) {
+      score += 90;
+    }
+  }
+
+  // Cross-references
   for (const crossReference of part.crossReferences || []) {
     const referencedPartId = normalizeSearchText(crossReference.referencedPartId);
     if (referencedPartId === normalizedQuery) score += 80;
     else if (referencedPartId.includes(normalizedQuery)) score += 40;
   }
+
+  // Specifications (manufacturer, model, tags, etc.)
   for (const [key, value] of Object.entries(part.specifications || {})) {
+    if (typeof value !== 'string') continue;
     const normalizedKey = normalizeSearchText(key);
     const normalizedValue = normalizeSearchText(value);
-    if (normalizedValue === normalizedQuery) score += 60;
-    else if (normalizedValue.includes(normalizedQuery)) score += 30;
-    if (normalizedKey.includes(normalizedQuery)) score += 10;
+    if (normalizedValue === normalizedQuery) score += 55;
+    else if (normalizedValue.includes(normalizedQuery)) score += 25;
+    if (normalizedKey.includes(normalizedQuery)) score += 8;
   }
+
+  // Slight boost for parts that already carry verified OEM data when the query is a reference-like string
+  if (/^[a-z0-9]{5,}$/i.test(normalizedQuery) && part.oemReferences?.some((o) => o.verificationStatus === 'verified')) {
+    score += 15;
+  }
+
   return score;
 };
 
 export const searchParts = (query: string, parts: Part[] = CATALOG_PARTS): Part[] => {
   const trimmedQuery = query.trim();
-  if (!trimmedQuery) return [];
-  return parts.map((part) => ({ part, score: getSearchScore(part, trimmedQuery) }))
+  if (!trimmedQuery || trimmedQuery.length < 2) return [];
+
+  return parts
+    .map((part) => ({ part, score: getSearchScore(part, trimmedQuery) }))
     .filter((result) => result.score > 0)
     .sort((a, b) => b.score - a.score || a.part.name.localeCompare(b.part.name))
     .map((result) => result.part);
@@ -81,7 +140,9 @@ export const searchHistoryStorage = {
       if (!stored) return [];
       const parsed = JSON.parse(stored);
       return Array.isArray(parsed) ? parsed.filter((item): item is string => typeof item === 'string') : [];
-    } catch { return []; }
+    } catch {
+      return [];
+    }
   },
   add(query: string): void {
     if (typeof window === 'undefined') return;
@@ -90,18 +151,26 @@ export const searchHistoryStorage = {
     try {
       const history = this.get().filter((item) => item !== normalizedQuery);
       localStorage.setItem('searchHistory', JSON.stringify([normalizedQuery, ...history].slice(0, 20)));
-    } catch { /* ignore localStorage errors */ }
+    } catch {
+      /* ignore localStorage errors */
+    }
   },
   clear(): void {
     if (typeof window === 'undefined') return;
-    try { localStorage.removeItem('searchHistory'); } catch { /* ignore localStorage errors */ }
+    try {
+      localStorage.removeItem('searchHistory');
+    } catch {
+      /* ignore */
+    }
   },
 };
 
 class SearchCache {
   private cache: Map<string, SearchResult[]> = new Map();
   private maxSize = 50;
-  get(key: string): SearchResult[] | null { return this.cache.get(key) || null; }
+  get(key: string): SearchResult[] | null {
+    return this.cache.get(key) || null;
+  }
   set(key: string, results: SearchResult[]): void {
     if (this.cache.size >= this.maxSize) {
       const firstKey = this.cache.keys().next().value;
@@ -109,7 +178,9 @@ class SearchCache {
     }
     this.cache.set(key, results);
   }
-  clear(): void { this.cache.clear(); }
+  clear(): void {
+    this.cache.clear();
+  }
 }
 
 export const searchCache = new SearchCache();
@@ -118,15 +189,23 @@ export const searchCache = new SearchCache();
 export function searchCrossReferences(query: string) {
   const normalized = normalizeSearchText(query);
   if (!normalized) return [];
-  return CATALOG_PARTS.flatMap((part) => (part.crossReferences || []).map((crossReference) => ({
-    ...crossReference,
-    partId: part.id,
-    manufacturerId: part.specifications?.manufacturerId || '',
-    partTemplateSlug: part.id.split('-').slice(1).join('-'),
-    description: crossReference.notes || crossReference.relationshipType,
-    numbers: part.oemReferences.flatMap((oem) => [oem.referenceNumber, ...(oem.alternateNumbers || [])]),
-  }))).filter((reference) => {
-    const haystack = [reference.referencedPartId, reference.partId, reference.manufacturerId, reference.description, ...reference.numbers].join(' ');
+  return CATALOG_PARTS.flatMap((part) =>
+    (part.crossReferences || []).map((crossReference) => ({
+      ...crossReference,
+      partId: part.id,
+      manufacturerId: part.specifications?.manufacturerId || '',
+      partTemplateSlug: part.id.split('-').slice(1).join('-'),
+      description: crossReference.notes || crossReference.relationshipType,
+      numbers: part.oemReferences.flatMap((oem) => [oem.referenceNumber, ...(oem.alternateNumbers || [])]),
+    })),
+  ).filter((reference) => {
+    const haystack = [
+      reference.referencedPartId,
+      reference.partId,
+      reference.manufacturerId,
+      reference.description,
+      ...reference.numbers,
+    ].join(' ');
     return normalizeSearchText(haystack).includes(normalized);
   });
 }

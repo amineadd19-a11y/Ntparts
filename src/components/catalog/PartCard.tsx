@@ -18,16 +18,26 @@ interface PartCardProps {
 const FALLBACK =
   'https://images.unsplash.com/photo-1486262715619-67b85e0b08d3?w=800&q=80&auto=format&fit=crop';
 
+function primaryOemStatus(part: Part): 'verified' | 'source-listed' | 'unverified' | null {
+  if (!part.oemReferences?.length) return null;
+  if (part.oemReferences.some((r) => r.verificationStatus === 'verified')) return 'verified';
+  if (part.oemReferences.some((r) => r.verificationStatus === 'source-listed')) return 'source-listed';
+  return 'unverified';
+}
+
 export default function PartCard({ part, showFavorite = true }: PartCardProps) {
   const { language } = useAppStore();
   const t = (key: string) => getTranslation(key, language);
   const primaryImage = part.images?.find((img) => img.isPrimary) || part.images?.[0];
   const manufacturer = part.specifications?.manufacturer;
   const model = part.specifications?.model;
+  const aftermarket = part.specifications?.aftermarketReference;
   const [imgSrc, setImgSrc] = useState(primaryImage?.url || FALLBACK);
   const [failed, setFailed] = useState(false);
 
   const categoryLabel = translateCategory(part.category, language);
+  const oemStatus = primaryOemStatus(part);
+  const primaryOem = part.oemReferences?.[0]?.referenceNumber;
 
   return (
     <Link href={`/parts/${encodeURIComponent(part.id)}`} className="block h-full">
@@ -59,9 +69,14 @@ export default function PartCard({ part, showFavorite = true }: PartCardProps) {
               <FavoriteButton partId={part.id} />
             </div>
           )}
-          {part.oemReferences?.length > 0 && (
+          {oemStatus === 'verified' && (
             <span className="absolute start-2.5 top-2.5 rounded-full bg-emerald-600 px-2 py-0.5 text-[10px] font-bold text-white shadow">
-              OEM
+              VERIFIED OEM
+            </span>
+          )}
+          {oemStatus === 'source-listed' && (
+            <span className="absolute start-2.5 top-2.5 rounded-full bg-amber-500 px-2 py-0.5 text-[10px] font-bold text-white shadow">
+              SOURCE-LISTED
             </span>
           )}
         </div>
@@ -81,15 +96,20 @@ export default function PartCard({ part, showFavorite = true }: PartCardProps) {
             {part.name}
           </h3>
 
-          {part.oemReferences?.length ? (
-            <p className="mb-3 text-[11px] text-slate-500">
+          {primaryOem ? (
+            <p className="mb-1 text-[11px] text-slate-500">
               OEM:{' '}
-              <span className="font-mono font-semibold text-slate-700">
-                {part.oemReferences[0].referenceNumber}
-              </span>
+              <span className="font-mono font-semibold text-slate-700">{primaryOem}</span>
             </p>
           ) : (
-            <p className="mb-3 text-[11px] text-slate-400">{t('part.oemPending')}</p>
+            <p className="mb-1 text-[11px] text-slate-400">{t('part.oemPending')}</p>
+          )}
+
+          {aftermarket && (
+            <p className="mb-3 text-[11px] text-slate-500">
+              Aftermarket:{' '}
+              <span className="font-mono font-semibold text-slate-600">{aftermarket}</span>
+            </p>
           )}
 
           <div className="mt-auto flex items-center justify-between">
