@@ -54,11 +54,20 @@ function mergeOemReferences(existing: OEMReference[], incoming: OEMReference[]):
     // Keep the stronger verification status; never invent upgrades beyond what sources provide.
     const keep =
       rank(ref.verificationStatus) > rank(prev.verificationStatus)
-        ? { ...ref, alternateNumbers: Array.from(new Set([...(prev.alternateNumbers || []), ...(ref.alternateNumbers || [])])) }
+        ? {
+            ...ref,
+            alternateNumbers: Array.from(
+              new Set([...(prev.alternateNumbers || []), ...(ref.alternateNumbers || [])]),
+            ),
+          }
         : {
             ...prev,
             alternateNumbers: Array.from(
-              new Set([...(prev.alternateNumbers || []), ...(ref.alternateNumbers || []), ref.referenceNumber]),
+              new Set([
+                ...(prev.alternateNumbers || []),
+                ...(ref.alternateNumbers || []),
+                ref.referenceNumber,
+              ]),
             ).filter((n) => normalizeReference(n) !== key),
           };
     byNorm.set(key, keep);
@@ -91,9 +100,24 @@ function preferVerification(
  * Merge an incoming part into an existing one, preserving provenance and stronger evidence.
  */
 export function mergeParts(existing: Part, incoming: Part): Part {
+  const aftermarketReference =
+    existing.specifications?.aftermarketReference ||
+    incoming.specifications?.aftermarketReference ||
+    '';
+
+  const aftermarketBrands = Array.from(
+    new Set(
+      [
+        ...(existing.specifications?.aftermarketBrands || '').split(','),
+        ...(incoming.specifications?.aftermarketBrands || '').split(','),
+      ]
+        .map((s) => s.trim())
+        .filter(Boolean),
+    ),
+  ).join(', ');
+
   return {
     ...existing,
-    // Prefer non-empty richer description but never erase verified context blindly
     description: existing.description || incoming.description,
     oemReferences: mergeOemReferences(existing.oemReferences || [], incoming.oemReferences || []),
     crossReferences: [...(existing.crossReferences || []), ...(incoming.crossReferences || [])],
@@ -101,20 +125,8 @@ export function mergeParts(existing: Part, incoming: Part): Part {
     specifications: {
       ...(incoming.specifications || {}),
       ...(existing.specifications || {}),
-      // Keep both aftermarket refs if different
-      aftermarketReference:
-        existing.specifications?.aftermarketReference ||
-        incoming.specifications?.aftermarketReference,
-      aftermarketBrands: Array.from(
-        new Set(
-          [
-            ...(existing.specifications?.aftermarketBrands || '').split(','),
-            ...(incoming.specifications?.aftermarketBrands || '').split(','),
-          ]
-            .map((s) => s.trim())
-            .filter(Boolean),
-        ),
-      ).join(', '),
+      aftermarketReference,
+      aftermarketBrands,
     },
     verificationStatus: preferVerification(existing.verificationStatus, incoming.verificationStatus),
     updatedAt: new Date().toISOString(),
@@ -127,7 +139,7 @@ export function mergeParts(existing: Part, incoming: Part): Part {
  * When a collision is found, sources are merged into the first occurrence.
  */
 export function deduplicateAndMerge(parts: Part[]): MergeResult {
-  const index = new Map<string, number>(); // normalized key -> index in result
+  const index = new Map<string, number>();
   const result: Part[] = [];
   let merged = 0;
   let skippedDuplicates = 0;
@@ -144,7 +156,6 @@ export function deduplicateAndMerge(parts: Part[]): MergeResult {
 
     if (matchIndex >= 0) {
       result[matchIndex] = mergeParts(result[matchIndex], part);
-      // Re-index all keys of the merged entity
       for (const key of allReferenceKeys(result[matchIndex])) {
         index.set(key, matchIndex);
       }
