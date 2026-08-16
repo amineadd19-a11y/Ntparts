@@ -2,6 +2,7 @@ import type { Part } from '@/types';
 import * as CORE from '@/data/catalog-core';
 import { CATALOG_EXPANSION } from '@/data/catalog-expansion';
 import { RENPAR_CATALOG_PARTS } from '@/data/catalog-renpar';
+import { SOURCE_BACKED_PARTS } from '@/data/catalog-source-backed';
 import { deduplicateAndMerge } from '@/lib/catalog/pipeline';
 import { normalizeReference } from '@/lib/catalog/normalize';
 
@@ -49,6 +50,7 @@ const merged = deduplicateAndMerge([
   ...coreParts,
   ...CATALOG_EXPANSION,
   ...RENPAR_CATALOG_PARTS,
+  ...SOURCE_BACKED_PARTS,
 ]);
 
 export const CATALOG_PARTS: Part[] = merged.parts;
@@ -84,6 +86,7 @@ export const CATALOG_STATS = {
       count + part.oemReferences.filter((ref) => ref.verificationStatus === 'verified').length,
     0,
   ),
+  sourceBackedRecords: SOURCE_BACKED_PARTS.length,
   mergeInput: CATALOG_MERGE_STATS.input,
   mergeOutput: CATALOG_MERGE_STATS.output,
   mergeCollapsed: CATALOG_MERGE_STATS.merged,
@@ -188,4 +191,4 @@ export function getVerifiedOEMParts(): Part[] {
   );
 }
 
-export { CATALOG_EXPANSION, RENPAR_CATALOG_PARTS, OEM_REFERENCE_REGISTRY };
+export { CATALOG_EXPANSION, RENPAR_CATALOG_PARTS, SOURCE_BACKED_PARTS, OEM_REFERENCE_REGISTRY };
