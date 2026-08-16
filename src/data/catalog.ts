@@ -2,6 +2,8 @@ import type { Part } from '@/types';
 import * as CORE from '@/data/catalog-core';
 import { CATALOG_EXPANSION } from '@/data/catalog-expansion';
 import { RENPAR_CATALOG_PARTS } from '@/data/catalog-renpar';
+import { deduplicateAndMerge } from '@/lib/catalog/pipeline';
+import { normalizeReference } from '@/lib/catalog/normalize';
 
 /** Source-backed OEM registry used by the catalog validation gate. Empty modelIds means exact fitment is not proven. */
 const OEM_REFERENCE_REGISTRY = [
@@ -42,39 +44,15 @@ const coreParts: Part[] = CORE.CATALOG_PARTS.map((part) => ({
   images: (part.images ?? []).filter((image) => image.source?.includes('MANN-FILTER')),
 }));
 
-const normalizeRef = (value: string): string => value.toLowerCase().replace(/[\s\-\/.]/g, '');
-
-/**
- * Merge catalog sources while removing exact ID/reference collisions.
- * Source-listed references remain source-listed; they are never upgraded to verified
- * merely because they exist in the merged catalog.
- */
-const mergeUniqueParts = (parts: Part[]): Part[] => {
-  const seen = new Set<string>();
-  const result: Part[] = [];
-
-  for (const part of parts) {
-    const keys = [
-      part.id,
-      part.specifications?.aftermarketReference ?? '',
-      ...part.oemReferences.flatMap((oem) => [oem.referenceNumber, ...(oem.alternateNumbers ?? [])]),
-    ]
-      .filter(Boolean)
-      .map(normalizeRef);
-
-    if (keys.some((key) => seen.has(key))) continue;
-    keys.forEach((key) => seen.add(key));
-    result.push(part);
-  }
-
-  return result;
-};
-
-export const CATALOG_PARTS: Part[] = mergeUniqueParts([
+/** Merge all catalogue sources through the shared dedup/merge pipeline. */
+const merged = deduplicateAndMerge([
   ...coreParts,
   ...CATALOG_EXPANSION,
   ...RENPAR_CATALOG_PARTS,
 ]);
+
+export const CATALOG_PARTS: Part[] = merged.parts;
+export const CATALOG_MERGE_STATS = merged.stats;
 
 export const CATALOG_MANUFACTURERS: typeof CORE.CATALOG_MANUFACTURERS = CORE.CATALOG_MANUFACTURERS;
 export const CATALOG_MODELS: typeof CORE.CATALOG_MODELS = CORE.CATALOG_MODELS;
@@ -86,23 +64,29 @@ export const CATALOG_AFTERMARKET_BRANDS: string[] = Array.from(
       (part.specifications?.aftermarketBrands ?? '')
         .split(',')
         .map((brand) => brand.trim())
-        .filter(Boolean)
-    )
-  )
+        .filter(Boolean),
+    ),
+  ),
 ).sort();
 
 export const CATALOG_STATS = {
   manufacturers: CATALOG_MANUFACTURERS.length,
   models: CATALOG_MODELS.length,
-  partTemplates: CORE.CATALOG_STATS.partTemplates + CATALOG_EXPANSION.length / Math.max(CATALOG_MODELS.length, 1),
+  partTemplates:
+    CORE.CATALOG_STATS.partTemplates +
+    CATALOG_EXPANSION.length / Math.max(CATALOG_MODELS.length, 1),
   parts: CATALOG_PARTS.length,
   categories: CATALOG_CATEGORIES.length,
   systems: CATALOG_SYSTEMS.length,
   aftermarketBrands: CATALOG_AFTERMARKET_BRANDS.length,
   verifiedOEMReferences: CATALOG_PARTS.reduce(
-    (count, part) => count + part.oemReferences.filter((ref) => ref.verificationStatus === 'verified').length,
-    0
+    (count, part) =>
+      count + part.oemReferences.filter((ref) => ref.verificationStatus === 'verified').length,
+    0,
   ),
+  mergeInput: CATALOG_MERGE_STATS.input,
+  mergeOutput: CATALOG_MERGE_STATS.output,
+  mergeCollapsed: CATALOG_MERGE_STATS.merged,
 };
 
 const list = (value?: string): string[] =>
@@ -111,11 +95,15 @@ const list = (value?: string): string[] =>
 export function searchCatalog(query: string): Part[] {
   const q = query.trim().toLowerCase();
   if (!q) return CATALOG_PARTS;
-  const compact = normalizeRef(query);
+  const compact = normalizeReference(query);
 
   return CATALOG_PARTS.filter((part) => {
-    const refs = part.oemReferences.flatMap((oem) => [oem.referenceNumber, ...(oem.alternateNumbers ?? [])]);
-    if (refs.some((ref) => ref.toLowerCase().includes(q) || normalizeRef(ref).includes(compact))) return true;
+    const refs = part.oemReferences.flatMap((oem) => [
+      oem.referenceNumber,
+      ...(oem.alternateNumbers ?? []),
+    ]);
+    if (refs.some((ref) => ref.toLowerCase().includes(q) || normalizeReference(ref).includes(compact)))
+      return true;
 
     return [
       part.id,
@@ -137,7 +125,9 @@ export function searchCatalog(query: string): Part[] {
 
 export function getPartsByManufacturer(id: string): Part[] {
   const normalized = id.trim().toLowerCase();
-  return CATALOG_PARTS.filter((part) => part.specifications?.manufacturerId?.toLowerCase() === normalized);
+  return CATALOG_PARTS.filter(
+    (part) => part.specifications?.manufacturerId?.toLowerCase() === normalized,
+  );
 }
 
 export function getPartsByModel(id: string, model: string): Part[] {
@@ -146,7 +136,7 @@ export function getPartsByModel(id: string, model: string): Part[] {
   return CATALOG_PARTS.filter(
     (part) =>
       part.specifications?.manufacturerId?.toLowerCase() === manufacturer &&
-      part.specifications?.model?.toLowerCase() === modelName
+      part.specifications?.model?.toLowerCase() === modelName,
   );
 }
 
@@ -162,27 +152,29 @@ export function getPartsBySystem(systemId: string): Part[] {
 export function getPartsByAftermarketBrand(brand: string): Part[] {
   const normalized = brand.trim().toLowerCase();
   return CATALOG_PARTS.filter((part) =>
-    list(part.specifications?.aftermarketBrands).some((item) => item.toLowerCase() === normalized)
+    list(part.specifications?.aftermarketBrands).some((item) => item.toLowerCase() === normalized),
   );
 }
 
 export function getPartsByTag(tag: string): Part[] {
   const normalized = tag.trim().toLowerCase();
-  return CATALOG_PARTS.filter((part) => list(part.specifications?.tags).some((item) => item.toLowerCase() === normalized));
+  return CATALOG_PARTS.filter((part) =>
+    list(part.specifications?.tags).some((item) => item.toLowerCase() === normalized),
+  );
 }
 
 export function getPartsByOEM(referenceNumber: string): Part[] {
   const normalized = referenceNumber.trim().toLowerCase();
-  const compact = normalizeRef(referenceNumber);
+  const compact = normalizeReference(referenceNumber);
   return CATALOG_PARTS.filter((part) =>
     part.oemReferences.some((oem) =>
       [oem.referenceNumber, ...(oem.alternateNumbers ?? [])].some(
         (reference) =>
           reference.toLowerCase() === normalized ||
-          normalizeRef(reference) === compact ||
-          normalizeRef(reference).includes(compact)
-      )
-    )
+          normalizeReference(reference) === compact ||
+          normalizeReference(reference).includes(compact),
+      ),
+    ),
   );
 }
 
@@ -192,8 +184,8 @@ export function getPartById(id: string): Part | undefined {
 
 export function getVerifiedOEMParts(): Part[] {
   return CATALOG_PARTS.filter((part) =>
-    part.oemReferences.some((reference) => reference.verificationStatus === 'verified')
+    part.oemReferences.some((reference) => reference.verificationStatus === 'verified'),
   );
 }
 
-export { CATALOG_EXPANSION, RENPAR_CATALOG_PARTS };
+export { CATALOG_EXPANSION, RENPAR_CATALOG_PARTS, OEM_REFERENCE_REGISTRY };
