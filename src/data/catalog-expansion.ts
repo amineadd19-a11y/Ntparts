@@ -1,10 +1,97 @@
-import { Part } from '@/types';
+import type { Part } from '@/types';
 import { CATALOG_MANUFACTURERS, CATALOG_MODELS } from '@/data/catalog-core';
 import { resolveProductImages } from '@/data/catalog-images';
 
-type T={slug:string;name:string;category:string;systemId:Part['systemId'];tags:string[];brands:string[]};
-const TEMPLATES:T[]=[
-['brake-drum','Brake Drum','Brakes','brake-system',['brake','drum'],['BREMBO','FEBI','TRW']],['brake-lining','Brake Lining','Brakes','brake-system',['brake','lining'],['TEXTAR','TRW','FEBI']],['abs-sensor','ABS Sensor','Brakes','brake-system',['abs','sensor'],['BOSCH','KNORR-BREMSE','WABCO']],['compressor','Air Compressor','Engine','engine-system',['air','compressor'],['KNORR-BREMSE','WABCO']],['hydraulic-filter','Hydraulic Filter','Filters','other-system',['filter','hydraulic'],['DONALDSON','MAHLE','MANN-FILTER']],['fuel-pump','Fuel Pump','Engine','engine-system',['fuel','pump'],['BOSCH','DENSO']],['high-pressure-pump','High Pressure Fuel Pump','Engine','engine-system',['fuel','high pressure','pump'],['BOSCH','DENSO','DELPHI']],['turbo-actuator','Turbo Actuator','Engine','engine-system',['turbo','actuator'],['GARRETT','BORGWARNER']],['egr-valve','EGR Valve','Engine','engine-system',['egr','valve'],['BOSCH','PIERBURG','FEBI']],['oil-pump','Oil Pump','Engine','engine-system',['oil','pump'],['FEBI','MAHLE']],['intercooler','Intercooler','Cooling System','cooling-system',['intercooler','charge air'],['MAHLE','NRF']],['fan-clutch','Fan Clutch','Cooling System','cooling-system',['fan','clutch','cooling'],['MAHLE','BEHR','BORGWARNER']],['coolant-hose','Coolant Hose','Cooling System','cooling-system',['coolant','hose'],['GATES','DAYCO','FEBI']],['belt-tensioner','Belt Tensioner','Engine','engine-system',['belt','tensioner'],['INA','GATES','DAYCO']],['timing-kit','Timing Belt/Chain Kit','Engine','engine-system',['timing','kit'],['CONTITECH','GATES','DAYCO','INA']],['engine-mount','Engine Mount','Engine','engine-system',['engine','mount'],['FEBI','LEMFÖRDER']],['clutch-disc','Clutch Disc','Transmission','transmission-system',['clutch','disc'],['SACHS','LuK','VALEO']],['clutch-cover','Clutch Cover','Transmission','transmission-system',['clutch','cover'],['SACHS','LuK','VALEO']],['release-bearing','Release Bearing','Transmission','transmission-system',['clutch','bearing'],['SACHS','SKF','FAG']],['clutch-slave-cylinder','Clutch Slave Cylinder','Transmission','transmission-system',['clutch','hydraulic'],['ZF','SACHS','TRW']],['gearbox','Gearbox','Transmission','transmission-system',['gearbox','transmission'],['ZF']],['gearbox-filter','Transmission Filter','Transmission','transmission-system',['gearbox','filter'],['ZF','MANN-FILTER']],['propeller-shaft','Propeller Shaft','Transmission','transmission-system',['propeller','shaft'],['GKN','SPICER']],['universal-joint','Universal Joint','Transmission','transmission-system',['universal','joint','driveshaft'],['SPICER','GKN']],['cab-air-spring','Cab Air Spring','Cabin','cabin-system',['cab','air','spring'],['CONTINENTAL','FIRESTONE']],['control-arm','Control Arm','Suspension','suspension-system',['control','arm'],['LEMFÖRDER','TRW','FEBI']],['stabilizer-link','Stabilizer Link','Suspension','suspension-system',['stabilizer','link'],['LEMFÖRDER','TRW','FEBI']],['leaf-spring','Leaf Spring','Suspension','suspension-system',['leaf','spring'],['SACHS','FEBI']],['steering-pump','Steering Pump','Steering','steering-system',['steering','pump'],['ZF','TRW']],['steering-gear','Steering Gear','Steering','steering-system',['steering','gear'],['ZF','TRW']],['tie-rod','Tie Rod','Steering','steering-system',['tie','rod'],['LEMFÖRDER','TRW','FEBI']],['drag-link','Drag Link','Steering','steering-system',['drag','link'],['LEMFÖRDER','TRW','FEBI']],['battery','Truck Battery','Electrical','electrical-system',['battery'],['VARTA','BOSCH','EXIDE']],['glow-plug','Glow Plug','Electrical','electrical-system',['glow','plug'],['BOSCH','DENSO']],['engine-sensor','Engine Sensor','Electrical','electrical-system',['sensor','engine'],['BOSCH','DENSO','HELLA']],['headlamp','Headlamp','Electrical','electrical-system',['headlamp','lighting'],['HELLA','VALEO']],['wiper-motor','Wiper Motor','Cabin','cabin-system',['wiper','motor'],['HELLA','VALEO']],['door-lock','Door Lock','Cabin','cabin-system',['door','lock'],['FEBI','VALEO']],['exhaust-pipe','Exhaust Pipe','Exhaust','exhaust-system',['exhaust','pipe'],['BOSAL','HJS','FEBI']],['muffler','Muffler','Exhaust','exhaust-system',['exhaust','muffler'],['BOSAL','HJS']],['dpf','Diesel Particulate Filter','Exhaust','exhaust-system',['dpf','exhaust'],['HJS','BOSAL']],['scr-catalyst','SCR Catalyst','Exhaust','exhaust-system',['scr','catalyst','adblue'],['HJS','BOSAL']],['adblue-pump','AdBlue Pump','Exhaust','exhaust-system',['adblue','pump'],['BOSCH','HELLA']]];
-const templates=TEMPLATES.map(([slug,name,category,systemId,tags,brands])=>({slug,name,category,systemId,tags,brands} as T));
-const REAL_IMAGE_SLUGS=new Set(['oil-filter','air-filter','fuel-filter','cabin-filter']);
-export const CATALOG_EXPANSION:Part[]=CATALOG_MODELS.flatMap(model=>templates.map(t=>{const id=`${model.id}-${t.slug}`;const m=CATALOG_MANUFACTURERS.find(x=>x.id===model.manufacturerId)!;const images=REAL_IMAGE_SLUGS.has(t.slug)?resolveProductImages(t.slug,id,t.name):[];return {id,systemId:t.systemId,name:t.name,description:`${t.name} — ${m.name} ${model.name}. Exact OEM and fitment are NOT VERIFIED.`,category:t.category,specifications:{type:t.name,vehicleType:'Truck',manufacturer:m.name,manufacturerId:m.id,model:model.name,tags:[...t.tags,m.id,model.name].join(', '),aftermarketBrands:t.brands.join(', '),oemStatus:'NOT VERIFIED',referencePolicy:'No OEM number claimed without authoritative verification'},images,oemReferences:[],crossReferences:[],compatibility:[],sources:[],verificationStatus:'needs-verification',createdAt:'2026-08-15T00:00:00.000Z',updatedAt:'2026-08-15T00:00:00.000Z'} as Part;}));
+type ExpansionTemplate = {
+  slug: string;
+  name: string;
+  category: string;
+  systemId: Part['systemId'];
+  tags: string[];
+  brands: string[];
+};
+
+const TEMPLATES: ExpansionTemplate[] = [
+  { slug: 'brake-drum', name: 'Brake Drum', category: 'Brakes', systemId: 'brake-system', tags: ['brake', 'drum'], brands: ['BREMBO', 'FEBI', 'TRW'] },
+  { slug: 'brake-lining', name: 'Brake Lining', category: 'Brakes', systemId: 'brake-system', tags: ['brake', 'lining'], brands: ['TEXTAR', 'TRW', 'FEBI'] },
+  { slug: 'abs-sensor', name: 'ABS Sensor', category: 'Brakes', systemId: 'brake-system', tags: ['abs', 'sensor'], brands: ['BOSCH', 'KNORR-BREMSE', 'WABCO'] },
+  { slug: 'compressor', name: 'Air Compressor', category: 'Engine', systemId: 'engine-system', tags: ['air', 'compressor'], brands: ['KNORR-BREMSE', 'WABCO'] },
+  { slug: 'hydraulic-filter', name: 'Hydraulic Filter', category: 'Filters', systemId: 'other-system', tags: ['filter', 'hydraulic'], brands: ['DONALDSON', 'MAHLE', 'MANN-FILTER'] },
+  { slug: 'fuel-pump', name: 'Fuel Pump', category: 'Engine', systemId: 'engine-system', tags: ['fuel', 'pump'], brands: ['BOSCH', 'DENSO'] },
+  { slug: 'high-pressure-pump', name: 'High Pressure Fuel Pump', category: 'Engine', systemId: 'engine-system', tags: ['fuel', 'high pressure', 'pump'], brands: ['BOSCH', 'DENSO', 'DELPHI'] },
+  { slug: 'turbo-actuator', name: 'Turbo Actuator', category: 'Engine', systemId: 'engine-system', tags: ['turbo', 'actuator'], brands: ['GARRETT', 'BORGWARNER'] },
+  { slug: 'egr-valve', name: 'EGR Valve', category: 'Engine', systemId: 'engine-system', tags: ['egr', 'valve'], brands: ['BOSCH', 'PIERBURG', 'FEBI'] },
+  { slug: 'oil-pump', name: 'Oil Pump', category: 'Engine', systemId: 'engine-system', tags: ['oil', 'pump'], brands: ['FEBI', 'MAHLE'] },
+  { slug: 'intercooler', name: 'Intercooler', category: 'Cooling System', systemId: 'cooling-system', tags: ['intercooler', 'charge air'], brands: ['MAHLE', 'NRF'] },
+  { slug: 'fan-clutch', name: 'Fan Clutch', category: 'Cooling System', systemId: 'cooling-system', tags: ['fan', 'clutch', 'cooling'], brands: ['MAHLE', 'BEHR', 'BORGWARNER'] },
+  { slug: 'coolant-hose', name: 'Coolant Hose', category: 'Cooling System', systemId: 'cooling-system', tags: ['coolant', 'hose'], brands: ['GATES', 'DAYCO', 'FEBI'] },
+  { slug: 'belt-tensioner', name: 'Belt Tensioner', category: 'Engine', systemId: 'engine-system', tags: ['belt', 'tensioner'], brands: ['INA', 'GATES', 'DAYCO'] },
+  { slug: 'timing-kit', name: 'Timing Belt/Chain Kit', category: 'Engine', systemId: 'engine-system', tags: ['timing', 'kit'], brands: ['CONTITECH', 'GATES', 'DAYCO', 'INA'] },
+  { slug: 'engine-mount', name: 'Engine Mount', category: 'Engine', systemId: 'engine-system', tags: ['engine', 'mount'], brands: ['FEBI', 'LEMFÖRDER'] },
+  { slug: 'clutch-disc', name: 'Clutch Disc', category: 'Transmission', systemId: 'transmission-system', tags: ['clutch', 'disc'], brands: ['SACHS', 'LuK', 'VALEO'] },
+  { slug: 'clutch-cover', name: 'Clutch Cover', category: 'Transmission', systemId: 'transmission-system', tags: ['clutch', 'cover'], brands: ['SACHS', 'LuK', 'VALEO'] },
+  { slug: 'release-bearing', name: 'Release Bearing', category: 'Transmission', systemId: 'transmission-system', tags: ['clutch', 'bearing'], brands: ['SACHS', 'SKF', 'FAG'] },
+  { slug: 'clutch-slave-cylinder', name: 'Clutch Slave Cylinder', category: 'Transmission', systemId: 'transmission-system', tags: ['clutch', 'hydraulic'], brands: ['ZF', 'SACHS', 'TRW'] },
+  { slug: 'gearbox', name: 'Gearbox', category: 'Transmission', systemId: 'transmission-system', tags: ['gearbox', 'transmission'], brands: ['ZF'] },
+  { slug: 'gearbox-filter', name: 'Transmission Filter', category: 'Transmission', systemId: 'transmission-system', tags: ['gearbox', 'filter'], brands: ['ZF', 'MANN-FILTER'] },
+  { slug: 'propeller-shaft', name: 'Propeller Shaft', category: 'Transmission', systemId: 'transmission-system', tags: ['propeller', 'shaft'], brands: ['GKN', 'SPICER'] },
+  { slug: 'universal-joint', name: 'Universal Joint', category: 'Transmission', systemId: 'transmission-system', tags: ['universal', 'joint', 'driveshaft'], brands: ['SPICER', 'GKN'] },
+  { slug: 'cab-air-spring', name: 'Cab Air Spring', category: 'Cabin', systemId: 'cabin-system', tags: ['cab', 'air', 'spring'], brands: ['CONTINENTAL', 'FIRESTONE'] },
+  { slug: 'control-arm', name: 'Control Arm', category: 'Suspension', systemId: 'suspension-system', tags: ['control', 'arm'], brands: ['LEMFÖRDER', 'TRW', 'FEBI'] },
+  { slug: 'stabilizer-link', name: 'Stabilizer Link', category: 'Suspension', systemId: 'suspension-system', tags: ['stabilizer', 'link'], brands: ['LEMFÖRDER', 'TRW', 'FEBI'] },
+  { slug: 'leaf-spring', name: 'Leaf Spring', category: 'Suspension', systemId: 'suspension-system', tags: ['leaf', 'spring'], brands: ['SACHS', 'FEBI'] },
+  { slug: 'steering-pump', name: 'Steering Pump', category: 'Steering', systemId: 'steering-system', tags: ['steering', 'pump'], brands: ['ZF', 'TRW'] },
+  { slug: 'steering-gear', name: 'Steering Gear', category: 'Steering', systemId: 'steering-system', tags: ['steering', 'gear'], brands: ['ZF', 'TRW'] },
+  { slug: 'tie-rod', name: 'Tie Rod', category: 'Steering', systemId: 'steering-system', tags: ['tie', 'rod'], brands: ['LEMFÖRDER', 'TRW', 'FEBI'] },
+  { slug: 'drag-link', name: 'Drag Link', category: 'Steering', systemId: 'steering-system', tags: ['drag', 'link'], brands: ['LEMFÖRDER', 'TRW', 'FEBI'] },
+  { slug: 'battery', name: 'Truck Battery', category: 'Electrical', systemId: 'electrical-system', tags: ['battery'], brands: ['VARTA', 'BOSCH', 'EXIDE'] },
+  { slug: 'glow-plug', name: 'Glow Plug', category: 'Electrical', systemId: 'electrical-system', tags: ['glow', 'plug'], brands: ['BOSCH', 'DENSO'] },
+  { slug: 'engine-sensor', name: 'Engine Sensor', category: 'Electrical', systemId: 'electrical-system', tags: ['sensor', 'engine'], brands: ['BOSCH', 'DENSO', 'HELLA'] },
+  { slug: 'headlamp', name: 'Headlamp', category: 'Electrical', systemId: 'electrical-system', tags: ['headlamp', 'lighting'], brands: ['HELLA', 'VALEO'] },
+  { slug: 'wiper-motor', name: 'Wiper Motor', category: 'Cabin', systemId: 'cabin-system', tags: ['wiper', 'motor'], brands: ['HELLA', 'VALEO'] },
+  { slug: 'door-lock', name: 'Door Lock', category: 'Cabin', systemId: 'cabin-system', tags: ['door', 'lock'], brands: ['FEBI', 'VALEO'] },
+  { slug: 'exhaust-pipe', name: 'Exhaust Pipe', category: 'Exhaust', systemId: 'exhaust-system', tags: ['exhaust', 'pipe'], brands: ['BOSAL', 'HJS', 'FEBI'] },
+  { slug: 'muffler', name: 'Muffler', category: 'Exhaust', systemId: 'exhaust-system', tags: ['exhaust', 'muffler'], brands: ['BOSAL', 'HJS'] },
+  { slug: 'dpf', name: 'Diesel Particulate Filter', category: 'Exhaust', systemId: 'exhaust-system', tags: ['dpf', 'exhaust'], brands: ['HJS', 'BOSAL'] },
+  { slug: 'scr-catalyst', name: 'SCR Catalyst', category: 'Exhaust', systemId: 'exhaust-system', tags: ['scr', 'catalyst', 'adblue'], brands: ['HJS', 'BOSAL'] },
+  { slug: 'adblue-pump', name: 'AdBlue Pump', category: 'Exhaust', systemId: 'exhaust-system', tags: ['adblue', 'pump'], brands: ['BOSCH', 'HELLA'] },
+];
+
+const REAL_IMAGE_SLUGS = new Set(['oil-filter', 'air-filter', 'fuel-filter', 'cabin-filter']);
+
+export const CATALOG_EXPANSION: Part[] = CATALOG_MODELS.flatMap((model) =>
+  TEMPLATES.map((template) => {
+    const id = `${model.id}-${template.slug}`;
+    const manufacturer = CATALOG_MANUFACTURERS.find((item) => item.id === model.manufacturerId);
+    if (!manufacturer) throw new Error(`Catalog model references unknown manufacturer: ${model.manufacturerId}`);
+    const images = REAL_IMAGE_SLUGS.has(template.slug)
+      ? resolveProductImages(template.slug, id, template.name) as Part['images']
+      : [];
+    return {
+      id,
+      systemId: template.systemId,
+      name: template.name,
+      description: `${template.name} — ${manufacturer.name} ${model.name}. Exact OEM and fitment are NOT VERIFIED.`,
+      category: template.category,
+      specifications: {
+        type: template.name,
+        vehicleType: 'Truck',
+        manufacturer: manufacturer.name,
+        manufacturerId: manufacturer.id,
+        model: model.name,
+        tags: [...template.tags, manufacturer.id, model.name].join(', '),
+        aftermarketBrands: template.brands.join(', '),
+        oemStatus: 'NOT VERIFIED',
+        referencePolicy: 'No OEM number claimed without authoritative verification',
+      },
+      images,
+      oemReferences: [],
+      crossReferences: [],
+      compatibility: [],
+      sources: [],
+      verificationStatus: 'needs-verification' as const,
+      createdAt: '2026-08-15T00:00:00.000Z',
+      updatedAt: '2026-08-15T00:00:00.000Z',
+    } satisfies Part;
+  })
+);

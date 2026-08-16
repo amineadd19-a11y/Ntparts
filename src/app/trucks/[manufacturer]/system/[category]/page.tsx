@@ -8,6 +8,9 @@ import AdSlot from '@/components/ads/AdSlot';
 import { CATALOG_MANUFACTURERS, CATALOG_PARTS } from '@/data/catalog';
 import { useAppStore } from '@/store';
 import { getTranslation, translateCategory } from '@/data/translations';
+import type { Part } from '@/types';
+
+type CatalogManufacturer = (typeof CATALOG_MANUFACTURERS)[number];
 
 export default function ManufacturerSystemPage() {
   const params = useParams();
@@ -16,21 +19,21 @@ export default function ManufacturerSystemPage() {
   const { language } = useAppStore();
   const t = (key: string) => getTranslation(key, language);
 
-  const manufacturer = CATALOG_MANUFACTURERS.find((item) => item.id === manufacturerId);
+  const manufacturer: CatalogManufacturer | undefined = CATALOG_MANUFACTURERS.find((item: CatalogManufacturer) => item.id === manufacturerId);
   if (!manufacturer) notFound();
 
-  const parts = CATALOG_PARTS.filter(
-    (part) =>
+  const parts: Part[] = CATALOG_PARTS.filter(
+    (part: Part) =>
       part.specifications?.manufacturerId === manufacturer.id && part.category === category
   );
   if (parts.length === 0) notFound();
 
-  const withOem = parts.filter((p) => p.oemReferences?.length > 0);
+  const withOem = parts.filter((p: Part) => p.oemReferences?.length > 0);
   const modelsCovered = Array.from(
-    new Set(parts.map((p) => p.specifications?.model).filter(Boolean))
+    new Set(parts.map((p: Part) => p.specifications?.model).filter(Boolean))
   );
 
-  const oemSamples = withOem.flatMap((p) =>
+  const oemSamples = withOem.flatMap((p: Part) =>
     p.oemReferences.map((oem) => ({
       partName: p.name,
       model: p.specifications?.model,
@@ -43,124 +46,26 @@ export default function ManufacturerSystemPage() {
   return (
     <main className="min-h-screen bg-slate-50">
       <section className="mx-auto max-w-7xl px-4 py-8 sm:px-6">
-        <Link
-          href={`/trucks/${manufacturer.id}`}
-          className="mb-6 inline-flex items-center gap-2 text-sm font-semibold text-sky-700 transition hover:text-sky-900"
-        >
+        <Link href={`/trucks/${manufacturer.id}`} className="mb-6 inline-flex items-center gap-2 text-sm font-semibold text-sky-700 transition hover:text-sky-900">
           <ArrowLeft size={16} className="rtl:rotate-180" /> {manufacturer.name}
         </Link>
-
         <div className="mb-8 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
           <div className="bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 px-6 py-7 sm:px-8">
-            <div className="flex flex-wrap items-center gap-2 text-[11px] font-bold uppercase tracking-[0.18em] text-sky-400">
-              <span>{manufacturer.name}</span>
-              <span className="text-slate-500">/</span>
-              <span>{t('manufacturer.systems')}</span>
-            </div>
-            <h1 className="mt-2 text-3xl font-black tracking-tight text-white sm:text-4xl">
-              {translateCategory(category, language)}
-            </h1>
+            <div className="flex flex-wrap items-center gap-2 text-[11px] font-bold uppercase tracking-[0.18em] text-sky-400"><span>{manufacturer.name}</span><span className="text-slate-500">/</span><span>{t('manufacturer.systems')}</span></div>
+            <h1 className="mt-2 text-3xl font-black tracking-tight text-white sm:text-4xl">{translateCategory(category, language)}</h1>
             <p className="mt-2 max-w-2xl text-sm text-slate-300">{t('manufacturer.openSystem')}</p>
           </div>
           <div className="grid grid-cols-2 gap-px bg-slate-100 sm:grid-cols-3">
-            <div className="flex items-center gap-3 bg-white px-5 py-4">
-              <Layers size={18} className="text-slate-400" />
-              <div>
-                <p className="text-[10px] font-bold uppercase text-slate-400">{t('common.parts')}</p>
-                <p className="text-xl font-black text-slate-900">{parts.length}</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-3 bg-white px-5 py-4">
-              <ShieldCheck size={18} className="text-emerald-600" />
-              <div>
-                <p className="text-[10px] font-bold uppercase text-slate-400">
-                  {t('manufacturer.withOem')}
-                </p>
-                <p className="text-xl font-black text-emerald-700">{withOem.length}</p>
-              </div>
-            </div>
-            <div className="col-span-2 flex items-center gap-3 bg-white px-5 py-4 sm:col-span-1">
-              <Hash size={18} className="text-sky-600" />
-              <div>
-                <p className="text-[10px] font-bold uppercase text-slate-400">{t('manufacturer.models')}</p>
-                <p className="text-sm font-bold text-slate-800">
-                  {modelsCovered.join(' · ') || '—'}
-                </p>
-              </div>
-            </div>
+            <div className="flex items-center gap-3 bg-white px-5 py-4"><Layers size={18} className="text-slate-400" /><div><p className="text-[10px] font-bold uppercase text-slate-400">{t('common.parts')}</p><p className="text-xl font-black text-slate-900">{parts.length}</p></div></div>
+            <div className="flex items-center gap-3 bg-white px-5 py-4"><ShieldCheck size={18} className="text-emerald-600" /><div><p className="text-[10px] font-bold uppercase text-slate-400">{t('manufacturer.withOem')}</p><p className="text-xl font-black text-emerald-700">{withOem.length}</p></div></div>
+            <div className="col-span-2 flex items-center gap-3 bg-white px-5 py-4 sm:col-span-1"><Hash size={18} className="text-sky-600" /><div><p className="text-[10px] font-bold uppercase text-slate-400">{t('manufacturer.models')}</p><p className="text-sm font-bold text-slate-800">{modelsCovered.join(' · ') || '—'}</p></div></div>
           </div>
         </div>
-
         <AdSlot placement="system-top" />
-
         {oemSamples.length > 0 && (
-          <section className="mb-10">
-            <h2 className="mb-4 text-lg font-black text-slate-900">
-              {t('manufacturer.publishedOem')}
-            </h2>
-            <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
-              <div className="overflow-x-auto">
-                <table className="w-full min-w-[640px] text-start text-sm">
-                  <thead>
-                    <tr className="border-b border-slate-100 bg-slate-50 text-[11px] font-bold uppercase tracking-wider text-slate-500">
-                      <th className="px-4 py-3">{t('nav.parts')}</th>
-                      <th className="px-4 py-3">{t('part.model')}</th>
-                      <th className="px-4 py-3">OEM</th>
-                      <th className="px-4 py-3">{t('part.crossReferences')}</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {oemSamples.map((row, i) => (
-                      <tr
-                        key={`${row.partId}-${row.number}-${i}`}
-                        className="border-b border-slate-50 transition hover:bg-sky-50/50"
-                      >
-                        <td className="px-4 py-3">
-                          <Link
-                            href={`/parts/${encodeURIComponent(row.partId)}`}
-                            className="font-semibold text-slate-900 hover:text-sky-700"
-                          >
-                            {row.partName}
-                          </Link>
-                        </td>
-                        <td className="px-4 py-3 text-slate-600">{row.model}</td>
-                        <td className="px-4 py-3">
-                          <code className="rounded bg-slate-100 px-2 py-0.5 font-mono text-xs font-bold text-slate-800">
-                            {row.number}
-                          </code>
-                        </td>
-                        <td className="px-4 py-3">
-                          <div className="flex flex-wrap gap-1">
-                            {row.alts.slice(0, 6).map((alt) => (
-                              <span
-                                key={alt}
-                                className="rounded-full bg-sky-50 px-2 py-0.5 font-mono text-[10px] font-semibold text-sky-800 ring-1 ring-sky-100"
-                              >
-                                {alt}
-                              </span>
-                            ))}
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </section>
+          <section className="mb-10"><h2 className="mb-4 text-lg font-black text-slate-900">{t('manufacturer.publishedOem')}</h2><div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm"><div className="overflow-x-auto"><table className="w-full min-w-[640px] text-start text-sm"><thead><tr className="border-b border-slate-100 bg-slate-50 text-[11px] font-bold uppercase tracking-wider text-slate-500"><th className="px-4 py-3">{t('nav.parts')}</th><th className="px-4 py-3">{t('part.model')}</th><th className="px-4 py-3">OEM</th><th className="px-4 py-3">{t('part.crossReferences')}</th></tr></thead><tbody>{oemSamples.map((row, i) => <tr key={`${row.partId}-${row.number}-${i}`} className="border-b border-slate-50 transition hover:bg-sky-50/50"><td className="px-4 py-3"><Link href={`/parts/${encodeURIComponent(row.partId)}`} className="font-semibold text-slate-900 hover:text-sky-700">{row.partName}</Link></td><td className="px-4 py-3 text-slate-600">{row.model}</td><td className="px-4 py-3"><code className="rounded bg-slate-100 px-2 py-0.5 font-mono text-xs font-bold text-slate-800">{row.number}</code></td><td className="px-4 py-3"><div className="flex flex-wrap gap-1">{row.alts.slice(0, 6).map((alt) => <span key={alt} className="rounded-full bg-sky-50 px-2 py-0.5 font-mono text-[10px] font-semibold text-sky-800 ring-1 ring-sky-100">{alt}</span>)}</div></td></tr>)}</tbody></table></div></div></section>
         )}
-
-        <section>
-          <h2 className="mb-4 text-lg font-black text-slate-900">
-            {t('manufacturer.allPartsInSystem')}
-          </h2>
-          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {parts.map((part) => (
-              <PartCard key={part.id} part={part} />
-            ))}
-          </div>
-        </section>
-
+        <section><h2 className="mb-4 text-lg font-black text-slate-900">{t('manufacturer.allPartsInSystem')}</h2><div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">{parts.map((part: Part) => <PartCard key={part.id} part={part} />)}</div></section>
         <p className="mt-8 text-center text-xs text-slate-500">{t('manufacturer.verifyNote')}</p>
       </section>
     </main>

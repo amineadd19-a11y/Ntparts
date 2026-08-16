@@ -6,6 +6,8 @@ import AdSlot from '@/components/ads/AdSlot';
 import { useAppStore } from '@/store';
 import { getTranslation } from '@/data/translations';
 
+type TruckManufacturer = (typeof TRUCK_MANUFACTURERS)[number];
+
 export default function TrucksPage() {
   const { language } = useAppStore();
   const t = (key: string) => getTranslation(key, language);
@@ -27,7 +29,7 @@ export default function TrucksPage() {
       </div>
 
       <div className="mb-12 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
-        {TRUCK_MANUFACTURERS.map((manufacturer) => (
+        {TRUCK_MANUFACTURERS.map((manufacturer: TruckManufacturer) => (
           <ManufacturerCard key={manufacturer.id} manufacturer={manufacturer} />
         ))}
       </div>

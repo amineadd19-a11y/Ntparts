@@ -63,15 +63,7 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en" dir="ltr" suppressHydrationWarning>
-      <head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link
-          href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap"
-          rel="stylesheet"
-        />
-      </head>
-      <body className="bg-slate-100 text-slate-900 antialiased" style={{ fontFamily: 'Inter, system-ui, sans-serif' }}>
+      <body className="bg-slate-100 text-slate-900 antialiased">
         <Header />
         {children}
         <Footer />
