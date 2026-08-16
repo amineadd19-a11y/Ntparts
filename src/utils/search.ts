@@ -10,6 +10,7 @@
 
 import { Part, SearchResult } from '@/types';
 import { CATALOG_PARTS } from '@/data/catalog';
+import { lookupByReference } from '@/lib/catalog/indexes';
 
 const normalizeSearchText = (value: string): string =>
   value
@@ -39,7 +40,6 @@ const getSearchScore = (part: Part, query: string): number => {
   const category = normalizeSearchText(part.category);
   const aftermarket = normalizeSearchText(part.specifications?.aftermarketReference || '');
 
-  // Exact / strong name & category matches
   if (name === normalizedQuery) score += 100;
   else if (name.startsWith(normalizedQuery)) score += 70;
   else if (name.includes(normalizedQuery)) score += 45;
@@ -49,7 +49,6 @@ const getSearchScore = (part: Part, query: string): number => {
 
   if (description.includes(normalizedQuery)) score += 12;
 
-  // OEM references — highest weight for verified exact
   for (const oem of part.oemReferences || []) {
     const reference = normalizeSearchText(oem.referenceNumber);
     const isVerified = oem.verificationStatus === 'verified';
@@ -78,7 +77,6 @@ const getSearchScore = (part: Part, query: string): number => {
     }
   }
 
-  // Aftermarket reference exact / partial
   if (aftermarket) {
     if (aftermarket === normalizedQuery) score += 180;
     else if (aftermarket.includes(normalizedQuery) || normalizedQuery.includes(aftermarket)) {
@@ -86,14 +84,12 @@ const getSearchScore = (part: Part, query: string): number => {
     }
   }
 
-  // Cross-references
   for (const crossReference of part.crossReferences || []) {
     const referencedPartId = normalizeSearchText(crossReference.referencedPartId);
     if (referencedPartId === normalizedQuery) score += 80;
     else if (referencedPartId.includes(normalizedQuery)) score += 40;
   }
 
-  // Specifications (manufacturer, model, tags, etc.)
   for (const [key, value] of Object.entries(part.specifications || {})) {
     if (typeof value !== 'string') continue;
     const normalizedKey = normalizeSearchText(key);
@@ -103,8 +99,10 @@ const getSearchScore = (part: Part, query: string): number => {
     if (normalizedKey.includes(normalizedQuery)) score += 8;
   }
 
-  // Slight boost for parts that already carry verified OEM data when the query is a reference-like string
-  if (/^[a-z0-9]{5,}$/i.test(normalizedQuery) && part.oemReferences?.some((o) => o.verificationStatus === 'verified')) {
+  if (
+    /^[a-z0-9]{5,}$/i.test(normalizedQuery) &&
+    part.oemReferences?.some((o) => o.verificationStatus === 'verified')
+  ) {
     score += 15;
   }
 
@@ -115,11 +113,20 @@ export const searchParts = (query: string, parts: Part[] = CATALOG_PARTS): Part[
   const trimmedQuery = query.trim();
   if (!trimmedQuery || trimmedQuery.length < 2) return [];
 
-  return parts
-    .map((part) => ({ part, score: getSearchScore(part, trimmedQuery) }))
+  // Fast path: exact normalized reference hits from the index
+  const exactHits = lookupByReference(trimmedQuery);
+  const exactIds = new Set(exactHits.map((p) => p.id));
+
+  const scored = parts
+    .map((part) => ({
+      part,
+      score: getSearchScore(part, trimmedQuery) + (exactIds.has(part.id) ? 50 : 0),
+    }))
     .filter((result) => result.score > 0)
     .sort((a, b) => b.score - a.score || a.part.name.localeCompare(b.part.name))
     .map((result) => result.part);
+
+  return scored;
 };
 
 export const filterPartsByCategory = (parts: Part[], category: string): Part[] =>
@@ -152,7 +159,7 @@ export const searchHistoryStorage = {
       const history = this.get().filter((item) => item !== normalizedQuery);
       localStorage.setItem('searchHistory', JSON.stringify([normalizedQuery, ...history].slice(0, 20)));
     } catch {
-      /* ignore localStorage errors */
+      /* ignore */
     }
   },
   clear(): void {
@@ -185,7 +192,6 @@ class SearchCache {
 
 export const searchCache = new SearchCache();
 
-/** Find parts and explicit cross-reference records already present in the catalog. */
 export function searchCrossReferences(query: string) {
   const normalized = normalizeSearchText(query);
   if (!normalized) return [];
