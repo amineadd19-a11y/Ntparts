@@ -1,8 +1,6 @@
 import { NextResponse } from 'next/server';
-import { gunzipSync } from 'node:zlib';
 import { CATALOG_PARTS } from '@/data/catalog';
 import {
-  INVENTORY_GZIP_BASE64,
   INVENTORY_ITEM_COUNT,
   INVENTORY_RECORDS_LOADED,
   INVENTORY_SNAPSHOT_DATE,
@@ -10,31 +8,11 @@ import {
   INVENTORY_TOTAL_QUANTITY,
   INVENTORY_TOTAL_VALUE,
 } from '@/data/inventory-snapshot';
+import { INVENTORY_RECORDS } from '@/data/inventory-records';
 import { normalizeReference } from '@/lib/catalog/normalize';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
-
-type InventoryTuple = [string, number];
-
-function decodeInventory(): InventoryTuple[] {
-  if (!INVENTORY_GZIP_BASE64 || INVENTORY_GZIP_BASE64.length < 100) return [];
-  try {
-    const json = gunzipSync(Buffer.from(INVENTORY_GZIP_BASE64, 'base64')).toString('utf8');
-    const parsed = JSON.parse(json) as Array<[string, number]>;
-    if (!Array.isArray(parsed)) return [];
-    return parsed.filter(
-      (row): row is InventoryTuple =>
-        Array.isArray(row) &&
-        typeof row[0] === 'string' &&
-        row[0].length > 0 &&
-        typeof row[1] === 'number' &&
-        Number.isFinite(row[1])
-    );
-  } catch {
-    return [];
-  }
-}
 
 export async function GET() {
   const referenceMap = new Map<string, { partId: string; name: string; category: string }>();
@@ -50,8 +28,7 @@ export async function GET() {
     }
   }
 
-  const raw = decodeInventory();
-  const records = raw.map(([reference, quantity]) => ({
+  const records = INVENTORY_RECORDS.map(([reference, quantity]) => ({
     reference,
     quantity,
     catalogMatch: referenceMap.get(normalizeReference(reference)) ?? null,
