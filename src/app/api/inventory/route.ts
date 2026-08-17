@@ -4,6 +4,7 @@ import { CATALOG_PARTS } from '@/data/catalog';
 import {
   INVENTORY_GZIP_BASE64,
   INVENTORY_ITEM_COUNT,
+  INVENTORY_RECORDS_LOADED,
   INVENTORY_SNAPSHOT_DATE,
   INVENTORY_SOURCE,
   INVENTORY_TOTAL_QUANTITY,
@@ -22,10 +23,18 @@ function decodeInventory(): InventoryTuple[] {
   }
   try {
     const json = gunzipSync(Buffer.from(INVENTORY_GZIP_BASE64, 'base64')).toString('utf8');
-    return JSON.parse(json) as InventoryTuple[];
+    const parsed = JSON.parse(json) as Array<[string, number]>;
+    if (!Array.isArray(parsed)) return [];
+    return parsed.filter(
+      (row): row is InventoryTuple =>
+        Array.isArray(row) &&
+        typeof row[0] === 'string' &&
+        row[0].length > 0 &&
+        typeof row[1] === 'number' &&
+        Number.isFinite(row[1])
+    );
   } catch {
-    // Snapshot payload may be incomplete in this environment; return empty list
-    // while still exposing verified aggregate stats from Inventaire.pdf.
+    // Do not invent stock lines if the payload cannot be decoded.
     return [];
   }
 }
@@ -55,11 +64,14 @@ export async function GET() {
     {
       source: INVENTORY_SOURCE,
       snapshotDate: INVENTORY_SNAPSHOT_DATE,
+      // Official Inventaire.pdf aggregate totals (snapshot summary)
       itemCount: INVENTORY_ITEM_COUNT,
       totalQuantity: INVENTORY_TOTAL_QUANTITY,
       totalValue: INVENTORY_TOTAL_VALUE,
+      // Actual searchable line-level rows recovered from the source payload
       records,
       recordsLoaded: records.length,
+      recordsExpected: INVENTORY_RECORDS_LOADED,
     },
     {
       headers: {
