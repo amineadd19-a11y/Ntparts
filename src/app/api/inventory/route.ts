@@ -1,8 +1,6 @@
 import { NextResponse } from 'next/server';
-import { gunzipSync } from 'node:zlib';
 import { CATALOG_PARTS } from '@/data/catalog';
 import {
-  INVENTORY_GZIP_BASE64,
   INVENTORY_ITEM_COUNT,
   INVENTORY_RECORDS_LOADED,
   INVENTORY_SNAPSHOT_DATE,
@@ -10,6 +8,7 @@ import {
   INVENTORY_TOTAL_QUANTITY,
   INVENTORY_TOTAL_VALUE,
 } from '@/data/inventory-snapshot';
+import inventoryRecords from '@/data/inventory-records.json';
 import { normalizeReference } from '@/lib/catalog/normalize';
 
 export const dynamic = 'force-dynamic';
@@ -17,26 +16,16 @@ export const runtime = 'nodejs';
 
 type InventoryTuple = [string, number];
 
-function decodeInventory(): InventoryTuple[] {
-  if (!INVENTORY_GZIP_BASE64 || INVENTORY_GZIP_BASE64.length < 100) {
-    return [];
-  }
-  try {
-    const json = gunzipSync(Buffer.from(INVENTORY_GZIP_BASE64, 'base64')).toString('utf8');
-    const parsed = JSON.parse(json) as Array<[string, number]>;
-    if (!Array.isArray(parsed)) return [];
-    return parsed.filter(
-      (row): row is InventoryTuple =>
-        Array.isArray(row) &&
-        typeof row[0] === 'string' &&
-        row[0].length > 0 &&
-        typeof row[1] === 'number' &&
-        Number.isFinite(row[1])
-    );
-  } catch {
-    // Do not invent stock lines if the payload cannot be decoded.
-    return [];
-  }
+function loadInventory(): InventoryTuple[] {
+  if (!Array.isArray(inventoryRecords)) return [];
+  return (inventoryRecords as Array<[string, number]>).filter(
+    (row): row is InventoryTuple =>
+      Array.isArray(row) &&
+      typeof row[0] === 'string' &&
+      row[0].length > 0 &&
+      typeof row[1] === 'number' &&
+      Number.isFinite(row[1])
+  );
 }
 
 export async function GET() {
@@ -53,7 +42,7 @@ export async function GET() {
     }
   }
 
-  const raw = decodeInventory();
+  const raw = loadInventory();
   const records = raw.map(([reference, quantity]) => ({
     reference,
     quantity,
@@ -64,11 +53,9 @@ export async function GET() {
     {
       source: INVENTORY_SOURCE,
       snapshotDate: INVENTORY_SNAPSHOT_DATE,
-      // Official Inventaire.pdf aggregate totals (snapshot summary)
       itemCount: INVENTORY_ITEM_COUNT,
       totalQuantity: INVENTORY_TOTAL_QUANTITY,
       totalValue: INVENTORY_TOTAL_VALUE,
-      // Actual searchable line-level rows recovered from the source payload
       records,
       recordsLoaded: records.length,
       recordsExpected: INVENTORY_RECORDS_LOADED,
