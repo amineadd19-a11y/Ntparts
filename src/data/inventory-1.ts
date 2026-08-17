@@ -1,0 +1,1 @@
+export const INVENTORY_PART_1: readonly [string,number][]=[PLACEHOLDER]
