@@ -10,6 +10,7 @@
 import { CATALOG_PARTS } from '@/data/catalog';
 import { INVENTORY_CMUP } from '@/data/inventory-cmup';
 import { normalizeReference } from '@/lib/catalog/normalize';
+import { matchesStockReference } from '@/lib/inventory/search';
 
 export type PurchasePriceInfo = {
   purchasePrice: number;
@@ -165,28 +166,6 @@ export function enrichInventoryRecord(
 }
 
 export function recordMatchesQuery(record: EnrichedStockRecord, query: string): boolean {
-  const qRaw = query.trim();
-  if (!qRaw) return true;
-  const q = qRaw.toLowerCase();
-  const qNorm = normalizeReference(qRaw);
-  const candidates = [
-    record.reference,
-    record.normalizedReference,
-    ...(record.searchRefs ?? []),
-    record.gamme ?? '',
-    record.description ?? '',
-    record.manufacturer ?? '',
-    record.catalogMatch?.name ?? '',
-    record.catalogMatch?.category ?? '',
-    ...(record.catalogMatch?.oemReferences ?? []),
-  ];
-  for (const c of candidates) {
-    if (!c) continue;
-    const lower = c.toLowerCase();
-    const n = normalizeReference(c);
-    if (lower === q || n === qNorm) return true;
-    if (lower.includes(q)) return true;
-    if (qNorm.length >= 2 && n.includes(qNorm)) return true;
-  }
-  return false;
+  // CMUP is never a search criterion — only reference (+ verified alternates).
+  return matchesStockReference(record, query);
 }
