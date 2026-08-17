@@ -52,8 +52,13 @@ export const useAppStore = create<AppStore>()(
       setSelectedModel: (id) => set({ selectedModel: id }),
     }),
     {
-      name: 'ntparts-store-v2',
-      partialize: (s) => ({ language: s.language, favorites: s.favorites }),
+      name: 'ntparts-store-v3',
+      partialize: (s) => ({
+        language: s.language,
+        favorites: s.favorites,
+        searchHistory: s.searchHistory.slice(0, 10),
+        recentParts: s.recentParts.slice(0, 10),
+      }),
     }
   )
 );
