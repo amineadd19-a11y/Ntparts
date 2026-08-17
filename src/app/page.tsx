@@ -16,6 +16,7 @@ import {
 } from '@/data/inventory-snapshot';
 import { useAppStore } from '@/store';
 import { getTranslation } from '@/data/translations';
+import { stockLabel } from '@/data/stock-labels';
 
 type TruckManufacturer = (typeof TRUCK_MANUFACTURERS)[number];
 
@@ -37,17 +38,17 @@ export default function Home() {
             <div>
               <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-100/80 px-3 py-1 text-xs font-black uppercase tracking-[0.15em] text-emerald-800">
                 <PackageCheck size={14} aria-hidden />
-                {t('home.stockTitle')}
+                {stockLabel(language, 'title')}
               </div>
               <h2 id="stock-heading" className="text-2xl font-black tracking-tight text-slate-900 sm:text-3xl">
-                {t('home.stockSubtitle')}
+                {stockLabel(language, 'subtitle')}
               </h2>
               <p className="mt-3 max-w-xl text-sm leading-6 text-slate-600">
-                {t('home.stockDescription')}
+                {stockLabel(language, 'description')}
               </p>
               <div className="mt-5 flex flex-wrap items-center gap-3">
                 <span className="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2.5 text-sm font-bold text-white shadow-md shadow-emerald-600/25 transition group-hover:bg-emerald-500">
-                  {t('home.stockView')}
+                  {stockLabel(language, 'view')}
                   <ArrowRight size={16} aria-hidden className={language === 'ar' ? 'rotate-180' : ''} />
                 </span>
                 <span className="text-xs font-semibold text-slate-500">
@@ -58,7 +59,7 @@ export default function Home() {
             <div className="grid grid-cols-2 gap-3">
               <div className="rounded-xl border border-emerald-100 bg-white/90 p-4 shadow-sm">
                 <div className="text-[11px] font-bold uppercase tracking-wider text-emerald-700">
-                  {t('home.stockReferences')}
+                  {stockLabel(language, 'references')}
                 </div>
                 <div className="mt-1 text-2xl font-black text-slate-900 sm:text-3xl">
                   {INVENTORY_ITEM_COUNT.toLocaleString()}
@@ -66,7 +67,7 @@ export default function Home() {
               </div>
               <div className="rounded-xl border border-sky-100 bg-white/90 p-4 shadow-sm">
                 <div className="text-[11px] font-bold uppercase tracking-wider text-sky-700">
-                  {t('home.stockQuantity')}
+                  {stockLabel(language, 'quantity')}
                 </div>
                 <div className="mt-1 text-2xl font-black text-slate-900 sm:text-3xl">
                   {INVENTORY_TOTAL_QUANTITY.toLocaleString()}
