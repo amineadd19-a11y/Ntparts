@@ -1,6 +1,10 @@
 /**
  * Inventory enrichment for Stock disponible.
- * Stock and purchase cost come from Inventaire.pdf only for this stock view.
+ *
+ * STOCK QUANTITY  → Inventaire.pdf only
+ * PRIX D'ACHAT    → Inventaire.pdf → C.M.U.P. unitaire only
+ *
+ * Never uses RENPAR, Tarif, catalogue prices, or any other source for Stock purchase price.
  * Never invents prices, OEM numbers, or quantities.
  */
 import { CATALOG_PARTS } from '@/data/catalog';
@@ -11,6 +15,7 @@ export type PurchasePriceInfo = {
   purchasePrice: number;
   currency: 'MAD';
   priceSource: 'Inventaire.pdf';
+  priceField: 'C.M.U.P. unitaire';
   priceSnapshot: '2026-08-17';
 };
 
@@ -23,8 +28,6 @@ export type CatalogMatchInfo = {
   verificationStatus?: string;
   oemReferences?: string[];
   aftermarketReference?: string;
-  sourcePrice?: string;
-  sourceDocument?: string;
 };
 
 export type EnrichedStockRecord = {
@@ -38,7 +41,8 @@ export type EnrichedStockRecord = {
   purchasePrice: number | null;
   currency: string | null;
   priceSource: string | null;
-  pricePage: number | null;
+  priceField: string | null;
+  priceSnapshot: string | null;
   stockSource: string;
   stockSnapshot: string;
   catalogMatch: CatalogMatchInfo | null;
@@ -48,17 +52,23 @@ export type EnrichedStockRecord = {
 let _catalogIndex: Map<string, CatalogMatchInfo> | null = null;
 let _catalogSearchRefs: Map<string, string[]> | null = null;
 
+/** Price index from Inventaire.pdf C.M.U.P. unitaire only. */
 export function getPriceIndex(): Map<string, PurchasePriceInfo> {
   return new Map(
-    Object.entries(INVENTORY_CMUP).map(([reference, purchasePrice]) => [reference, {
-      purchasePrice,
-      currency: 'MAD',
-      priceSource: 'Inventaire.pdf',
-      priceSnapshot: '2026-08-17',
-    }])
+    Object.entries(INVENTORY_CMUP).map(([reference, purchasePrice]) => [
+      reference,
+      {
+        purchasePrice,
+        currency: 'MAD' as const,
+        priceSource: 'Inventaire.pdf' as const,
+        priceField: 'C.M.U.P. unitaire' as const,
+        priceSnapshot: '2026-08-17' as const,
+      },
+    ])
   );
 }
 
+/** Catalogue index for description / gamme / OEM search only — NEVER for purchase price. */
 export function getCatalogIndex(): Map<string, CatalogMatchInfo> {
   if (_catalogIndex) return _catalogIndex;
   const map = new Map<string, CatalogMatchInfo>();
@@ -84,8 +94,6 @@ export function getCatalogIndex(): Map<string, CatalogMatchInfo> {
       verificationStatus: part.verificationStatus,
       oemReferences: uniqueRefs.slice(0, 24),
       aftermarketReference: aftermarket,
-      sourcePrice: part.specifications?.sourcePrice,
-      sourceDocument: part.specifications?.sourceDocument,
     };
 
     for (const ref of uniqueRefs) {
@@ -93,7 +101,9 @@ export function getCatalogIndex(): Map<string, CatalogMatchInfo> {
       if (!key) continue;
       if (!map.has(key)) map.set(key, info);
       const existing = searchMap.get(key) ?? [];
-      for (const r of uniqueRefs) if (!existing.includes(r)) existing.push(r);
+      for (const r of uniqueRefs) {
+        if (!existing.includes(r)) existing.push(r);
+      }
       searchMap.set(key, existing);
     }
   }
@@ -116,8 +126,10 @@ export function enrichInventoryRecord(
 ): EnrichedStockRecord {
   const normalizedReference = normalizeReference(reference);
   const catalog = getCatalogIndex().get(normalizedReference) ?? null;
-  const price = INVENTORY_CMUP[normalizedReference];
-  const purchasePrice = Number.isFinite(price) ? price : null;
+
+  // Purchase price: Inventaire.pdf C.M.U.P. unitaire ONLY — never RENPAR / catalogue / Tarif
+  const cmup = INVENTORY_CMUP[normalizedReference];
+  const purchasePrice = typeof cmup === 'number' && Number.isFinite(cmup) ? cmup : null;
 
   const gamme = catalog?.aftermarketReference ?? null;
   const description = catalog?.name ?? null;
@@ -143,7 +155,8 @@ export function enrichInventoryRecord(
     purchasePrice,
     currency: purchasePrice === null ? null : 'MAD',
     priceSource: purchasePrice === null ? null : 'Inventaire.pdf',
-    pricePage: null,
+    priceField: purchasePrice === null ? null : 'C.M.U.P. unitaire',
+    priceSnapshot: purchasePrice === null ? null : '2026-08-17',
     stockSource,
     stockSnapshot,
     catalogMatch: catalog,
