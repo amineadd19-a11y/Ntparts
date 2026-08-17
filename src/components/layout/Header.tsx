@@ -5,12 +5,13 @@ import { Menu, X, Heart, Globe, Search, Package, PackageCheck } from 'lucide-rea
 import { useEffect, useState } from 'react';
 import { useAppStore } from '@/store';
 import { getTranslation } from '@/data/translations';
+import { stockLabel } from '@/data/stock-labels';
 
 export default function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { language, setLanguage } = useAppStore();
   const t = (key: string) => getTranslation(key, language);
-  const stockLabel = t('nav.stock');
+  const stockNavLabel = stockLabel(language, 'nav');
 
   useEffect(() => {
     document.documentElement.lang = language;
@@ -39,7 +40,7 @@ export default function Header() {
     ['/about', 'nav.about'],
   ];
 
-  const labelFor = (key: string) => t(key);
+  const labelFor = (key: string) => (key === 'nav.stock' ? stockNavLabel : t(key));
 
   return (
     <header className="sticky top-0 z-50 border-b border-slate-800/80 bg-slate-950/95 backdrop-blur-xl shadow-[0_8px_32px_rgba(0,0,0,0.25)]">
@@ -73,7 +74,7 @@ export default function Header() {
               {languages.map((lang) => <option key={lang.code} value={lang.code} className="bg-slate-900 text-slate-200">{lang.label}</option>)}
             </select>
           </div>
-          <Link href="/stock" className="hidden items-center gap-2 rounded-lg bg-emerald-500 px-4 py-2 text-sm font-bold text-slate-950 shadow-lg shadow-emerald-500/20 transition hover:-translate-y-0.5 hover:bg-emerald-400 lg:flex"><PackageCheck size={15} /> {stockLabel}</Link>
+          <Link href="/stock" className="hidden items-center gap-2 rounded-lg bg-emerald-500 px-4 py-2 text-sm font-bold text-slate-950 shadow-lg shadow-emerald-500/20 transition hover:-translate-y-0.5 hover:bg-emerald-400 lg:flex"><PackageCheck size={15} /> {stockNavLabel}</Link>
           <button className="flex h-9 w-9 items-center justify-center rounded-lg border border-slate-700 bg-slate-900 text-slate-200 md:hidden" onClick={() => setMobileMenuOpen(!mobileMenuOpen)} aria-label="Menu">{mobileMenuOpen ? <X size={20} /> : <Menu size={20} />}</button>
         </div>
       </div>
