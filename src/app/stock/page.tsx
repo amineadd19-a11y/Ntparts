@@ -5,7 +5,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { PackageCheck, Search, RefreshCw, ExternalLink } from 'lucide-react';
 
 type RecordItem = { reference: string; quantity: number; catalogMatch: { partId: string; name: string; category: string } | null };
-type InventoryResponse = { source: string; snapshotDate: string; itemCount: number; totalQuantity: number; totalValue: number; records: RecordItem[] };
+type InventoryResponse = { source: string; snapshotDate: string; itemCount: number; totalQuantity: number; totalValue: number; records: RecordItem[]; recordsLoaded?: number };
 
 export default function StockPage() {
   const [data, setData] = useState<InventoryResponse | null>(null);
@@ -78,8 +78,14 @@ export default function StockPage() {
             {!loading && records.length === 0 && <div className="p-12 text-center text-sm text-slate-500">No stock line matches your search.</div>}
           </div>
 
+          {(data.recordsLoaded === 0 || data.records.length === 0) && (
+            <div className="mb-6 rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm leading-6 text-slate-600">
+              Aggregate inventory figures above come from <strong>{data.source}</strong> (snapshot {data.snapshotDate}).
+              Line-level stock rows are not available in this build environment. No fabricated references or quantities are shown.
+            </div>
+          )}
           <div className="mt-6 rounded-2xl border border-amber-100 bg-amber-50 p-4 text-sm leading-6 text-amber-900">
-            Source: <strong>{data.source}</strong>, snapshot {data.snapshotDate}. Stock availability is an inventory snapshot, not a live warehouse reservation. Catalogue mapping does not by itself prove vehicle fitment.
+            Source: <strong>{data.source}</strong>, snapshot {data.snapshotDate}. Stock availability is an inventory snapshot, not a live warehouse reservation. Catalogue mapping does not by itself prove vehicle fitment. Missing values are marked as not verified — no data is invented.
           </div>
         </>
       )}
