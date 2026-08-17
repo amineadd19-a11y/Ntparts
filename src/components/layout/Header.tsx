@@ -10,7 +10,7 @@ export default function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { language, setLanguage } = useAppStore();
   const t = (key: string) => getTranslation(key, language);
-  const stockLabel = language === 'fr' ? 'Stock disponible' : language === 'ar' ? 'المتوفر حالياً' : 'Available Now';
+  const stockLabel = t('nav.stock');
 
   useEffect(() => {
     document.documentElement.lang = language;
@@ -39,7 +39,7 @@ export default function Header() {
     ['/about', 'nav.about'],
   ];
 
-  const labelFor = (key: string) => (key === 'nav.stock' ? stockLabel : t(key));
+  const labelFor = (key: string) => t(key);
 
   return (
     <header className="sticky top-0 z-50 border-b border-slate-800/80 bg-slate-950/95 backdrop-blur-xl shadow-[0_8px_32px_rgba(0,0,0,0.25)]">
