@@ -27,11 +27,21 @@ export default function StockPage() {
   useEffect(() => { void load(); }, []);
 
   const records = useMemo(() => {
-    const q = query.trim().toLowerCase();
+    const qRaw = query.trim();
+    const q = qRaw.toLowerCase();
+    const qNorm = qRaw.toLowerCase().replace(/[\s\-\/._]/g, '');
     return (data?.records ?? []).filter((item) => {
       if (matchedOnly && !item.catalogMatch) return false;
       if (!q) return true;
-      return [item.reference, item.catalogMatch?.name ?? '', item.catalogMatch?.category ?? ''].join(' ').toLowerCase().includes(q);
+      const ref = item.reference ?? '';
+      const refLower = ref.toLowerCase();
+      const refNorm = refLower.replace(/[\s\-\/._]/g, '');
+      const name = (item.catalogMatch?.name ?? '').toLowerCase();
+      const category = (item.catalogMatch?.category ?? '').toLowerCase();
+      if (refLower === q || refNorm === qNorm) return true;
+      if (refLower.includes(q) || (qNorm.length >= 2 && refNorm.includes(qNorm))) return true;
+      if (name.includes(q) || category.includes(q)) return true;
+      return false;
     });
   }, [data, matchedOnly, query]);
 
@@ -41,7 +51,7 @@ export default function StockPage() {
         <div>
           <p className="text-xs font-black uppercase tracking-[0.2em] text-emerald-600">NTParts Stock</p>
           <h1 className="mt-2 text-3xl font-black tracking-tight text-slate-950 sm:text-4xl">Available Now</h1>
-          <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-500">Current stock snapshot imported from the supplied Sage inventory. Use the reference to locate the item in the catalogue when a match exists.</p>
+          <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-500">Current stock snapshot imported from the supplied Sage inventory. Search by reference (exact, partial, or normalized). Use catalogue links when a match exists.</p>
         </div>
         <button onClick={() => void load()} className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-bold text-slate-700 shadow-sm hover:border-emerald-300 hover:text-emerald-700">
           <RefreshCw size={16} className={loading ? 'animate-spin' : ''} /> Refresh
@@ -75,13 +85,26 @@ export default function StockPage() {
               </div>
             ))}
             {records.length > 300 && <p className="border-t border-slate-100 p-4 text-center text-xs text-slate-500">Showing 300 of {records.length.toLocaleString()} matching stock lines. Refine the search to narrow the list.</p>}
-            {!loading && records.length === 0 && <div className="p-12 text-center text-sm text-slate-500">No stock line matches your search.</div>}
+            {!loading && records.length === 0 && (
+              <div className="p-12 text-center text-sm text-slate-500">
+                {query.trim()
+                  ? <>No stock reference matches <span className="font-mono font-semibold text-slate-700">&quot;{query.trim()}&quot;</span>. Try another reference, or clear the search to browse available lines.</>
+                  : <>No stock lines are loaded from the inventory snapshot.</>}
+              </div>
+            )}
           </div>
 
-          {(data.recordsLoaded === 0 || data.records.length === 0) && (
+          {(data.recordsLoaded === 0 && !query.trim()) && (
             <div className="mb-6 rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm leading-6 text-slate-600">
               Aggregate inventory figures above come from <strong>{data.source}</strong> (snapshot {data.snapshotDate}).
-              Line-level stock rows are not available in this build environment. No fabricated references or quantities are shown.
+              Line-level stock rows could not be recovered from the snapshot payload. No fabricated references or quantities are shown.
+            </div>
+          )}
+          {typeof data.recordsLoaded === 'number' && data.recordsLoaded > 0 && data.recordsLoaded < data.itemCount && (
+            <div className="mb-6 rounded-2xl border border-sky-100 bg-sky-50 p-4 text-sm leading-6 text-sky-900">
+              Showing <strong>{data.recordsLoaded.toLocaleString()}</strong> searchable stock lines recovered from <strong>{data.source}</strong>.
+              Official snapshot totals remain <strong>{data.itemCount.toLocaleString()}</strong> references / <strong>{data.totalQuantity.toLocaleString()}</strong> units.
+              Unrecovered lines are omitted rather than invented.
             </div>
           )}
           <div className="mt-6 rounded-2xl border border-amber-100 bg-amber-50 p-4 text-sm leading-6 text-amber-900">
