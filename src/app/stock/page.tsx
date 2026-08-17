@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { useAppStore } from '@/store';
 import { stockLabel, type StockLabelKey } from '@/data/stock-labels';
+import { matchesStockReference } from '@/lib/inventory/search';
 
 type CatalogMatch = {
   partId: string;
@@ -25,8 +26,6 @@ type CatalogMatch = {
   verificationStatus?: string;
   oemReferences?: string[];
   aftermarketReference?: string;
-  sourcePrice?: string;
-  sourceDocument?: string;
 };
 
 type RecordItem = {
@@ -40,7 +39,8 @@ type RecordItem = {
   purchasePrice: number | null;
   currency: string | null;
   priceSource: string | null;
-  pricePage: number | null;
+  priceField: string | null;
+  priceSnapshot: string | null;
   stockSource: string;
   stockSnapshot: string;
   catalogMatch: CatalogMatch | null;
@@ -101,36 +101,10 @@ export default function StockPage() {
 
   const records = useMemo(() => {
     const list = data?.records ?? [];
-    const qRaw = debouncedQuery.trim();
-    const q = qRaw.toLowerCase();
-    const qNorm = qRaw.toLowerCase().replace(/[\s\-\/._]/g, '');
-
-    return list.filter((item) => {
-      if (matchedOnly && !item.catalogMatch) return false;
-      if (!q) return true;
-
-      const candidates = [
-        item.reference,
-        item.normalizedReference,
-        ...(item.searchRefs ?? []),
-        item.gamme ?? '',
-        item.description ?? '',
-        item.manufacturer ?? '',
-        item.catalogMatch?.name ?? '',
-        item.catalogMatch?.category ?? '',
-        ...(item.catalogMatch?.oemReferences ?? []),
-      ];
-
-      for (const c of candidates) {
-        if (!c) continue;
-        const lower = c.toLowerCase();
-        const n = lower.replace(/[\s\-\/._]/g, '');
-        if (lower === q || n === qNorm) return true;
-        if (lower.includes(q)) return true;
-        if (qNorm.length >= 2 && n.includes(qNorm)) return true;
-      }
-      return false;
-    });
+    // Catalogue-match toggle only — never filter by CMUP/purchasePrice.
+    const base = matchedOnly ? list.filter((item) => item.catalogMatch) : list;
+    // Reference search is independent of CMUP. Missing price still shows the row.
+    return base.filter((item) => matchesStockReference(item, debouncedQuery));
   }, [data, matchedOnly, debouncedQuery]);
 
   const shown = records.slice(0, 300);
@@ -379,13 +353,15 @@ export default function StockPage() {
                   <div className="rounded-xl bg-slate-50 p-3">
                     <dt className="text-[10px] font-bold uppercase text-slate-400">{L('priceSource')}</dt>
                     <dd className="mt-0.5 text-sm font-semibold text-slate-800">
-                      {selected.priceSource ?? L('notAvailable')}
+                      {selected.priceSource
+                        ? `${selected.priceSource}${selected.priceField ? ` · ${selected.priceField}` : ''}`
+                        : L('notAvailable')}
                     </dd>
                   </div>
                   <div className="rounded-xl bg-slate-50 p-3">
-                    <dt className="text-[10px] font-bold uppercase text-slate-400">{L('pricePage')}</dt>
+                    <dt className="text-[10px] font-bold uppercase text-slate-400">{L('date')}</dt>
                     <dd className="mt-0.5 font-semibold text-slate-800">
-                      {selected.pricePage != null ? String(selected.pricePage) : L('notAvailable')}
+                      {selected.priceSnapshot ?? L('notAvailable')}
                     </dd>
                   </div>
                 </dl>
