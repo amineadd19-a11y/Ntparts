@@ -1,8 +1,15 @@
 import type { Metadata, Viewport } from 'next';
 import React, { ReactNode } from 'react';
+import { Inter } from 'next/font/google';
 import '@/styles/globals.css';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
+
+const inter = Inter({
+  subsets: ['latin', 'latin-ext'],
+  display: 'swap',
+  variable: '--font-inter',
+});
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://ntparts.vercel.app';
 
@@ -13,7 +20,7 @@ export const metadata: Metadata = {
     template: '%s | NTParts',
   },
   description:
-    'Search OEM references, part numbers and compatibility for major truck manufacturers. Industrial catalogue built for workshops and parts specialists.',
+    'Search OEM references, part numbers and compatibility for major truck manufacturers. Industrial catalogue built for workshops and parts specialists. Available stock research from verified inventory snapshots.',
   keywords: [
     'truck parts',
     'OEM references',
@@ -29,6 +36,8 @@ export const metadata: Metadata = {
     'Freightliner',
     'Kenworth',
     'cross reference',
+    'stock disponible',
+    'C.M.U.P.',
   ],
   authors: [{ name: 'NTParts' }],
   openGraph: {
@@ -38,7 +47,7 @@ export const metadata: Metadata = {
     siteName: 'NTParts',
     title: 'NTParts — Professional truck parts catalogue',
     description:
-      'Find the right part. OEM references, cross-references and fitment data for European and North American trucks.',
+      'Find the right part. OEM references, cross-references, available stock and fitment data for European and North American trucks.',
   },
   twitter: {
     card: 'summary_large_image',
@@ -57,13 +66,13 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
-  themeColor: '#0f172a',
+  themeColor: '#0b1220',
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="en" dir="ltr" suppressHydrationWarning>
-      <body className="bg-slate-100 text-slate-900 antialiased">
+    <html lang="en" dir="ltr" suppressHydrationWarning className={inter.variable}>
+      <body className={`${inter.className} bg-slate-100 text-navy-900 antialiased`}>
         <Header />
         {children}
         <Footer />
