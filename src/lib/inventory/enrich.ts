@@ -1,24 +1,17 @@
 /**
- * Inventory enrichment: join stock lines with catalogue + verified RENPAR purchase prices.
+ * Inventory enrichment for Stock disponible.
+ * Stock and purchase cost come from Inventaire.pdf only for this stock view.
  * Never invents prices, OEM numbers, or quantities.
  */
 import { CATALOG_PARTS } from '@/data/catalog';
-import { RENPAR_ROWS_1 } from '@/data/renpar-data-1';
-import { RENPAR_ROWS_2 } from '@/data/renpar-data-2';
-import { RENPAR_ROWS_3 } from '@/data/renpar-data-3';
-import { RENPAR_ROWS_4 } from '@/data/renpar-data-4';
-import type { RenparRow } from '@/data/renpar-types';
+import { INVENTORY_CMUP } from '@/data/inventory-cmup';
 import { normalizeReference } from '@/lib/catalog/normalize';
 
 export type PurchasePriceInfo = {
   purchasePrice: number;
   currency: 'MAD';
-  priceSource: string;
-  pricePage: number;
-  gamme: string;
-  aftermarket: string;
-  description: string;
-  oems: string[];
+  priceSource: 'Inventaire.pdf';
+  priceSnapshot: '2026-08-17';
 };
 
 export type CatalogMatchInfo = {
@@ -49,54 +42,23 @@ export type EnrichedStockRecord = {
   stockSource: string;
   stockSnapshot: string;
   catalogMatch: CatalogMatchInfo | null;
-  /** Verified alternate references usable for search (no invented links). */
   searchRefs: string[];
 };
 
-const RENPAR_ROWS: RenparRow[] = [
-  ...RENPAR_ROWS_1,
-  ...RENPAR_ROWS_2,
-  ...RENPAR_ROWS_3,
-  ...RENPAR_ROWS_4,
-];
-
-let _priceIndex: Map<string, PurchasePriceInfo> | null = null;
 let _catalogIndex: Map<string, CatalogMatchInfo> | null = null;
 let _catalogSearchRefs: Map<string, string[]> | null = null;
 
-function parsePrice(raw: string): number | null {
-  const n = Number.parseFloat(String(raw).replace(',', '.').trim());
-  return Number.isFinite(n) && n >= 0 ? n : null;
-}
-
-/** Build normalized-ref → purchase price from RENPAR catalogue only (verified source). */
 export function getPriceIndex(): Map<string, PurchasePriceInfo> {
-  if (_priceIndex) return _priceIndex;
-  const map = new Map<string, PurchasePriceInfo>();
-  for (const [gamme, aftermarket, description, oems, price, page] of RENPAR_ROWS) {
-    const purchasePrice = parsePrice(price);
-    if (purchasePrice === null) continue;
-    const oemList = oems.split('|').map((x) => x.trim()).filter(Boolean);
-    const info: PurchasePriceInfo = {
+  return new Map(
+    Object.entries(INVENTORY_CMUP).map(([reference, purchasePrice]) => [reference, {
       purchasePrice,
       currency: 'MAD',
-      priceSource: 'RENPAR MOIS 11.pdf',
-      pricePage: page,
-      gamme,
-      aftermarket,
-      description: description.replace(/\s+/g, ' ').trim(),
-      oems: oemList,
-    };
-    for (const cand of [gamme, aftermarket, ...oemList]) {
-      const key = normalizeReference(cand);
-      if (key && !map.has(key)) map.set(key, info);
-    }
-  }
-  _priceIndex = map;
-  return map;
+      priceSource: 'Inventaire.pdf',
+      priceSnapshot: '2026-08-17',
+    }])
+  );
 }
 
-/** Build normalized-ref → catalogue part summary (OEM + aftermarket refs). */
 export function getCatalogIndex(): Map<string, CatalogMatchInfo> {
   if (_catalogIndex) return _catalogIndex;
   const map = new Map<string, CatalogMatchInfo>();
@@ -131,9 +93,7 @@ export function getCatalogIndex(): Map<string, CatalogMatchInfo> {
       if (!key) continue;
       if (!map.has(key)) map.set(key, info);
       const existing = searchMap.get(key) ?? [];
-      for (const r of uniqueRefs) {
-        if (!existing.includes(r)) existing.push(r);
-      }
+      for (const r of uniqueRefs) if (!existing.includes(r)) existing.push(r);
       searchMap.set(key, existing);
     }
   }
@@ -156,34 +116,11 @@ export function enrichInventoryRecord(
 ): EnrichedStockRecord {
   const normalizedReference = normalizeReference(reference);
   const catalog = getCatalogIndex().get(normalizedReference) ?? null;
-  const priceInfo = getPriceIndex().get(normalizedReference) ?? null;
+  const price = INVENTORY_CMUP[normalizedReference];
+  const purchasePrice = Number.isFinite(price) ? price : null;
 
-  let purchasePrice: number | null = null;
-  let currency: string | null = null;
-  let priceSource: string | null = null;
-  let pricePage: number | null = null;
-
-  if (catalog?.sourcePrice) {
-    const p = parsePrice(catalog.sourcePrice);
-    if (p !== null) {
-      purchasePrice = p;
-      currency = 'MAD';
-      priceSource = catalog.sourceDocument ?? 'catalogue';
-    }
-  }
-  if (purchasePrice === null && priceInfo) {
-    purchasePrice = priceInfo.purchasePrice;
-    currency = priceInfo.currency;
-    priceSource = priceInfo.priceSource;
-    pricePage = priceInfo.pricePage;
-  }
-
-  const gamme =
-    priceInfo?.gamme ??
-    catalog?.aftermarketReference ??
-    null;
-
-  const description = catalog?.name ?? priceInfo?.description ?? null;
+  const gamme = catalog?.aftermarketReference ?? null;
+  const description = catalog?.name ?? null;
   const manufacturer = catalog?.manufacturer ?? null;
 
   const searchRefs: string[] = [];
@@ -194,11 +131,6 @@ export function enrichInventoryRecord(
   };
   push(reference);
   for (const r of getCatalogSearchRefs().get(normalizedReference) ?? []) push(r);
-  if (priceInfo) {
-    push(priceInfo.gamme);
-    push(priceInfo.aftermarket);
-    for (const o of priceInfo.oems) push(o);
-  }
 
   return {
     reference,
@@ -209,9 +141,9 @@ export function enrichInventoryRecord(
     description,
     manufacturer,
     purchasePrice,
-    currency,
-    priceSource,
-    pricePage,
+    currency: purchasePrice === null ? null : 'MAD',
+    priceSource: purchasePrice === null ? null : 'Inventaire.pdf',
+    pricePage: null,
     stockSource,
     stockSnapshot,
     catalogMatch: catalog,
@@ -219,13 +151,11 @@ export function enrichInventoryRecord(
   };
 }
 
-/** Match query against a stock record (exact / normalized / partial / alternate refs / gamme). */
 export function recordMatchesQuery(record: EnrichedStockRecord, query: string): boolean {
   const qRaw = query.trim();
   if (!qRaw) return true;
   const q = qRaw.toLowerCase();
   const qNorm = normalizeReference(qRaw);
-
   const candidates = [
     record.reference,
     record.normalizedReference,
@@ -237,7 +167,6 @@ export function recordMatchesQuery(record: EnrichedStockRecord, query: string): 
     record.catalogMatch?.category ?? '',
     ...(record.catalogMatch?.oemReferences ?? []),
   ];
-
   for (const c of candidates) {
     if (!c) continue;
     const lower = c.toLowerCase();
