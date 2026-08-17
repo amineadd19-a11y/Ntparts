@@ -8,7 +8,8 @@ import {
   INVENTORY_TOTAL_QUANTITY,
   INVENTORY_TOTAL_VALUE,
 } from '@/data/inventory-snapshot';
-import inventoryRecords from '@/data/inventory-records.json';
+import inventoryRecords1 from '@/data/inventory-records-1.json';
+import inventoryRecords2 from '@/data/inventory-records-2.json';
 import { normalizeReference } from '@/lib/catalog/normalize';
 
 export const dynamic = 'force-dynamic';
@@ -17,15 +18,23 @@ export const runtime = 'nodejs';
 type InventoryTuple = [string, number];
 
 function loadInventory(): InventoryTuple[] {
-  if (!Array.isArray(inventoryRecords)) return [];
-  return (inventoryRecords as Array<[string, number]>).filter(
-    (row): row is InventoryTuple =>
-      Array.isArray(row) &&
-      typeof row[0] === 'string' &&
-      row[0].length > 0 &&
-      typeof row[1] === 'number' &&
-      Number.isFinite(row[1])
-  );
+  const parts = [inventoryRecords1, inventoryRecords2];
+  const out: InventoryTuple[] = [];
+  for (const part of parts) {
+    if (!Array.isArray(part)) continue;
+    for (const row of part as Array<[string, number]>) {
+      if (
+        Array.isArray(row) &&
+        typeof row[0] === 'string' &&
+        row[0].length > 0 &&
+        typeof row[1] === 'number' &&
+        Number.isFinite(row[1])
+      ) {
+        out.push([row[0], row[1]]);
+      }
+    }
+  }
+  return out;
 }
 
 export async function GET() {
