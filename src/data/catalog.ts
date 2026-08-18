@@ -2,6 +2,7 @@ import type { Part } from '@/types';
 import * as CORE from '@/data/catalog-core';
 import { RENPAR_CATALOG_PARTS } from '@/data/catalog-renpar';
 import { SOURCE_BACKED_PARTS } from '@/data/catalog-source-backed';
+import { imagesForPartRefs } from '@/data/catalog-images';
 import { deduplicateAndMerge } from '@/lib/catalog/pipeline';
 import { normalizeReference } from '@/lib/catalog/normalize';
 
@@ -42,26 +43,37 @@ const OEM_REFERENCE_REGISTRY = [
   { manufacturerId: 'volvo-trucks', partTemplateSlug: 'mirror', referenceNumber: '21360516', modelIds: [], sourceUrl: 'https://www.sampa.com/', evidence: 'official' },
 ];
 
+/** Attach real manufacturer photos when refs match known official assets. */
+function withRealPhotos(part: Part): Part {
+  if (part.images?.length) return part;
+  const refs = [
+    ...(part.oemReferences ?? []).flatMap((oem) => [oem.referenceNumber, ...(oem.alternateNumbers ?? [])]),
+    part.specifications?.aftermarketReference ?? '',
+    part.name,
+  ].filter(Boolean);
+  const images = imagesForPartRefs(part.id, part.name, refs, part.category);
+  return images.length ? { ...part, images: images as Part['images'] } : { ...part, images: [] };
+}
+
 /**
  * REAL CATALOGUE ONLY
  * - Core parts that carry at least one source-backed OEM reference
  * - SOURCE_BACKED_PARTS (public manufacturer / distributor evidence)
  * - RENPAR_CATALOG_PARTS (supplied catalogue PDF rows)
  *
- * Template expansion rows without OEM numbers are intentionally excluded.
- * No demo / placeholder / synthetic part records are published.
+ * Photos: official manufacturer CDN only (e.g. MANN-FILTER). No stock images.
  */
 const corePartsWithOem: Part[] = CORE.CATALOG_PARTS.filter(
   (part) => (part.oemReferences?.length ?? 0) > 0,
-).map((part) => ({
-  ...part,
-  images: (part.images ?? []).filter((image) => image.source?.includes('MANN-FILTER')),
-}));
+).map(withRealPhotos);
+
+const sourceBackedWithPhotos = SOURCE_BACKED_PARTS.map(withRealPhotos);
+const renparWithPhotos = RENPAR_CATALOG_PARTS.map(withRealPhotos);
 
 const merged = deduplicateAndMerge([
   ...corePartsWithOem,
-  ...SOURCE_BACKED_PARTS,
-  ...RENPAR_CATALOG_PARTS,
+  ...sourceBackedWithPhotos,
+  ...renparWithPhotos,
 ]);
 
 export const CATALOG_PARTS: Part[] = merged.parts;
@@ -95,6 +107,7 @@ export const CATALOG_STATS = {
       count + part.oemReferences.filter((ref) => ref.verificationStatus === 'verified').length,
     0,
   ),
+  partsWithRealPhotos: CATALOG_PARTS.filter((part) => (part.images?.length ?? 0) > 0).length,
   sourceBackedRecords: SOURCE_BACKED_PARTS.length,
   renparRecords: RENPAR_CATALOG_PARTS.length,
   coreWithOem: corePartsWithOem.length,
@@ -102,6 +115,7 @@ export const CATALOG_STATS = {
   mergeOutput: CATALOG_MERGE_STATS.output,
   mergeCollapsed: CATALOG_MERGE_STATS.merged,
   policy: 'real-catalogue-only' as const,
+  imagePolicy: 'real-manufacturer-photos-only' as const,
 };
 
 const list = (value?: string): string[] =>

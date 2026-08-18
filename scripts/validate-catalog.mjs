@@ -3,6 +3,7 @@ import { URL } from 'node:url';
 
 const file = fs.readFileSync(new URL('../src/data/catalog.ts', import.meta.url), 'utf8');
 const coreFile = fs.readFileSync(new URL('../src/data/catalog-core.ts', import.meta.url), 'utf8');
+const imagesFile = fs.readFileSync(new URL('../src/data/catalog-images.ts', import.meta.url), 'utf8');
 const errors = [];
 const warnings = [];
 
@@ -43,6 +44,16 @@ for (const pattern of [
     errors.push(`Synthetic placeholder pattern detected: ${pattern}`);
 }
 
+// Real product photos only — ban stock photo hosts
+for (const host of ['images.unsplash.com', 'images.pexels.com', 'cdn.pixabay.com', 'via.placeholder.com']) {
+  if (imagesFile.includes(host) || coreFile.includes(host) || file.includes(host)) {
+    errors.push(`Stock/placeholder image host not allowed: ${host}`);
+  }
+}
+if (!/MANN-FILTER \/ mann-filter\.com/.test(imagesFile)) {
+  errors.push('Official MANN-FILTER photo attribution missing from catalog-images.ts');
+}
+
 const refs = [
   ...registryBody.matchAll(
     /manufacturerId:\s*'([^']+)'[\s\S]*?partTemplateSlug:\s*'([^']+)'[\s\S]*?referenceNumber:\s*'([^']+)'[\s\S]*?modelIds:\s*\[([^\]]*)\]/g,
@@ -66,7 +77,6 @@ for (const item of refs) {
   seen.add(key);
 }
 
-// Pipeline presence
 if (!fs.existsSync(new URL('../src/lib/catalog/pipeline.ts', import.meta.url))) {
   errors.push('Catalogue merge pipeline module missing (src/lib/catalog/pipeline.ts).');
 }
@@ -90,6 +100,7 @@ console.log(`- ${sourceUrls} OEM source URLs`);
 console.log(`- ${crossRefs} cross-reference records`);
 console.log(`- ${unscoped} OEM records without proven exact fitment (not treated as compatibility)`);
 console.log('- Synthetic placeholder patterns: none detected');
+console.log('- Image policy: real manufacturer photos only (no stock hosts)');
 console.log('- Fitment policy: OEMs remain source-listed unless exact application is explicitly proven');
 console.log('- Merge pipeline + normalize modules: present');
 for (const warning of warnings) console.warn(`WARN: ${warning}`);
