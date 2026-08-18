@@ -1,12 +1,14 @@
 import type { Part } from '@/types';
 import * as CORE from '@/data/catalog-core';
-import { CATALOG_EXPANSION } from '@/data/catalog-expansion';
 import { RENPAR_CATALOG_PARTS } from '@/data/catalog-renpar';
 import { SOURCE_BACKED_PARTS } from '@/data/catalog-source-backed';
 import { deduplicateAndMerge } from '@/lib/catalog/pipeline';
 import { normalizeReference } from '@/lib/catalog/normalize';
 
-/** Source-backed OEM registry used by the catalog validation gate. Empty modelIds means exact fitment is not proven. */
+/**
+ * Source-backed OEM registry used by the catalog validation gate.
+ * Empty modelIds means exact fitment is not proven.
+ */
 const OEM_REFERENCE_REGISTRY = [
   { manufacturerId: 'volvo-trucks', partTemplateSlug: 'oil-filter', referenceNumber: '21707134', modelIds: [], sourceUrl: 'https://www.mann-filter.com/en/catalog/search-results/product.html/w11025_mann-filter.html', evidence: 'parts-catalog' },
   { manufacturerId: 'renault-trucks', partTemplateSlug: 'oil-filter', referenceNumber: '5001846641', modelIds: [], sourceUrl: 'https://www.mann-filter.com/en/catalog/search-results/product.html/w11025_mann-filter.html', evidence: 'parts-catalog' },
@@ -40,17 +42,26 @@ const OEM_REFERENCE_REGISTRY = [
   { manufacturerId: 'volvo-trucks', partTemplateSlug: 'mirror', referenceNumber: '21360516', modelIds: [], sourceUrl: 'https://www.sampa.com/', evidence: 'official' },
 ];
 
-const coreParts: Part[] = CORE.CATALOG_PARTS.map((part) => ({
+/**
+ * REAL CATALOGUE ONLY
+ * - Core parts that carry at least one source-backed OEM reference
+ * - SOURCE_BACKED_PARTS (public manufacturer / distributor evidence)
+ * - RENPAR_CATALOG_PARTS (supplied catalogue PDF rows)
+ *
+ * Template expansion rows without OEM numbers are intentionally excluded.
+ * No demo / placeholder / synthetic part records are published.
+ */
+const corePartsWithOem: Part[] = CORE.CATALOG_PARTS.filter(
+  (part) => (part.oemReferences?.length ?? 0) > 0,
+).map((part) => ({
   ...part,
   images: (part.images ?? []).filter((image) => image.source?.includes('MANN-FILTER')),
 }));
 
-/** Merge all catalogue sources through the shared dedup/merge pipeline. */
 const merged = deduplicateAndMerge([
-  ...coreParts,
-  ...CATALOG_EXPANSION,
-  ...RENPAR_CATALOG_PARTS,
+  ...corePartsWithOem,
   ...SOURCE_BACKED_PARTS,
+  ...RENPAR_CATALOG_PARTS,
 ]);
 
 export const CATALOG_PARTS: Part[] = merged.parts;
@@ -74,9 +85,7 @@ export const CATALOG_AFTERMARKET_BRANDS: string[] = Array.from(
 export const CATALOG_STATS = {
   manufacturers: CATALOG_MANUFACTURERS.length,
   models: CATALOG_MODELS.length,
-  partTemplates:
-    CORE.CATALOG_STATS.partTemplates +
-    CATALOG_EXPANSION.length / Math.max(CATALOG_MODELS.length, 1),
+  partTemplates: CORE.CATALOG_STATS.partTemplates,
   parts: CATALOG_PARTS.length,
   categories: CATALOG_CATEGORIES.length,
   systems: CATALOG_SYSTEMS.length,
@@ -87,9 +96,12 @@ export const CATALOG_STATS = {
     0,
   ),
   sourceBackedRecords: SOURCE_BACKED_PARTS.length,
+  renparRecords: RENPAR_CATALOG_PARTS.length,
+  coreWithOem: corePartsWithOem.length,
   mergeInput: CATALOG_MERGE_STATS.input,
   mergeOutput: CATALOG_MERGE_STATS.output,
   mergeCollapsed: CATALOG_MERGE_STATS.merged,
+  policy: 'real-catalogue-only' as const,
 };
 
 const list = (value?: string): string[] =>
@@ -191,4 +203,4 @@ export function getVerifiedOEMParts(): Part[] {
   );
 }
 
-export { CATALOG_EXPANSION, RENPAR_CATALOG_PARTS, SOURCE_BACKED_PARTS, OEM_REFERENCE_REGISTRY };
+export { RENPAR_CATALOG_PARTS, SOURCE_BACKED_PARTS, OEM_REFERENCE_REGISTRY };
