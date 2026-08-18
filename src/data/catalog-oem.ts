@@ -114,15 +114,26 @@ export const VERIFIED_OEM_REFERENCES: Array<{
     alternateNumbers: ['1889543'],
     sourceUrl: 'https://www.scania.com/',
   },
+  // Concrete cross-refs only — no bare brand tokens
   {
     manufacturerId: 'man-truck-bus', partTemplateSlug: 'brake-pad', referenceNumber: 'K059965K50',
-    alternateNumbers: ['TEXTAR'],
+    alternateNumbers: ['81.50820-6070', '81.50820-6061', 'SP1037195', '5021204049'],
     sourceUrl: 'https://www.knorr-bremse.com/',
+  },
+  {
+    manufacturerId: 'mercedes-benz-trucks', partTemplateSlug: 'brake-pad', referenceNumber: 'K046771K50',
+    alternateNumbers: ['A0064201020', 'A0044206020', '81.50820-6030'],
+    sourceUrl: 'https://www.befa.gr/wp-content/uploads/2021/03/ProTecS%C2%AE-Brake-Pad-Range.pdf',
   },
   {
     manufacturerId: 'daf-trucks', partTemplateSlug: 'brake-chamber', referenceNumber: '1387439',
     alternateNumbers: ['1726138', 'KNORR K034248'],
     sourceUrl: 'https://www.ebs.co.uk/',
+  },
+  {
+    manufacturerId: 'daf-trucks', partTemplateSlug: 'air-dryer', referenceNumber: '0699387',
+    alternateNumbers: ['4324102227', '1518683', 'A0004293795', '1932688', '5000295421'],
+    sourceUrl: 'https://www.rexbo.co.uk/wabco/air-dryer-cartridge-compressed-air-system-4324102227',
   },
 
   // —— ELRING ——
@@ -169,7 +180,7 @@ export const VERIFIED_OEM_REFERENCES: Array<{
     sourceUrl: 'https://www.elring.com/',
   },
 
-  // —— SAMPA sensors ——
+  // —— SAMPA ——
   {
     manufacturerId: 'volvo-trucks', partTemplateSlug: 'mirror', referenceNumber: '21360516',
     alternateNumbers: ['20723666', 'SAMPA 096.333', 'RENAULT 7421360516'],

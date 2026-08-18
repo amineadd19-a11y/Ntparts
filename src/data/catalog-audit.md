@@ -1,14 +1,20 @@
-# Catalog audit — 2026-08-15
-
-## What was fixed
-1. **Wrong COJALI type**: Volvo `1607728` was under *brake-valve*; COJALI `2214400` is an **air suspension valve**. Moved to `air-spring` / suspension mapping.
-2. **SAMPA 033.141**: Official sampa.com product page lists OEM **Volvo 22480372 / 20976003**, MANN WDK11102*, BOSCH F026402017 — not the previous guessed link to 20924422 alone.
-3. **Bare brand tags**: Removed lone alternates like only `EBS` / `FEBI` without a concrete part number where possible.
-4. **Dedup**: `uniqueRefs()` keeps one of `W 11 025` / `W11025` style duplicates.
-
-## What cannot be done automatically
-- **AutoDoc** (autodoc.*): Cloudflare-protected retail site; full catalogue scrape is not allowed and not technical feasible as bulk import.
-- **Full SAMPA catalogue**: tens of thousands of SKUs; we index **verified public product pages** only.
+# Catalog audit — 2026-08-18
 
 ## Policy
-Only public, attributable cross-references. Always verify fitment before order.
+**Real catalogue only.** No demo, placeholder, or synthetic part numbers are published.
+
+## Live sources
+1. Core OEM registry (`catalog-oem.ts`) — public manufacturer/distributor URLs
+2. Source-backed imports (`catalog-source-backed.ts`) — MANN, Knorr-Bremse, WABCO public docs
+3. RENPAR rows (`catalog-renpar.ts`) — supplied commercial catalogue PDF
+
+## 2026-08-18 changes
+- Removed template expansion rows from the live merge
+- Filtered core parts to those with at least one OEM reference
+- Removed bare brand token `TEXTAR` from MAN brake-pad alternates; replaced with concrete numbers
+- Added Knorr K046771K50 and WABCO/DAF 0699387 OEM registry rows (already source-backed)
+- Marked `catalog-expansion.ts` offline / empty
+
+## Still required before claiming exact fitment
+- VIN / chassis confirmation
+- Official application tables where modelIds are empty
