@@ -3,10 +3,7 @@ const nextConfig = {
   reactStrictMode: true,
   images: {
     remotePatterns: [
-      { protocol: 'https', hostname: 'images.unsplash.com' },
-      { protocol: 'https', hostname: 'images.pexels.com' },
-      { protocol: 'https', hostname: 'cdn.pixabay.com' },
-      { protocol: 'https', hostname: 'via.placeholder.com' },
+      // Official MANN-FILTER catalogue CDN only (no stock photo hosts)
       { protocol: 'https', hostname: 's7g10.scene7.com' },
       { protocol: 'https', hostname: 'www.mann-filter.com' },
     ],

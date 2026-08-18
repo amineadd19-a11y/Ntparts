@@ -1,17 +1,34 @@
 /**
- * Product images
- * Filter images: official MANN-FILTER catalogue assets (Adobe Scene7 CDN used by mann-filter.com).
- * Other parts: industrial reference photos.
+ * REAL product photos only.
+ *
+ * Policy:
+ * - Only official manufacturer catalogue assets with attributable CDN URLs.
+ * - No Unsplash, Pexels, stock, or decorative placeholders.
+ * - If no real photo exists for a part, return an empty array (UI shows "No product photo").
+ *
+ * Current sources:
+ * - MANN-FILTER Adobe Scene7 catalogue CDN (mann-filter.com)
  */
 
 const MANN = (asset: string) =>
   `https://s7g10.scene7.com/is/image/mannhummel/${asset}?qlt=85&wid=900&dpr=off&fmt=png-alpha`;
 
-/** Official MANN-FILTER product photos from https://www.mann-filter.com catalogue */
+export type ProductImage = {
+  id: string;
+  partId: string;
+  url: string;
+  title: string;
+  alt: string;
+  isPrimary: boolean;
+  source: string;
+};
+
+/** Official MANN-FILTER product photos keyed by part template slug or reference. */
 export const MANN_FILTER_IMAGES: Record<
   string,
   { primary: string; secondary?: string; label: string; catalogUrl: string }
 > = {
+  // By template slug
   'oil-filter': {
     primary: MANN('W_11_025-1'),
     secondary: MANN('W_11_025-dim'),
@@ -26,10 +43,9 @@ export const MANN_FILTER_IMAGES: Record<
     catalogUrl: 'https://www.mann-filter.com/',
   },
   'fuel-filter': {
-    // Truck fuel / oil spin-on family visual from official catalogue
-    primary: MANN('W_11_025-1'),
+    primary: MANN('WDK_11_102_1'),
     secondary: MANN('HU_12_140_x'),
-    label: 'MANN-FILTER filtration range',
+    label: 'MANN-FILTER WDK / filtration range',
     catalogUrl: 'https://www.mann-filter.com/',
   },
   'cabin-filter': {
@@ -39,97 +55,131 @@ export const MANN_FILTER_IMAGES: Record<
     catalogUrl:
       'https://www.mann-filter.com/en/catalog/search-results/product.html/cu2785_mann-filter.html',
   },
+
+  // By concrete reference (normalized keys)
+  w11025: {
+    primary: MANN('W_11_025-1'),
+    secondary: MANN('W_11_025-dim'),
+    label: 'MANN-FILTER W 11 025',
+    catalogUrl:
+      'https://www.mann-filter.com/en/catalog/search-results/product.html/w11025_mann-filter.html',
+  },
+  'w 11 025': {
+    primary: MANN('W_11_025-1'),
+    secondary: MANN('W_11_025-dim'),
+    label: 'MANN-FILTER W 11 025',
+    catalogUrl:
+      'https://www.mann-filter.com/en/catalog/search-results/product.html/w11025_mann-filter.html',
+  },
+  cu2785: {
+    primary: MANN('CU_2785'),
+    secondary: MANN('CU_2785-dim-1'),
+    label: 'MANN-FILTER CU 2785',
+    catalogUrl:
+      'https://www.mann-filter.com/en/catalog/search-results/product.html/cu2785_mann-filter.html',
+  },
+  'cu 2785': {
+    primary: MANN('CU_2785'),
+    secondary: MANN('CU_2785-dim-1'),
+    label: 'MANN-FILTER CU 2785',
+    catalogUrl:
+      'https://www.mann-filter.com/en/catalog/search-results/product.html/cu2785_mann-filter.html',
+  },
+  cu2184: {
+    primary: MANN('CU_2184'),
+    label: 'MANN-FILTER CU 2184',
+    catalogUrl: 'https://www.mann-filter.com/',
+  },
+  'cu 2184': {
+    primary: MANN('CU_2184'),
+    label: 'MANN-FILTER CU 2184',
+    catalogUrl: 'https://www.mann-filter.com/',
+  },
+  tb1394: {
+    primary: MANN('TB_1394_1_x'),
+    label: 'MANN-FILTER TB 1394/1 x',
+    catalogUrl: 'https://www.mann-filter.com/',
+  },
+  'tb 1394': {
+    primary: MANN('TB_1394_1_x'),
+    label: 'MANN-FILTER TB 1394/1 x',
+    catalogUrl: 'https://www.mann-filter.com/',
+  },
 };
 
-const UNSplash: Record<string, string> = {
-  'brake-disc':
-    'https://images.unsplash.com/photo-1486262715619-67b85e0b08d3?w=900&q=80&auto=format&fit=crop',
-  'brake-pad':
-    'https://images.unsplash.com/photo-1625047509248-ec889cbff17f?w=900&q=80&auto=format&fit=crop',
-  'brake-caliper':
-    'https://images.unsplash.com/photo-1619642751034-765dfdf7c58e?w=900&q=80&auto=format&fit=crop',
-  'brake-chamber':
-    'https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?w=900&q=80&auto=format&fit=crop',
-  'brake-valve':
-    'https://images.unsplash.com/photo-1487754180451-c456f541f709?w=900&q=80&auto=format&fit=crop',
-  'air-dryer':
-    'https://images.unsplash.com/photo-1503376780353-7e6692767b70?w=900&q=80&auto=format&fit=crop',
-  'water-pump':
-    'https://images.unsplash.com/photo-1487754180451-c456f541f709?w=900&q=80&auto=format&fit=crop',
-  thermostat:
-    'https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?w=900&q=80&auto=format&fit=crop',
-  radiator:
-    'https://images.unsplash.com/photo-1486262715619-67b85e0b08d3?w=900&q=80&auto=format&fit=crop',
-  'clutch-kit':
-    'https://images.unsplash.com/photo-1619642751034-765dfdf7c58e?w=900&q=80&auto=format&fit=crop',
-  'shock-absorber':
-    'https://images.unsplash.com/photo-1625047509248-ec889cbff17f?w=900&q=80&auto=format&fit=crop',
-  'air-spring':
-    'https://images.unsplash.com/photo-1503376780353-7e6692767b70?w=900&q=80&auto=format&fit=crop',
-  'starter-motor':
-    'https://images.unsplash.com/photo-1487754180451-c456f541f709?w=900&q=80&auto=format&fit=crop',
-  alternator:
-    'https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?w=900&q=80&auto=format&fit=crop',
-  turbocharger:
-    'https://images.unsplash.com/photo-1486262715619-67b85e0b08d3?w=900&q=80&auto=format&fit=crop',
-  injector:
-    'https://images.unsplash.com/photo-1619642751034-765dfdf7c58e?w=900&q=80&auto=format&fit=crop',
-  'drive-belt':
-    'https://images.unsplash.com/photo-1625047509248-ec889cbff17f?w=900&q=80&auto=format&fit=crop',
-  mirror:
-    'https://images.unsplash.com/photo-1503376780353-7e6692767b70?w=900&q=80&auto=format&fit=crop',
-};
+function normalizeKey(value: string): string {
+  return value.toLowerCase().replace(/[^a-z0-9]/g, '');
+}
 
-export function resolveProductImages(
-  slug: string,
-  partId: string,
-  partName: string
-): Array<{
-  id: string;
-  partId: string;
-  url: string;
-  title: string;
-  alt: string;
-  isPrimary: boolean;
-  source: string;
-}> {
-  const mann = MANN_FILTER_IMAGES[slug];
-  if (mann) {
-    const images = [
-      {
-        id: `${partId}-img-1`,
-        partId,
-        url: mann.primary,
-        title: mann.label,
-        alt: `${partName} — ${mann.label}`,
-        isPrimary: true,
-        source: 'MANN-FILTER / mann-filter.com',
-      },
-    ];
-    if (mann.secondary) {
-      images.push({
-        id: `${partId}-img-2`,
-        partId,
-        url: mann.secondary,
-        title: `${mann.label} dimensions`,
-        alt: `${partName} — ${mann.label} technical view`,
-        isPrimary: false,
-        source: 'MANN-FILTER / mann-filter.com',
-      });
+function lookupMann(
+  candidates: string[],
+): { primary: string; secondary?: string; label: string; catalogUrl: string } | null {
+  for (const raw of candidates) {
+    if (!raw) continue;
+    const direct = MANN_FILTER_IMAGES[raw.toLowerCase().trim()];
+    if (direct) return direct;
+    const compact = normalizeKey(raw);
+    for (const [key, value] of Object.entries(MANN_FILTER_IMAGES)) {
+      if (normalizeKey(key) === compact) return value;
+      if (normalizeKey(value.label).includes(compact) && compact.length >= 5) return value;
     }
-    return images;
   }
+  return null;
+}
 
-  const url = UNSplash[slug] || UNSplash['brake-disc'];
-  return [
+function toImages(
+  mann: { primary: string; secondary?: string; label: string; catalogUrl: string },
+  partId: string,
+  partName: string,
+): ProductImage[] {
+  const images: ProductImage[] = [
     {
       id: `${partId}-img-1`,
       partId,
-      url,
-      title: partName,
-      alt: partName,
+      url: mann.primary,
+      title: mann.label,
+      alt: `${partName} — ${mann.label}`,
       isPrimary: true,
-      source: 'reference',
+      source: 'MANN-FILTER / mann-filter.com',
     },
   ];
+  if (mann.secondary) {
+    images.push({
+      id: `${partId}-img-2`,
+      partId,
+      url: mann.secondary,
+      title: `${mann.label} technical view`,
+      alt: `${partName} — ${mann.label} technical view`,
+      isPrimary: false,
+      source: 'MANN-FILTER / mann-filter.com',
+    });
+  }
+  return images;
+}
+
+/**
+ * Resolve real product photos for a part.
+ * Returns [] when no attributable manufacturer photo is available.
+ */
+export function resolveProductImages(
+  slug: string,
+  partId: string,
+  partName: string,
+  extraRefs: string[] = [],
+): ProductImage[] {
+  const mann = lookupMann([slug, partName, ...extraRefs]);
+  if (mann) return toImages(mann, partId, partName);
+  return [];
+}
+
+/** Attach real photos to a part from its OEM / aftermarket references when possible. */
+export function imagesForPartRefs(
+  partId: string,
+  partName: string,
+  references: string[],
+  categoryHint?: string,
+): ProductImage[] {
+  const mann = lookupMann([...references, categoryHint || '', partName]);
+  if (mann) return toImages(mann, partId, partName);
+  return [];
 }

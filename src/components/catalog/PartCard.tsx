@@ -15,9 +15,6 @@ interface PartCardProps {
   showFavorite?: boolean;
 }
 
-const FALLBACK =
-  'https://images.unsplash.com/photo-1486262715619-67b85e0b08d3?w=800&q=80&auto=format&fit=crop';
-
 function primaryOemStatus(part: Part): 'verified' | 'source-listed' | 'unverified' | null {
   if (!part.oemReferences?.length) return null;
   if (part.oemReferences.some((r) => r.verificationStatus === 'verified')) return 'verified';
@@ -32,8 +29,7 @@ export default function PartCard({ part, showFavorite = true }: PartCardProps) {
   const manufacturer = part.specifications?.manufacturer;
   const model = part.specifications?.model;
   const aftermarket = part.specifications?.aftermarketReference;
-  const [imgSrc, setImgSrc] = useState(primaryImage?.url || FALLBACK);
-  const [failed, setFailed] = useState(false);
+  const [failed, setFailed] = useState(!primaryImage?.url);
 
   const categoryLabel = translateCategory(part.category, language);
   const oemStatus = primaryOemStatus(part);
@@ -43,17 +39,14 @@ export default function PartCard({ part, showFavorite = true }: PartCardProps) {
     <Link href={`/parts/${encodeURIComponent(part.id)}`} className="block h-full">
       <div className="nt-card nt-card-hover group flex h-full flex-col overflow-hidden rounded-xl">
         <div className="relative h-44 w-full flex-shrink-0 overflow-hidden bg-gradient-to-br from-slate-100 to-white">
-          {!failed ? (
+          {primaryImage?.url && !failed ? (
             <Image
-              src={imgSrc}
+              src={primaryImage.url}
               alt={primaryImage?.alt || part.name}
               fill
               sizes="(max-width:640px) 100vw, 25vw"
               className="object-contain p-3 transition duration-300 group-hover:scale-105"
-              onError={() => {
-                if (imgSrc !== FALLBACK) setImgSrc(FALLBACK);
-                else setFailed(true);
-              }}
+              onError={() => setFailed(true)}
               unoptimized
             />
           ) : (
@@ -61,7 +54,7 @@ export default function PartCard({ part, showFavorite = true }: PartCardProps) {
               <div className="flex h-12 w-12 items-center justify-center rounded-xl border border-slate-200 bg-white shadow-sm">
                 <Package size={22} className="text-slate-400" />
               </div>
-              <span className="text-[10px] font-bold uppercase tracking-wider">{categoryLabel}</span>
+              <span className="text-[10px] font-bold uppercase tracking-wider">No product photo</span>
             </div>
           )}
           {showFavorite && (
