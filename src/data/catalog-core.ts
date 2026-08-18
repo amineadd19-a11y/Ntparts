@@ -98,7 +98,6 @@ const MANUFACTURERS: ManufacturerDefinition[] = [
   { id: 'western-star', name: 'Western Star', source: SOURCES['western-star'], models: [{ id: 'western-star-49x', name: '49X' }, { id: 'western-star-57x', name: '57X' }, { id: 'western-star-47x', name: '47X' }] },
   { id: 'hino', name: 'Hino Trucks', source: SOURCES.hino, models: [{ id: 'hino-xl', name: 'XL Series' }, { id: 'hino-l', name: 'L Series' }] },
   { id: 'isuzu', name: 'Isuzu Trucks', source: SOURCES.isuzu, models: [{ id: 'isuzu-n', name: 'N Series' }, { id: 'isuzu-f', name: 'F Series' }, { id: 'isuzu-g', name: 'G Series' }] },
-  // Structure-only expansion — parts generated with NOT VERIFIED OEM/fitment until source-backed evidence is added
   { id: 'fuso', name: 'FUSO', source: SOURCES.fuso, models: [{ id: 'fuso-canter', name: 'Canter' }, { id: 'fuso-fighter', name: 'Fighter' }] },
   { id: 'international', name: 'International', source: SOURCES.international, models: [{ id: 'international-lt', name: 'LT Series' }, { id: 'international-rh', name: 'RH Series' }, { id: 'international-hv', name: 'HV Series' }] },
   { id: 'ud-trucks', name: 'UD Trucks', source: SOURCES['ud-trucks'], models: [{ id: 'ud-quon', name: 'Quon' }, { id: 'ud-condor', name: 'Condor' }] },
@@ -131,6 +130,10 @@ function createPart(manufacturer: ManufacturerDefinition, model: ModelDefinition
   const oemReferences = oemRefsFor(id, manufacturer.id, template.slug);
   const crossReferences = unique(oemReferences.flatMap((ref) => ref.alternateNumbers ?? []));
   const tags = unique([...template.tags, manufacturer.id, model.name.toLowerCase()]);
+  const imageRefs = [
+    ...oemReferences.flatMap((ref) => [ref.referenceNumber, ...(ref.alternateNumbers ?? [])]),
+    ...crossReferences,
+  ];
   return {
     id,
     systemId: template.systemId,
@@ -149,7 +152,8 @@ function createPart(manufacturer: ManufacturerDefinition, model: ModelDefinition
       crossReferences: crossReferences.join(', '),
       referencePolicy: 'No OEM number claimed without source-backed evidence; verify exact application before order',
     },
-    images: resolveProductImages(template.slug, id, template.name) as Part['images'],
+    // Real manufacturer photos only — empty when no attributable CDN asset exists
+    images: resolveProductImages(template.slug, id, template.name, imageRefs) as Part['images'],
     oemReferences,
     crossReferences: [],
     compatibility: [],
