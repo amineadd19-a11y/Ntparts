@@ -213,8 +213,9 @@ export function scorePart(part: Part, query: string): ScoredPart | null {
     else if (qSoft.length >= 3 && xrId.includes(qSoft)) score = Math.max(score, 40);
   }
 
-  // Small boost when query looks like a part number and part has verified OEM
+  // Boost only when there is already a real match signal (never invent hits).
   if (
+    score > 0 &&
     /^[a-z0-9]{5,}$/i.test(qSoft) &&
     (part.oemReferences ?? []).some((o) => o.verificationStatus === 'verified')
   ) {
