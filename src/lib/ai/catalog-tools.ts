@@ -99,9 +99,14 @@ export function compareParts(left: string, right: string) {
   const leftRefs = new Set(leftMatches.flatMap((match) => match.references.map(normalize)));
   const rightRefs = new Set(rightMatches.flatMap((match) => match.references.map(normalize)));
   const sharedReferences = Array.from(leftRefs).filter((reference) => rightRefs.has(reference));
-  const sameCatalogPart = leftMatches.some((leftMatch) =>
-    rightMatches.some((rightMatch) => leftMatch.id === rightMatch.id),
+
+  // Only high-confidence hits can prove "same catalogue part"
+  const strongLeft = leftMatches.filter((m) => m.relevance >= 0.9);
+  const strongRight = rightMatches.filter((m) => m.relevance >= 0.9);
+  const sameCatalogPart = strongLeft.some((leftMatch) =>
+    strongRight.some((rightMatch) => leftMatch.id === rightMatch.id),
   );
+
   const sharedApplications = leftMatches
     .flatMap((leftMatch) =>
       rightMatches
