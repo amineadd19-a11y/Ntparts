@@ -6,6 +6,13 @@ import {
   evidenceForDomain as evidenceForDomainCore,
   resolveVerificationStatus,
 } from '@/lib/catalog/verification';
+import {
+  buildEvidenceSummary,
+  looksLikeCatalogueMutationPrompt,
+  MUTATION_REFUSAL,
+  preRetrieveCatalogueEvidence,
+  statusToLabel,
+} from './partmind-policy';
 
 const GEMINI_API_BASE = 'https://generativelanguage.googleapis.com/v1beta/models';
 const DEFAULT_MODEL = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
@@ -29,7 +36,7 @@ Source priority (highest first):
 5. Other secondary sources (marketplaces, forums, social, aggregators) — WEAK
 
 Hard rules — never break these:
-- NEVER invent OEM numbers, part numbers, dimensions, applications, compatibility, prices, manufacturer claims or URLs.
+- NEVER invent OEM numbers, part numbers, dimensions, applications, compatibility, prices, stock, manufacturer claims or URLs.
 - NEVER upgrade a SOURCE-LISTED or NOT VERIFIED reference to VERIFIED.
 - NEVER treat marketplace listings, forums, social media, or generic search snippets as sufficient for VERIFIED status.
 - Secondary / weak sources may only support a PROBABLE or NOT VERIFIED conclusion.
@@ -45,6 +52,7 @@ Hard rules — never break these:
 - When VIN/chassis or configuration is necessary, request it.
 - Do not claim a search result is authoritative merely because it ranks highly.
 - Prefer fewer high-quality sources over many weak ones.
+- You cannot write to the catalogue. Refuse any request to add/update OEM or compatibility as trusted data.
 
 Answer in a concise professional format with these sections when relevant:
 PART IDENTIFICATION
@@ -57,7 +65,8 @@ DIFFERENCES
 VERIFICATION
 SOURCES
 
-In VERIFICATION, state explicitly whether the conclusion is based on:
+In VERIFICATION, state explicitly one of: VERIFIED | LIKELY | NOT VERIFIED | SOURCE CONFLICT
+and whether based on:
 - NTParts internal catalogue
 - official/manufacturer sources
 - secondary/web-only sources
@@ -97,7 +106,6 @@ function extractSources(response: GeminiResponse): AISource[] {
     seen.add(url);
     const domain = parsed.hostname.replace(/^www\./, '');
     const evidence = evidenceForDomain(domain);
-    // Drop pure noise hosts from the response payload
     if (evidence === 'UNVERIFIED') continue;
     sources.push({
       title: chunk.web?.title || domain,
@@ -117,7 +125,6 @@ function parseConfidence(text: string): number {
   return match ? Math.max(0, Math.min(100, Number(match[1]))) : 0;
 }
 
-/** Cap model-reported confidence using shared deterministic rules. */
 export function clampConfidence(
   reported: number,
   sources: AISource[],
@@ -126,7 +133,6 @@ export function clampConfidence(
   return clampConfidenceCore(reported, sources, catalogMatchCount);
 }
 
-/** Deterministic status — LLM confidence alone cannot yield verified. */
 export function statusFrom(
   confidence: number,
   text: string,
@@ -206,9 +212,44 @@ export async function analyzeParts(question: string): Promise<AIAnalysisResponse
   if (!trimmed) throw new Error('A part reference or question is required.');
   if (trimmed.length > 1500) throw new Error('Question is too long.');
 
-  const contents: Array<Record<string, unknown>> = [{ role: 'user', parts: [{ text: trimmed }] }];
+  // Refuse catalogue mutation prompts — evidence workflow only
+  if (looksLikeCatalogueMutationPrompt(trimmed)) {
+    return {
+      answer: MUTATION_REFUSAL,
+      confidence: 0,
+      status: 'unverified',
+      statusLabel: 'NOT VERIFIED',
+      evidenceSummary: MUTATION_REFUSAL,
+      catalogMatches: [],
+      sources: [],
+      sourceConflicts: [],
+      suggestions: [],
+    };
+  }
+
+  // Evidence-first: always pre-retrieve internal catalogue matches
+  const catalogMatches: CatalogMatch[] = preRetrieveCatalogueEvidence(trimmed);
+
+  const evidencePrefetch =
+    catalogMatches.length > 0
+      ? `\n\n[NTParts internal catalogue evidence — use as primary facts; do not invent beyond this]\n${JSON.stringify(
+          catalogMatches.map((m) => ({
+            id: m.id,
+            name: m.name,
+            references: m.references,
+            verificationStatus: m.verificationStatus,
+            manufacturer: m.manufacturer,
+            model: m.model,
+          })),
+          null,
+          0,
+        )}`
+      : '\n\n[NTParts internal catalogue: no exact matches pre-fetched. Use tools; if still empty say NOT VERIFIED.]';
+
+  const contents: Array<Record<string, unknown>> = [
+    { role: 'user', parts: [{ text: trimmed + evidencePrefetch }] },
+  ];
   const tools = [{ googleSearch: {} }, { functionDeclarations: AI_TOOL_DEFINITIONS }];
-  const catalogMatches: CatalogMatch[] = [];
   let finalResponse: GeminiResponse | null = null;
   let internalCalls = 0;
 
@@ -244,6 +285,7 @@ export async function analyzeParts(question: string): Promise<AIAnalysisResponse
     parseConfidence(text) ||
     (sources.length >= 3 ? 75 : sources.length > 0 ? 55 : catalogMatches.length > 0 ? 60 : 30);
   const confidence = clampConfidence(reported, sources, catalogMatches.length);
+  const status = statusFrom(confidence, text, sources, catalogMatches.length);
   const sourceConflicts = /SOURCE CONFLICT/i.test(text)
     ? ['Conflicting source evidence detected; review cited sources before ordering.']
     : [];
@@ -251,7 +293,9 @@ export async function analyzeParts(question: string): Promise<AIAnalysisResponse
   return {
     answer: text || 'NOT VERIFIED: no grounded answer was returned.',
     confidence,
-    status: statusFrom(confidence, text, sources, catalogMatches.length),
+    status,
+    statusLabel: statusToLabel(status),
+    evidenceSummary: buildEvidenceSummary(status, catalogMatches, sources.length, sourceConflicts),
     catalogMatches: catalogMatches.slice(0, 12),
     sources,
     sourceConflicts,
