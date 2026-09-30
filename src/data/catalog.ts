@@ -3,7 +3,7 @@ import * as CORE from '@/data/catalog-core';
 import { RENPAR_CATALOG_PARTS } from '@/data/catalog-renpar';
 import { SOURCE_BACKED_PARTS } from '@/data/catalog-source-backed';
 import { imagesForPartRefs } from '@/data/catalog-images';
-import { deduplicateAndMerge } from '@/lib/catalog/pipeline';
+import { deduplicateAndMerge, isLiveCatalogueEligible } from '@/lib/catalog/pipeline';
 import { normalizeReference } from '@/lib/catalog/normalize';
 
 /**
@@ -56,25 +56,28 @@ function withRealPhotos(part: Part): Part {
 }
 
 /**
- * REAL CATALOGUE ONLY
- * - Core parts that carry at least one source-backed OEM reference
- * - SOURCE_BACKED_PARTS (public manufacturer / distributor evidence)
- * - RENPAR_CATALOG_PARTS (supplied catalogue PDF rows)
+ * LIVE CATALOGUE — source of truth
  *
- * Photos: official manufacturer CDN only (e.g. MANN-FILTER). No stock images.
+ * A. VERIFIED / SOURCE-BACKED (published):
+ *    1. Core OEM-backed parts (catalog-core — only rows with OEM evidence)
+ *    2. SOURCE_BACKED_PARTS (public manufacturer / distributor evidence)
+ *    3. RENPAR_CATALOG_PARTS (supplied commercial catalogue PDF rows)
+ *
+ * B. DISCOVERY / UNVERIFIED (not published):
+ *    - catalog-expansion.ts (offline / empty)
+ *    - Any manufacturer×model×template combination without OEM evidence
+ *
+ * Photos: official manufacturer CDN only. No stock images.
+ * Merge enforces isLiveCatalogueEligible — no silent promotion of discovery data.
  */
-const corePartsWithOem: Part[] = CORE.CATALOG_PARTS.filter(
-  (part) => (part.oemReferences?.length ?? 0) > 0,
-).map(withRealPhotos);
-
+const coreOemBacked: Part[] = CORE.CATALOG_PARTS.map(withRealPhotos);
 const sourceBackedWithPhotos = SOURCE_BACKED_PARTS.map(withRealPhotos);
 const renparWithPhotos = RENPAR_CATALOG_PARTS.map(withRealPhotos);
 
-const merged = deduplicateAndMerge([
-  ...corePartsWithOem,
-  ...sourceBackedWithPhotos,
-  ...renparWithPhotos,
-]);
+const merged = deduplicateAndMerge(
+  [...coreOemBacked, ...sourceBackedWithPhotos, ...renparWithPhotos],
+  { liveOnly: true },
+);
 
 export const CATALOG_PARTS: Part[] = merged.parts;
 export const CATALOG_MERGE_STATS = merged.stats;
@@ -110,12 +113,14 @@ export const CATALOG_STATS = {
   partsWithRealPhotos: CATALOG_PARTS.filter((part) => (part.images?.length ?? 0) > 0).length,
   sourceBackedRecords: SOURCE_BACKED_PARTS.length,
   renparRecords: RENPAR_CATALOG_PARTS.length,
-  coreWithOem: corePartsWithOem.length,
+  coreOemBacked: coreOemBacked.length,
   mergeInput: CATALOG_MERGE_STATS.input,
   mergeOutput: CATALOG_MERGE_STATS.output,
   mergeCollapsed: CATALOG_MERGE_STATS.merged,
+  rejectedNotEligible: CATALOG_MERGE_STATS.rejectedNotEligible,
   policy: 'real-catalogue-only' as const,
   imagePolicy: 'real-manufacturer-photos-only' as const,
+  discoveryPolicy: 'templates-without-oem-never-published' as const,
 };
 
 const list = (value?: string): string[] =>
@@ -217,4 +222,15 @@ export function getVerifiedOEMParts(): Part[] {
   );
 }
 
-export { RENPAR_CATALOG_PARTS, SOURCE_BACKED_PARTS, OEM_REFERENCE_REGISTRY };
+/** Every live part must pass the eligibility gate (defense in depth). */
+export function assertLiveCatalogueIntegrity(): { ok: boolean; violations: string[] } {
+  const violations: string[] = [];
+  for (const part of CATALOG_PARTS) {
+    if (!isLiveCatalogueEligible(part)) {
+      violations.push(`Non-eligible part in live catalogue: ${part.id}`);
+    }
+  }
+  return { ok: violations.length === 0, violations };
+}
+
+export { RENPAR_CATALOG_PARTS, SOURCE_BACKED_PARTS, OEM_REFERENCE_REGISTRY, isLiveCatalogueEligible };
