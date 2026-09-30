@@ -72,7 +72,7 @@ function SearchResults() {
               <>
                 <strong className="font-bold text-navy-900">{totalUnfiltered}</strong>{' '}
                 {language === 'fr' ? 'résultats pour' : language === 'ar' ? 'نتيجة لـ' : 'results for'}{' '}
-                <span className="font-mono font-semibold text-sky-700">"{q}"</span>
+                <span className="font-mono font-semibold text-sky-700">{`\u201c${q}\u201d`}</span>
               </>
             ) : (
               <span>
