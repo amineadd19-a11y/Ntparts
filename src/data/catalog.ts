@@ -4,7 +4,7 @@ import { RENPAR_CATALOG_PARTS } from '@/data/catalog-renpar';
 import { SOURCE_BACKED_PARTS } from '@/data/catalog-source-backed';
 import { imagesForPartRefs } from '@/data/catalog-images';
 import { deduplicateAndMerge, isLiveCatalogueEligible } from '@/lib/catalog/pipeline';
-import { normalizeReference } from '@/lib/catalog/normalize';
+import { searchCatalogueParts, searchByOem } from '@/lib/catalog/search';
 
 /**
  * Source-backed OEM registry used by the catalog validation gate.
@@ -126,35 +126,11 @@ export const CATALOG_STATS = {
 const list = (value?: string): string[] =>
   value ? value.split(',').map((item) => item.trim()).filter(Boolean) : [];
 
+/** Canonical ranked search — same engine as website + PartMind. */
 export function searchCatalog(query: string): Part[] {
-  const q = query.trim().toLowerCase();
+  const q = query.trim();
   if (!q) return CATALOG_PARTS;
-  const compact = normalizeReference(query);
-
-  return CATALOG_PARTS.filter((part) => {
-    const refs = part.oemReferences.flatMap((oem) => [
-      oem.referenceNumber,
-      ...(oem.alternateNumbers ?? []),
-    ]);
-    if (refs.some((ref) => ref.toLowerCase().includes(q) || normalizeReference(ref).includes(compact)))
-      return true;
-
-    return [
-      part.id,
-      part.name,
-      part.category,
-      part.description ?? '',
-      part.specifications?.manufacturer ?? '',
-      part.specifications?.model ?? '',
-      part.specifications?.crossReferences ?? '',
-      part.specifications?.aftermarketReference ?? '',
-      ...list(part.specifications?.tags),
-      ...list(part.specifications?.aftermarketBrands),
-    ]
-      .join(' ')
-      .toLowerCase()
-      .includes(q);
-  });
+  return searchCatalogueParts(q, { limit: 200 });
 }
 
 export function getPartsByManufacturer(id: string): Part[] {
@@ -197,19 +173,9 @@ export function getPartsByTag(tag: string): Part[] {
   );
 }
 
+/** OEM / reference lookup via canonical engine. */
 export function getPartsByOEM(referenceNumber: string): Part[] {
-  const normalized = referenceNumber.trim().toLowerCase();
-  const compact = normalizeReference(referenceNumber);
-  return CATALOG_PARTS.filter((part) =>
-    part.oemReferences.some((oem) =>
-      [oem.referenceNumber, ...(oem.alternateNumbers ?? [])].some(
-        (reference) =>
-          reference.toLowerCase() === normalized ||
-          normalizeReference(reference) === compact ||
-          normalizeReference(reference).includes(compact),
-      ),
-    ),
-  );
+  return searchByOem(referenceNumber, { limit: 50 });
 }
 
 export function getPartById(id: string): Part | undefined {
