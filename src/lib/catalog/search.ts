@@ -26,17 +26,19 @@ import { CATALOG_PARTS } from '@/data/catalog';
 import { normalizeReference } from '@/lib/catalog/normalize';
 import { lookupByReference } from '@/lib/catalog/indexes';
 
+export type MatchKind =
+  | 'exact-verified-oem'
+  | 'exact-source-listed-oem'
+  | 'exact-oem'
+  | 'partial-oem'
+  | 'aftermarket'
+  | 'manufacturer-model'
+  | 'text';
+
 export interface ScoredPart {
   part: Part;
   score: number;
-  matchKind:
-    | 'exact-verified-oem'
-    | 'exact-source-listed-oem'
-    | 'exact-oem'
-    | 'partial-oem'
-    | 'aftermarket'
-    | 'manufacturer-model'
-    | 'text';
+  matchKind: MatchKind;
   verificationStatus: VerificationStatus;
 }
 
@@ -56,6 +58,20 @@ export interface CanonicalSearchResult {
   normalizedQuery: string;
   results: ScoredPart[];
   total: number;
+}
+
+const MATCH_RANK: Record<MatchKind, number> = {
+  'exact-verified-oem': 70,
+  'exact-source-listed-oem': 60,
+  'exact-oem': 50,
+  'partial-oem': 40,
+  aftermarket: 30,
+  'manufacturer-model': 20,
+  text: 10,
+};
+
+function upgradeMatchKind(current: MatchKind, next: MatchKind): MatchKind {
+  return MATCH_RANK[next] > MATCH_RANK[current] ? next : current;
 }
 
 function softNormalize(value: string): string {
@@ -100,7 +116,7 @@ export function scorePart(part: Part, query: string): ScoredPart | null {
   if (!qSoft && !qNorm) return null;
 
   let score = 0;
-  let matchKind: ScoredPart['matchKind'] = 'text';
+  let matchKind: MatchKind = 'text';
 
   // --- OEM / reference layer ---
   for (const oem of part.oemReferences ?? []) {
@@ -117,17 +133,13 @@ export function scorePart(part: Part, query: string): ScoredPart | null {
       if (cSoft === qSoft || cNorm === qNorm) {
         if (isVerified) {
           score = Math.max(score, 320);
-          matchKind = 'exact-verified-oem';
+          matchKind = upgradeMatchKind(matchKind, 'exact-verified-oem');
         } else if (isSourceListed) {
           score = Math.max(score, 260);
-          if (matchKind !== 'exact-verified-oem') matchKind = 'exact-source-listed-oem';
+          matchKind = upgradeMatchKind(matchKind, 'exact-source-listed-oem');
         } else {
           score = Math.max(score, 200);
-          if (
-            matchKind !== 'exact-verified-oem' &&
-            matchKind !== 'exact-source-listed-oem'
-          )
-            matchKind = 'exact-oem';
+          matchKind = upgradeMatchKind(matchKind, 'exact-oem');
         }
       } else if (
         (qNorm.length >= 3 && (cNorm.includes(qNorm) || qNorm.includes(cNorm))) ||
@@ -136,12 +148,7 @@ export function scorePart(part: Part, query: string): ScoredPart | null {
         const partial = isVerified ? 160 : isSourceListed ? 130 : 100;
         if (partial > score) {
           score = partial;
-          if (
-            matchKind === 'text' ||
-            matchKind === 'manufacturer-model' ||
-            matchKind === 'aftermarket'
-          )
-            matchKind = 'partial-oem';
+          matchKind = upgradeMatchKind(matchKind, 'partial-oem');
         }
       }
     }
@@ -155,15 +162,12 @@ export function scorePart(part: Part, query: string): ScoredPart | null {
     if (aSoft === qSoft || aNorm === qNorm) {
       if (score < 180) {
         score = 180;
-        matchKind = 'aftermarket';
+        matchKind = upgradeMatchKind(matchKind, 'aftermarket');
       }
-    } else if (
-      qSoft.length >= 3 &&
-      (aSoft.includes(qSoft) || qSoft.includes(aSoft))
-    ) {
+    } else if (qSoft.length >= 3 && (aSoft.includes(qSoft) || qSoft.includes(aSoft))) {
       if (score < 90) {
         score = 90;
-        if (matchKind === 'text' || matchKind === 'manufacturer-model') matchKind = 'aftermarket';
+        matchKind = upgradeMatchKind(matchKind, 'aftermarket');
       }
     }
   }
@@ -180,7 +184,7 @@ export function scorePart(part: Part, query: string): ScoredPart | null {
     const mScore = manufacturer === qSoft || model === qSoft ? 70 : 40;
     if (mScore > score) {
       score = mScore;
-      matchKind = 'manufacturer-model';
+      matchKind = upgradeMatchKind(matchKind, 'manufacturer-model');
     }
   }
 
@@ -244,8 +248,7 @@ export function searchCatalogue(
   }
 
   // Fast path: exact normalized reference hits from the index (live catalogue)
-  const exactHits =
-    options.parts === undefined ? lookupByReference(trimmed) : [];
+  const exactHits = options.parts === undefined ? lookupByReference(trimmed) : [];
   const exactIds = new Set(exactHits.map((p) => p.id));
 
   const scored: ScoredPart[] = [];
@@ -267,10 +270,7 @@ export function searchCatalogue(
     // Boost exact index hits so they never lose to pure text
     if (exactIds.has(part.id)) {
       result.score += 50;
-      if (
-        result.matchKind === 'text' ||
-        result.matchKind === 'manufacturer-model'
-      ) {
+      if (MATCH_RANK[result.matchKind] < MATCH_RANK['exact-oem']) {
         result.matchKind = 'exact-oem';
       }
     }
@@ -279,9 +279,7 @@ export function searchCatalogue(
   }
 
   scored.sort(
-    (a, b) =>
-      b.score - a.score ||
-      a.part.name.localeCompare(b.part.name),
+    (a, b) => b.score - a.score || a.part.name.localeCompare(b.part.name),
   );
 
   const limited = scored.slice(0, limit);
@@ -306,13 +304,7 @@ export function searchCatalogueParts(
 export function searchByOem(reference: string, options?: CanonicalSearchOptions): Part[] {
   const result = searchCatalogue(reference, { ...options, limit: options?.limit ?? 30 });
   return result.results
-    .filter(
-      (r) =>
-        r.matchKind === 'exact-verified-oem' ||
-        r.matchKind === 'exact-source-listed-oem' ||
-        r.matchKind === 'exact-oem' ||
-        r.matchKind === 'partial-oem',
-    )
+    .filter((r) => MATCH_RANK[r.matchKind] >= MATCH_RANK['partial-oem'])
     .map((r) => r.part);
 }
 
