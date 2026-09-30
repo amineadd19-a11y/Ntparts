@@ -103,42 +103,64 @@ const MANUFACTURERS: ManufacturerDefinition[] = [
   { id: 'ud-trucks', name: 'UD Trucks', source: SOURCES['ud-trucks'], models: [{ id: 'ud-quon', name: 'Quon' }, { id: 'ud-condor', name: 'Condor' }] },
 ];
 
-const normalizeRef = (value: string): string => value.toLowerCase().replace(/[\s\-\/.]/g, '');
 const unique = (values: string[]): string[] => Array.from(new Set(values.filter(Boolean)));
 
 function sourceFor(manufacturer: ManufacturerDefinition, partId: string): Source {
-  return { id: `${manufacturer.source.id}-${partId}`, partId, name: manufacturer.source.name, url: manufacturer.source.url, type: 'official', reliability: 'high' };
+  return {
+    id: `${manufacturer.source.id}-${partId}`,
+    partId,
+    name: manufacturer.source.name,
+    url: manufacturer.source.url,
+    type: 'official',
+    reliability: 'high',
+  };
 }
 
 function oemRefsFor(partId: string, manufacturerId: string, templateSlug: string): OEMReference[] {
-  return VERIFIED_OEM_REFERENCES
-    .filter((item) => item.manufacturerId === manufacturerId && item.partTemplateSlug === templateSlug)
-    .map((item, index) => ({
-      id: `${partId}-oem-${index + 1}`,
-      partId,
-      manufacturerId,
-      referenceNumber: item.referenceNumber,
-      alternateNumbers: unique(item.alternateNumbers ?? []),
-      verificationStatus: 'verified' as const,
-      source: item.sourceUrl,
-      evidenceLevel: 'parts-catalog' as const,
-    }));
+  return VERIFIED_OEM_REFERENCES.filter(
+    (item) => item.manufacturerId === manufacturerId && item.partTemplateSlug === templateSlug,
+  ).map((item, index) => ({
+    id: `${partId}-oem-${index + 1}`,
+    partId,
+    manufacturerId,
+    // Empty modelIds = exact fitment not proven (explicit policy)
+    modelIds: [],
+    referenceNumber: item.referenceNumber,
+    alternateNumbers: unique(item.alternateNumbers ?? []),
+    verificationStatus: 'verified' as const,
+    source: item.sourceUrl,
+    evidenceLevel: 'parts-catalog' as const,
+  }));
 }
 
-function createPart(manufacturer: ManufacturerDefinition, model: ModelDefinition, template: PartTemplate): Part {
+/**
+ * Build a live catalogue part only when OEM evidence exists.
+ * Returns null for template-only combinations (discovery / not published).
+ */
+function createOemBackedPart(
+  manufacturer: ManufacturerDefinition,
+  model: ModelDefinition,
+  template: PartTemplate,
+): Part | null {
   const id = `${model.id}-${template.slug}`;
   const oemReferences = oemRefsFor(id, manufacturer.id, template.slug);
+  if (oemReferences.length === 0) {
+    // Discovery only — never enter the live catalogue path
+    return null;
+  }
+
   const crossReferences = unique(oemReferences.flatMap((ref) => ref.alternateNumbers ?? []));
   const tags = unique([...template.tags, manufacturer.id, model.name.toLowerCase()]);
   const imageRefs = [
     ...oemReferences.flatMap((ref) => [ref.referenceNumber, ...(ref.alternateNumbers ?? [])]),
     ...crossReferences,
   ];
+
   return {
     id,
     systemId: template.systemId,
     name: template.name,
-    description: `${template.name} — ${manufacturer.name} ${model.name}. ${oemReferences.length ? 'Source-backed OEM references indexed; confirm exact fitment before ordering.' : 'Exact OEM and fitment are NOT VERIFIED.'}`,
+    description: `${template.name} — ${manufacturer.name} ${model.name}. Source-backed OEM references indexed; confirm exact fitment before ordering. Empty model scope means exact application is NOT VERIFIED.`,
     category: template.category,
     specifications: {
       type: template.name,
@@ -148,9 +170,11 @@ function createPart(manufacturer: ManufacturerDefinition, model: ModelDefinition
       model: model.name,
       tags: tags.join(', '),
       aftermarketBrands: template.aftermarketBrands.join(', '),
-      oemStatus: oemReferences.length ? 'verified' : 'NOT VERIFIED',
+      oemStatus: 'verified',
       crossReferences: crossReferences.join(', '),
-      referencePolicy: 'No OEM number claimed without source-backed evidence; verify exact application before order',
+      referencePolicy:
+        'No OEM number claimed without source-backed evidence; verify exact application before order',
+      fitmentScope: 'unproven-exact-application',
     },
     // Real manufacturer photos only — empty when no attributable CDN asset exists
     images: resolveProductImages(template.slug, id, template.name, imageRefs) as Part['images'],
@@ -158,23 +182,46 @@ function createPart(manufacturer: ManufacturerDefinition, model: ModelDefinition
     crossReferences: [],
     compatibility: [],
     sources: [sourceFor(manufacturer, id)],
-    verificationStatus: oemReferences.length ? 'verified' : 'needs-verification',
+    verificationStatus: 'verified',
     createdAt: now,
     updatedAt: now,
   };
 }
 
+/**
+ * LIVE CORE PARTS — OEM-backed only.
+ * Manufacturer × model × template combinations WITHOUT OEM evidence are NOT generated.
+ * Structural metadata (manufacturers, models, templates) remains available for navigation.
+ */
 export const CATALOG_PARTS: Part[] = MANUFACTURERS.flatMap((manufacturer) =>
-  manufacturer.models.flatMap((model) => PART_TEMPLATES.map((template) => createPart(manufacturer, model, template)))
+  manufacturer.models.flatMap((model) =>
+    PART_TEMPLATES.map((template) => createOemBackedPart(manufacturer, model, template)).filter(
+      (part): part is Part => part !== null,
+    ),
+  ),
 );
 
+/** Structural navigation data — not catalogue evidence. */
 export const CATALOG_MANUFACTURERS = MANUFACTURERS.map(({ id, name }) => ({ id, name }));
 export const CATALOG_MODELS = MANUFACTURERS.flatMap((manufacturer) =>
-  manufacturer.models.map((model) => ({ id: model.id, manufacturerId: manufacturer.id, name: model.name }))
+  manufacturer.models.map((model) => ({
+    id: model.id,
+    manufacturerId: manufacturer.id,
+    name: model.name,
+  })),
 );
+export const CATALOG_PART_TEMPLATES = PART_TEMPLATES.map(({ slug, name, category, systemId }) => ({
+  slug,
+  name,
+  category,
+  systemId,
+}));
 export const CATALOG_CATEGORIES = Array.from(new Set(CATALOG_PARTS.map((part) => part.category)));
 export const CATALOG_SYSTEMS = Array.from(new Set(CATALOG_PARTS.map((part) => part.systemId)));
-export const CATALOG_AFTERMARKET_BRANDS = Array.from(new Set(PART_TEMPLATES.flatMap((template) => template.aftermarketBrands))).sort();
+export const CATALOG_AFTERMARKET_BRANDS = Array.from(
+  new Set(PART_TEMPLATES.flatMap((template) => template.aftermarketBrands)),
+).sort();
+
 export const CATALOG_STATS = {
   manufacturers: CATALOG_MANUFACTURERS.length,
   models: CATALOG_MODELS.length,
@@ -184,15 +231,35 @@ export const CATALOG_STATS = {
   systems: CATALOG_SYSTEMS.length,
   aftermarketBrands: CATALOG_AFTERMARKET_BRANDS.length,
   verifiedOEMReferences: VERIFIED_OEM_REFERENCES.length,
+  policy: 'oem-backed-only' as const,
 };
+
+const normalizeRef = (value: string): string => value.toLowerCase().replace(/[\s\-\/.]/g, '');
 
 export function searchCoreCatalog(query: string): Part[] {
   const q = query.trim().toLowerCase();
   if (!q) return CATALOG_PARTS;
   const compact = normalizeRef(query);
   return CATALOG_PARTS.filter((part) => {
-    const refs = part.oemReferences.flatMap((oem) => [oem.referenceNumber, ...(oem.alternateNumbers ?? [])]);
-    if (refs.some((ref) => ref.toLowerCase().includes(q) || normalizeRef(ref).includes(compact))) return true;
-    return [part.id, part.name, part.category, part.description ?? '', part.specifications?.manufacturer ?? '', part.specifications?.model ?? '', part.specifications?.crossReferences ?? '', part.specifications?.tags ?? '', part.specifications?.aftermarketBrands ?? ''].join(' ').toLowerCase().includes(q);
+    const refs = part.oemReferences.flatMap((oem) => [
+      oem.referenceNumber,
+      ...(oem.alternateNumbers ?? []),
+    ]);
+    if (refs.some((ref) => ref.toLowerCase().includes(q) || normalizeRef(ref).includes(compact)))
+      return true;
+    return [
+      part.id,
+      part.name,
+      part.category,
+      part.description ?? '',
+      part.specifications?.manufacturer ?? '',
+      part.specifications?.model ?? '',
+      part.specifications?.crossReferences ?? '',
+      part.specifications?.tags ?? '',
+      part.specifications?.aftermarketBrands ?? '',
+    ]
+      .join(' ')
+      .toLowerCase()
+      .includes(q);
   });
 }

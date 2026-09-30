@@ -27,10 +27,21 @@ export interface CatalogMatch {
   relevance: number;
 }
 
+/** Human-facing verification labels (PartMind). */
+export type PartMindStatusLabel =
+  | 'VERIFIED'
+  | 'LIKELY'
+  | 'NOT VERIFIED'
+  | 'SOURCE CONFLICT';
+
 export interface AIAnalysisResponse {
   answer: string;
   confidence: number;
   status: 'verified' | 'probable' | 'conflict' | 'unverified';
+  /** Explicit label for UI / clients (always set by analyzeParts). */
+  statusLabel?: PartMindStatusLabel;
+  /** Short evidence summary for clients (always set by analyzeParts). */
+  evidenceSummary?: string;
   catalogMatches: CatalogMatch[];
   sources: AISource[];
   sourceConflicts: string[];

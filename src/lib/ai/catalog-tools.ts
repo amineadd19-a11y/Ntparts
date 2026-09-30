@@ -1,6 +1,7 @@
-import { CATALOG_PARTS, getPartsByOEM, searchCatalog } from '@/data/catalog';
+import { CATALOG_PARTS } from '@/data/catalog';
 import type { Part } from '@/types';
 import type { CatalogMatch } from './types';
+import { searchCatalogue, searchByOem } from '@/lib/catalog/search';
 
 function normalize(value: string): string {
   return value.toLowerCase().replace(/[\s\-./]/g, '');
@@ -9,8 +10,8 @@ function normalize(value: string): string {
 function references(part: Part): string[] {
   return Array.from(
     new Set(
-      part.oemReferences.flatMap((ref) => [ref.referenceNumber, ...(ref.alternateNumbers ?? [])])
-    )
+      part.oemReferences.flatMap((ref) => [ref.referenceNumber, ...(ref.alternateNumbers ?? [])]),
+    ),
   );
 }
 
@@ -28,29 +29,33 @@ function toMatch(part: Part, relevance: number): CatalogMatch {
   };
 }
 
+/** Uses the canonical catalogue search engine (same as website search). */
 export function searchPart(query: string): CatalogMatch[] {
   const q = query.trim();
   if (!q) return [];
 
-  const exact = getPartsByOEM(q);
-  const broad = searchCatalog(q);
-  const seen = new Set<string>();
-  const results: CatalogMatch[] = [];
-
-  for (const part of [...exact, ...broad]) {
-    if (seen.has(part.id)) continue;
-    seen.add(part.id);
-    const refs = references(part).map(normalize);
+  const { results } = searchCatalogue(q, { limit: 12 });
+  return results.map((r) => {
     const nq = normalize(q);
-    const relevance = refs.includes(nq) ? 1 : refs.some((ref) => ref.includes(nq)) ? 0.9 : 0.65;
-    results.push(toMatch(part, relevance));
-  }
-
-  return results.sort((a, b) => b.relevance - a.relevance).slice(0, 12);
+    const refs = references(r.part).map(normalize);
+    const relevance =
+      r.matchKind === 'exact-verified-oem'
+        ? 1
+        : r.matchKind === 'exact-source-listed-oem' || r.matchKind === 'exact-oem'
+          ? 0.95
+          : refs.includes(nq)
+            ? 0.9
+            : r.score / 320;
+    return toMatch(r.part, Math.min(1, relevance));
+  });
 }
 
 export function findOEM(query: string): CatalogMatch[] {
-  return searchPart(query).filter((match) => match.verificationStatus === 'verified');
+  return searchByOem(query, { limit: 12 })
+    .filter((part) =>
+      part.oemReferences.some((ref) => ref.verificationStatus === 'verified'),
+    )
+    .map((part) => toMatch(part, 1));
 }
 
 export function findCrossReferences(query: string): CatalogMatch[] {
@@ -77,7 +82,8 @@ export function findTruckModels(query: string): string[] {
   if (!q) return [];
   const models = new Set<string>();
   for (const part of CATALOG_PARTS) {
-    const haystack = `${part.specifications?.manufacturer ?? ''} ${part.specifications?.model ?? ''} ${part.description ?? ''}`.toLowerCase();
+    const haystack =
+      `${part.specifications?.manufacturer ?? ''} ${part.specifications?.model ?? ''} ${part.description ?? ''}`.toLowerCase();
     if (haystack.includes(q)) {
       const manufacturer = part.specifications?.manufacturer;
       const model = part.specifications?.model;
@@ -93,11 +99,24 @@ export function compareParts(left: string, right: string) {
   const leftRefs = new Set(leftMatches.flatMap((match) => match.references.map(normalize)));
   const rightRefs = new Set(rightMatches.flatMap((match) => match.references.map(normalize)));
   const sharedReferences = Array.from(leftRefs).filter((reference) => rightRefs.has(reference));
-  const sameCatalogPart = leftMatches.some((leftMatch) => rightMatches.some((rightMatch) => leftMatch.id === rightMatch.id));
+
+  // Only high-confidence hits can prove "same catalogue part"
+  const strongLeft = leftMatches.filter((m) => m.relevance >= 0.9);
+  const strongRight = rightMatches.filter((m) => m.relevance >= 0.9);
+  const sameCatalogPart = strongLeft.some((leftMatch) =>
+    strongRight.some((rightMatch) => leftMatch.id === rightMatch.id),
+  );
+
   const sharedApplications = leftMatches
-    .flatMap((leftMatch) => rightMatches
-      .filter((rightMatch) => leftMatch.manufacturer === rightMatch.manufacturer && leftMatch.model === rightMatch.model)
-      .map((rightMatch) => `${leftMatch.manufacturer ?? ''} ${leftMatch.model ?? ''}`.trim()))
+    .flatMap((leftMatch) =>
+      rightMatches
+        .filter(
+          (rightMatch) =>
+            leftMatch.manufacturer === rightMatch.manufacturer &&
+            leftMatch.model === rightMatch.model,
+        )
+        .map((rightMatch) => `${leftMatch.manufacturer ?? ''} ${leftMatch.model ?? ''}`.trim()),
+    )
     .filter(Boolean);
 
   return {
@@ -117,7 +136,8 @@ export function compareParts(left: string, right: string) {
 export const AI_TOOL_DEFINITIONS = [
   {
     name: 'searchPart',
-    description: 'Search the NTParts internal catalogue by OEM, aftermarket reference, model or description.',
+    description:
+      'Search the NTParts internal catalogue by OEM, aftermarket reference, model or description. Uses the same canonical search engine as the website.',
     parameters: {
       type: 'OBJECT',
       properties: { query: { type: 'STRING', description: 'Part reference or natural-language query.' } },
