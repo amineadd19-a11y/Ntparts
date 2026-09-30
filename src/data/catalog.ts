@@ -4,7 +4,7 @@ import { RENPAR_CATALOG_PARTS } from '@/data/catalog-renpar';
 import { SOURCE_BACKED_PARTS } from '@/data/catalog-source-backed';
 import { imagesForPartRefs } from '@/data/catalog-images';
 import { deduplicateAndMerge, isLiveCatalogueEligible } from '@/lib/catalog/pipeline';
-import { searchCatalogueParts, searchByOem } from '@/lib/catalog/search';
+import { normalizeReference } from '@/lib/catalog/normalize';
 
 /**
  * Source-backed OEM registry used by the catalog validation gate.
@@ -69,6 +69,10 @@ function withRealPhotos(part: Part): Part {
  *
  * Photos: official manufacturer CDN only. No stock images.
  * Merge enforces isLiveCatalogueEligible — no silent promotion of discovery data.
+ *
+ * NOTE: Do not import @/lib/catalog/search here — that module imports CATALOG_PARTS
+ * and would create a circular dependency that breaks Next.js / Vercel builds.
+ * Prefer searchCatalogue() from @/lib/catalog/search for ranked UI/AI search.
  */
 const coreOemBacked: Part[] = CORE.CATALOG_PARTS.map(withRealPhotos);
 const sourceBackedWithPhotos = SOURCE_BACKED_PARTS.map(withRealPhotos);
@@ -126,11 +130,39 @@ export const CATALOG_STATS = {
 const list = (value?: string): string[] =>
   value ? value.split(',').map((item) => item.trim()).filter(Boolean) : [];
 
-/** Canonical ranked search — same engine as website + PartMind. */
+/**
+ * Lightweight catalogue filter (no ranking).
+ * For ranked search use searchCatalogue from @/lib/catalog/search.
+ */
 export function searchCatalog(query: string): Part[] {
-  const q = query.trim();
+  const q = query.trim().toLowerCase();
   if (!q) return CATALOG_PARTS;
-  return searchCatalogueParts(q, { limit: 200 });
+  const compact = normalizeReference(query);
+
+  return CATALOG_PARTS.filter((part) => {
+    const refs = part.oemReferences.flatMap((oem) => [
+      oem.referenceNumber,
+      ...(oem.alternateNumbers ?? []),
+    ]);
+    if (refs.some((ref) => ref.toLowerCase().includes(q) || normalizeReference(ref).includes(compact)))
+      return true;
+
+    return [
+      part.id,
+      part.name,
+      part.category,
+      part.description ?? '',
+      part.specifications?.manufacturer ?? '',
+      part.specifications?.model ?? '',
+      part.specifications?.crossReferences ?? '',
+      part.specifications?.aftermarketReference ?? '',
+      ...list(part.specifications?.tags),
+      ...list(part.specifications?.aftermarketBrands),
+    ]
+      .join(' ')
+      .toLowerCase()
+      .includes(q);
+  });
 }
 
 export function getPartsByManufacturer(id: string): Part[] {
@@ -173,9 +205,19 @@ export function getPartsByTag(tag: string): Part[] {
   );
 }
 
-/** OEM / reference lookup via canonical engine. */
 export function getPartsByOEM(referenceNumber: string): Part[] {
-  return searchByOem(referenceNumber, { limit: 50 });
+  const normalized = referenceNumber.trim().toLowerCase();
+  const compact = normalizeReference(referenceNumber);
+  return CATALOG_PARTS.filter((part) =>
+    part.oemReferences.some((oem) =>
+      [oem.referenceNumber, ...(oem.alternateNumbers ?? [])].some(
+        (reference) =>
+          reference.toLowerCase() === normalized ||
+          normalizeReference(reference) === compact ||
+          normalizeReference(reference).includes(compact),
+      ),
+    ),
+  );
 }
 
 export function getPartById(id: string): Part | undefined {
