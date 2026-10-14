@@ -78,12 +78,15 @@ describe('catalogue evidence trust policy', () => {
         sourceTitle: 'Manufacturer parts catalogue, application table',
         sourceUrl: 'https://manufacturer.example/applications',
         sourceType: 'official',
-        checkedAt: '2020-01-01T09:00:00.000Z',
+        checkedAt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
         vehicleConfiguration: 'Truck model X, 2020–2023, engine D13K',
         sourceReference: 'Table 4, application row 12',
       },
     };
     expect(isVerifiedCompatibility(evidenced)).toBe(true);
+    expect(isVerifiedCompatibility({ ...evidenced, evidence: { ...evidenced.evidence!, checkedAt: new Date(Date.now() - 366 * 24 * 60 * 60 * 1000).toISOString() } })).toBe(false);
+    expect(isVerifiedCompatibility({ ...evidenced, evidence: { ...evidenced.evidence!, sourceReference: ' ' } })).toBe(false);
+    expect(isVerifiedCompatibility({ ...evidenced, evidence: { ...evidenced.evidence!, sourceUrl: 'https://user:password@manufacturer.example/applications' } })).toBe(false);
     expect(isVerifiedCompatibility({ ...evidenced, evidence: { ...evidenced.evidence!, sourceType: 'secondary' } })).toBe(false);
     expect(isVerifiedCompatibility({ ...evidenced, evidence: { ...evidenced.evidence!, sourceUrl: 'not-a-url' } })).toBe(false);
     expect(isVerifiedCompatibility({ ...evidenced, evidence: { ...evidenced.evidence!, sourceTitle: ' ' } })).toBe(false);

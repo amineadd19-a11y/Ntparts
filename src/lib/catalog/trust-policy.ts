@@ -1,12 +1,14 @@
 import type { Compatibility, CrossReference, OEMReference, Part, Source } from '@/types';
 
 const EVIDENCE_SOURCE_TYPES = new Set<Source['type']>(['official', 'parts-catalog']);
+/** Fitment evidence must be rechecked at least annually before it can support a verified claim. */
+export const MAX_FITMENT_EVIDENCE_AGE_DAYS = 365;
 
 function isHttpUrl(value?: string): boolean {
   if (!value) return false;
   try {
     const url = new URL(value);
-    return url.protocol === 'https:' || url.protocol === 'http:';
+    return (url.protocol === 'https:' || url.protocol === 'http:') && !url.username && !url.password;
   } catch {
     return false;
   }
@@ -45,11 +47,14 @@ export function isVerifiedCompatibility(compatibility: Compatibility): boolean {
     (evidence.sourceType !== 'official' && evidence.sourceType !== 'parts-catalog') ||
     !evidence.sourceTitle.trim() ||
     !evidence.vehicleConfiguration.trim() ||
+    !evidence.sourceReference?.trim() ||
     !isHttpUrl(evidence.sourceUrl)
   ) return false;
 
   const checkedAt = Date.parse(evidence.checkedAt);
-  return Number.isFinite(checkedAt) && checkedAt <= Date.now();
+  const ageMs = Date.now() - checkedAt;
+  const maxAgeMs = MAX_FITMENT_EVIDENCE_AGE_DAYS * 24 * 60 * 60 * 1000;
+  return Number.isFinite(checkedAt) && ageMs >= 0 && ageMs <= maxAgeMs;
 }
 
 export type PartTrustLabel = 'verified' | 'source-listed' | 'needs-verification' | 'unverified' | 'rejected';
