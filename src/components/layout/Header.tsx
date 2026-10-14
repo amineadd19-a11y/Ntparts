@@ -2,18 +2,16 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Menu, X, Heart, Globe, Search, Package, PackageCheck } from 'lucide-react';
+import { Menu, X, Heart, Globe, Search, Package } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useAppStore } from '@/store';
 import { getTranslation } from '@/data/translations';
-import { stockLabel } from '@/data/stock-labels';
 
 export default function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const pathname = usePathname();
   const { language, setLanguage } = useAppStore();
   const t = (key: string) => getTranslation(key, language);
-  const stockNavLabel = stockLabel(language, 'nav');
 
   useEffect(() => {
     document.documentElement.lang = language;
@@ -42,11 +40,10 @@ export default function Header() {
     ['/search', 'nav.search'],
     ['/trucks', 'nav.trucks'],
     ['/parts', 'nav.parts'],
-    ['/stock', 'nav.stock'],
     ['/about', 'nav.about'],
   ];
 
-  const labelFor = (key: string) => (key === 'nav.stock' ? stockNavLabel : t(key));
+  const labelFor = (key: string) => t(key);
 
   const isActive = (href: string) => {
     if (href === '/') return pathname === '/';
@@ -71,19 +68,12 @@ export default function Header() {
         <nav className="hidden items-center gap-0.5 rounded-xl border border-slate-700/80 bg-slate-900/80 p-1 md:flex" aria-label="Main">
           {links.map(([href, key]) => {
             const active = isActive(href);
-            const stock = key === 'nav.stock';
             return (
               <Link
                 key={href}
                 href={href}
                 className={`rounded-lg px-3.5 py-2 text-sm font-semibold transition ${
-                  active
-                    ? stock
-                      ? 'bg-accent-500/20 text-accent-300'
-                      : 'bg-slate-800 text-white'
-                    : stock
-                      ? 'text-accent-300/90 hover:bg-slate-800 hover:text-accent-200'
-                      : 'text-slate-300 hover:bg-slate-800 hover:text-white'
+                  active ? 'bg-slate-800 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white'
                 }`}
                 aria-current={active ? 'page' : undefined}
               >
@@ -123,12 +113,6 @@ export default function Header() {
               ))}
             </select>
           </div>
-          <Link
-            href="/stock"
-            className="hidden items-center gap-2 rounded-lg bg-accent-500 px-4 py-2 text-sm font-bold text-navy-950 shadow-lg shadow-accent-500/20 transition hover:-translate-y-0.5 hover:bg-accent-400 lg:flex"
-          >
-            <PackageCheck size={15} aria-hidden /> {stockNavLabel}
-          </Link>
           <button
             type="button"
             className="flex h-9 w-9 items-center justify-center rounded-lg border border-slate-700 bg-slate-900 text-slate-200 md:hidden"
@@ -154,11 +138,7 @@ export default function Header() {
                 }`}
                 aria-current={isActive(href) ? 'page' : undefined}
               >
-                {key === 'nav.stock' ? (
-                  <PackageCheck size={16} className="text-accent-400" aria-hidden />
-                ) : (
-                  <Package size={16} className="text-slate-500" aria-hidden />
-                )}
+                <Package size={16} className="text-slate-500" aria-hidden />
                 {labelFor(key)}
               </Link>
             ))}
