@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { FormEvent, useState } from 'react';
 import { AlertCircle, CheckCircle2, Loader2, Search, ShieldAlert, Truck } from 'lucide-react';
 import { useAppStore } from '@/store';
@@ -52,6 +53,8 @@ export default function VinDecoderPage() {
     submit: isArabic ? 'تحليل رقم الهيكل' : lang === 'fr' ? 'Décoder le VIN' : 'Decode VIN',
     loading: isArabic ? 'جاري البحث...' : lang === 'fr' ? 'Recherche en cours...' : 'Looking up VIN...',
     source: isArabic ? 'المصدر' : lang === 'fr' ? 'Source' : 'Source',
+    searchCatalog: isArabic ? 'قلب فكتالوج القطع حسب المركبة' : lang === 'fr' ? 'Rechercher dans le catalogue' : 'Search the parts catalogue',
+    catalogNote: isArabic ? 'هاد البحث مجاني وكيستعمل غير المراجع الموجودة فعلاً فـ NTParts. النتائج المحتملة ماشي تأكيد للتوافق مع رقم الهيكل؛ خاص التحقق من OEM والمحرك والمحور قبل الطلب.' : lang === 'fr' ? 'Cette recherche gratuite utilise uniquement les références déjà présentes dans NTParts. Les résultats ne confirment pas la compatibilité VIN; vérifiez l’OEM, le moteur et l’essieu avant commande.' : 'This free search uses only references already present in NTParts. Results do not confirm VIN fitment; verify the OEM, engine and axle before ordering.',
     decoded: isArabic ? 'المعلومات المتوفرة عن المركبة' : lang === 'fr' ? 'Informations disponibles sur le véhicule' : 'Available vehicle details',
     warningTitle: isArabic ? 'مهم: فك VIN لا يؤكد توافق قطع الغيار' : lang === 'fr' ? 'Important : le décodage VIN ne confirme pas la compatibilité des pièces' : 'Important: VIN decoding does not confirm parts fitment',
     warning: isArabic
@@ -139,6 +142,17 @@ export default function VinDecoderPage() {
               })}
             </dl>
             <p className="mt-5 text-xs text-slate-500">{copy.source}: {result.source}</p>
+            {(result.vehicle.make || result.vehicle.model || result.vehicle.manufacturer) && (
+              <div className="mt-5 rounded-xl border border-sky-200 bg-sky-50 p-4">
+                <p className="text-sm leading-6 text-sky-950">{copy.catalogNote}</p>
+                <Link
+                  href={`/parts?q=${encodeURIComponent((result.vehicle.model || result.vehicle.make || result.vehicle.manufacturer || ''))}`}
+                  className="mt-3 inline-flex items-center justify-center gap-2 rounded-lg bg-sky-600 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-sky-700"
+                >
+                  <Search size={16} aria-hidden />{copy.searchCatalog}
+                </Link>
+              </div>
+            )}
           </div>
         )}
 
