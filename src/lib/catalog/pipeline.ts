@@ -28,22 +28,22 @@ export interface MergeResult {
 /**
  * Live-catalogue eligibility gate.
  * A part may appear in the production catalogue only when it carries at least one
- * non-empty OEM/reference with a status other than rejected/unverified-without-source.
- * Template combinations without evidence are discovery data — not live.
+ * non-empty OEM reference whose status is explicitly eligible for public catalogue use.
+ * `needs-verification`, `unverified`, and `rejected` are never eligible for live publication.
  */
+const LIVE_OK: VerificationStatus[] = ['verified', 'source-listed', 'cross-checked'];
+
 export function isLiveCatalogueEligible(part: Part): boolean {
-  if (part.verificationStatus === 'rejected') return false;
+  // The part-level status and the reference-level status both gate publication.
+  // A verified reference must not accidentally promote an unverified part entity.
+  if (!LIVE_OK.includes(part.verificationStatus)) return false;
   const refs = part.oemReferences ?? [];
   if (refs.length === 0) return false;
   return refs.some(
     (ref) =>
-      Boolean(ref.referenceNumber?.trim()) &&
-      ref.verificationStatus !== 'rejected' &&
-      ref.verificationStatus !== 'unverified',
+      Boolean(ref.referenceNumber?.trim()) && LIVE_OK.includes(ref.verificationStatus),
   );
 }
-
-const LIVE_OK: VerificationStatus[] = ['verified', 'source-listed', 'cross-checked', 'needs-verification'];
 
 function allReferenceKeys(part: Part): string[] {
   const keys: string[] = [];
