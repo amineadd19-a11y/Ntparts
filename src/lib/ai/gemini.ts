@@ -298,7 +298,7 @@ export async function analyzeParts(question: string): Promise<AIAnalysisResponse
     answer = [
       'FITMENT NOT VERIFIED: NTParts does not currently have attributable evidence for this exact part-to-vehicle relationship. Do not order based on a compatibility claim alone; confirm the OEM reference against the manufacturer catalogue and exact VIN/chassis/engine.',
       text,
-    ].filter(Boolean).join('\\n\\n');
+    ].filter(Boolean).join('\n\n');
   }
   const sourceConflicts = /SOURCE CONFLICT/i.test(text)
     ? ['Conflicting source evidence detected; review cited sources before ordering.']
