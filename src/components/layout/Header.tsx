@@ -39,11 +39,14 @@ export default function Header() {
     ['/', 'nav.home'],
     ['/search', 'nav.search'],
     ['/trucks', 'nav.trucks'],
+    ['/vehicles', 'nav.vehicles'],
     ['/parts', 'nav.parts'],
     ['/about', 'nav.about'],
   ];
 
-  const labelFor = (key: string) => t(key);
+  const labelFor = (key: string) => key === 'nav.vehicles'
+    ? language === 'ar' ? 'المركبات' : language === 'fr' ? 'Véhicules' : 'Vehicles'
+    : t(key);
 
   const isActive = (href: string) => {
     if (href === '/') return pathname === '/';
