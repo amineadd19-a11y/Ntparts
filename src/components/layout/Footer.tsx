@@ -172,7 +172,10 @@ export default function Footer() {
           <p className="text-sm text-slate-500">
             © {year} NTParts. {copy.rights}
           </p>
-          <p className="text-xs text-slate-600">{copy.disclaimer}</p>
+          <div className="flex flex-col gap-2 sm:items-end">
+            <p className="text-xs text-slate-600">{copy.disclaimer}</p>
+            <p className="text-xs text-slate-500">Vehicle data by <a className="underline hover:text-sky-300" href="https://vehiclesdb.com" target="_blank" rel="noreferrer">VehiclesDB</a> (CC BY 4.0)</p>
+          </div>
         </div>
       </div>
     </footer>

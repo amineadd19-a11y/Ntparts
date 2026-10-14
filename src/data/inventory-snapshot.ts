@@ -1,12 +1,8 @@
-export const INVENTORY_SNAPSHOT_DATE = '2026-08-17';
-export const INVENTORY_SOURCE = 'Inventaire.pdf';
-/** Official aggregate from Inventaire.pdf snapshot (do not invent). */
-export const INVENTORY_ITEM_COUNT = 1744;
-export const INVENTORY_TOTAL_QUANTITY = 5368.5;
-export const INVENTORY_TOTAL_VALUE = 1443330.37;
-/**
- * Line-level stock tuples recovered from Inventaire.pdf snapshot.
- * Only well-formed source pairs — nothing fabricated.
- * Full tuples live in inventory-records.ts (imported by the inventory API).
- */
-export const INVENTORY_RECORDS_LOADED = 1454;
+/** Current inventory state: no live stock loaded after catalogue reset. */
+export const INVENTORY_SNAPSHOT_DATE = '';
+export const INVENTORY_SOURCE = 'no-current-inventory-loaded';
+export const INVENTORY_ITEM_COUNT = 0;
+export const INVENTORY_TOTAL_QUANTITY = 0;
+export const INVENTORY_TOTAL_VALUE = 0;
+/** No historical tuples are considered current stock. */
+export const INVENTORY_RECORDS_LOADED = 0;
