@@ -3,7 +3,7 @@
 ## Current live behaviour
 
 - The legacy generated/core part rows are excluded from the live catalogue merge.
-- Only records from the existing source-backed manufacturer/distributor dataset and the supplied RENPAR catalogue are considered for live results, subject to the existing eligibility gate.
+- The supplied RENPAR MOIS 11 PDF contributes 497 source-listed rows with page-level provenance; rows without an OEM reference remain aftermarket-only. The eligibility gate accepts this local source only when the document, page, and source record match.
 - Exact vehicle fitment is not asserted when source evidence does not prove it.
 - Live inventory tuples, CMUP values, aggregate quantity, and aggregate value are reset to zero until a new dated stocktake is imported.
 - The historical `inventory-records-1.ts` through `inventory-records-8.ts` files are no longer imported. They remain in this branch only as a recoverable archive; their values are not current stock.
