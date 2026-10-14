@@ -266,6 +266,56 @@ export const SOURCE_BACKED_PARTS: Part[] = [
     sourceUrl: 'https://www.mann-filter.com/content/dam/website/mann-filter/mann-filter-com/en/documents/MF_Guide-2020_Euro6_A4_Interaktiv.pdf',
     sourceType: 'parts-catalog',
   }),
+
+  // --- DAF XF106 fuel filters: publicly source-listed OEM + aftermarket cross-references ---
+  part({
+    id: 'src-daf-2277128-fuel-filter',
+    name: 'DAF XF106 Fuel Filter (OEM 2277128 / DT Spare Parts 5.45070)',
+    category: 'Filters',
+    systemId: 'engine-system',
+    description:
+      'DAF/PACCAR fuel-filter reference family listed for DAF XF106 in a public DAF truck-parts catalogue. Cross-references include 1852005, 2133095 and 2164462; aftermarket equivalents are included only where listed by public parts catalogues. Source-listed; verify dimensions and exact vehicle application before ordering.',
+    manufacturerId: 'daf-trucks',
+    manufacturer: 'DAF / PACCAR',
+    aftermarketReference: '5.45070',
+    aftermarketBrands: 'DT Spare Parts, FEBI BILSTEIN, HENGST, HIFI FILTER, SF-FILTER, SAMPA, KOLBENSCHMIDT, FLEETGUARD',
+    oem: [{
+      number: '2277128',
+      manufacturerId: 'daf-trucks',
+      alternates: [
+        '1852005', '2133095', '2164462',
+        '5.45070', '176029', 'E127KPD303', 'E127KP D303',
+        'SN70448', 'SK48783', '053.111', '50019071', 'FS20259', 'MD-3095',
+      ],
+    }],
+    sourceName: 'Public DAF truck-parts catalogue (XF106) and commercial-vehicle cross-reference listing',
+    sourceUrl: 'https://www.kmotorshop.com/en/article-detail/view/377676/fuel-filter-50019071-kolbenschmidt-1852005-2133095-2164462',
+    sourceType: 'parts-catalog',
+  }),
+  part({
+    id: 'src-daf-2277129-fuel-filter',
+    name: 'DAF XF106 Fuel Filter (OEM 2277129 / DT Spare Parts 5.45071)',
+    category: 'Filters',
+    systemId: 'engine-system',
+    description:
+      'DAF/PACCAR fuel-filter reference family listed for DAF XF106 in public commercial-vehicle catalogues. Cross-references include 1852006, 2133096 and 2164463; aftermarket equivalents are included only where listed by public parts catalogues. Source-listed; verify dimensions and exact vehicle application before ordering.',
+    manufacturerId: 'daf-trucks',
+    manufacturer: 'DAF / PACCAR',
+    aftermarketReference: '5.45071',
+    aftermarketBrands: 'DT Spare Parts, FEBI BILSTEIN, HENGST, FLEETGUARD, DONALDSON, BALDWIN, MANN-FILTER, WIX, HIFI FILTER, SAMPA, AUGER',
+    oem: [{
+      number: '2277129',
+      manufacturerId: 'daf-trucks',
+      alternates: [
+        '1852006', '2133096', '2164463',
+        '5.45071', '176031', 'E126KPD303', 'FS20260',
+        'P581406', 'PF46106', 'PU10009Z', 'WF10591', 'SN70503', '052.288', '91298',
+      ],
+    }],
+    sourceName: 'Public DAF truck-parts catalogue (XF106) and commercial-vehicle cross-reference listing',
+    sourceUrl: 'https://www.hermans-brems.be/nl/shop/product/hermans-brems/hbb1852006',
+    sourceType: 'parts-catalog',
+  }),
 ];
 
 export const SOURCE_BACKED_STATS = {
