@@ -146,7 +146,7 @@ export default function VinDecoderPage() {
               <div className="mt-5 rounded-xl border border-sky-200 bg-sky-50 p-4">
                 <p className="text-sm leading-6 text-sky-950">{copy.catalogNote}</p>
                 <Link
-                  href={`/parts?q=${encodeURIComponent([result.vehicle.make, result.vehicle.model, result.vehicle.manufacturer].filter(Boolean).join(' '))}`}
+                  href={`/parts?q=${encodeURIComponent((result.vehicle.model || result.vehicle.make || result.vehicle.manufacturer || ''))}`}
                   className="mt-3 inline-flex items-center justify-center gap-2 rounded-lg bg-sky-600 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-sky-700"
                 >
                   <Search size={16} aria-hidden />{copy.searchCatalog}
