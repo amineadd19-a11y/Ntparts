@@ -28,26 +28,56 @@ export interface MergeResult {
 
 /**
  * Live-catalogue eligibility gate.
- * A part may appear in the production catalogue only when it carries at least one
- * non-empty OEM reference whose status is explicitly eligible for public catalogue use.
- * `needs-verification`, `unverified`, and `rejected` are never eligible for live publication.
+ * Public web references require an attributable URL. The one exception is the
+ * user-supplied RENPAR MOIS 11 PDF: those rows are attributable by document + page,
+ * and are published only as SOURCE-LISTED (never as verified fitment).
+ * `needs-verification`, `unverified`, and `rejected` are never eligible.
  */
 const LIVE_OK: VerificationStatus[] = ['verified', 'source-listed', 'cross-checked'];
 
+function hasSuppliedRenparProvenance(part: Part): boolean {
+  const specs = part.specifications ?? {};
+  const page = Number(specs.sourcePage);
+  if (
+    specs.sourceDocument !== 'RENPAR MOIS 11.pdf' ||
+    !Number.isInteger(page) ||
+    page < 1 ||
+    !specs.aftermarketReference?.trim()
+  ) {
+    return false;
+  }
+
+  return (part.sources ?? []).some(
+    (source) =>
+      source.type === 'parts-catalog' &&
+      source.name === `RENPAR MOIS 11.pdf — page ${page}` &&
+      !source.url,
+  );
+}
+
 export function isLiveCatalogueEligible(part: Part): boolean {
-  // The part-level status and the reference-level status both gate publication.
-  // A verified reference must not accidentally promote an unverified part entity.
   if (!LIVE_OK.includes(part.verificationStatus)) return false;
   const refs = part.oemReferences ?? [];
-  if (refs.length === 0) return false;
+  const hasRenparSource = hasSuppliedRenparProvenance(part);
+
+  // A source-listed aftermarket part number is a valid catalogue entry even when
+  // the supplied source does not state an OEM number. It is never relabelled as OEM.
+  if (refs.length === 0) return hasRenparSource;
+
   return refs.some((ref) => {
     if (!ref.referenceNumber?.trim() || !LIVE_OK.includes(ref.verificationStatus)) return false;
 
-    // Every public reference needs an attributable URL. A VERIFIED label additionally
-    // requires explicit official/parts-catalog evidence; status text alone is not proof.
-    if (!ref.source || !/^https?:\/\//i.test(ref.source)) return false;
-    if (ref.verificationStatus === 'verified') return isVerifiedOEMReference(ref);
-    return true;
+    if (ref.verificationStatus === 'verified') {
+      return Boolean(ref.source && /^https?:\/\//i.test(ref.source)) &&
+        isVerifiedOEMReference(ref);
+    }
+
+    if (ref.source && /^https?:\/\//i.test(ref.source)) return true;
+
+    // Allow a local-document citation only when the part carries the exact matching
+    // source document/page metadata. No arbitrary non-URL references are accepted.
+    const expectedCitation = `RENPAR MOIS 11.pdf, page ${part.specifications?.sourcePage}`;
+    return hasRenparSource && ref.evidenceLevel === 'parts-catalog' && ref.source === expectedCitation;
   });
 }
 
