@@ -19,7 +19,7 @@ Template expansion rows without OEM evidence are **excluded** from the live cata
 - Structured OEM + aftermarket search
 - **PartMind AI** — catalogue tools + Google Search grounding
 - Explicit `NOT VERIFIED` / `SOURCE CONFLICT` answers
-- Inventory / stock snapshot from real inventory file
+- Catalogue is separate from private company inventory; public stock display is disabled
 - Multi-language UI (EN / FR / AR)
 - Full quality gate (types, lint, tests, catalog validation, build)
 
@@ -59,6 +59,10 @@ npm run quality-gate
 ```
 
 Runs: type-check → lint → tests → `validate:catalog` → build.
+
+## External catalogue provider
+
+The next provider to evaluate is a licensed TecAlliance TecDoc Web Service or Data Package, subject to written confirmation of truck/bus coverage, Morocco territory, and online display/redistribution rights. AUTODOC is not treated as an automatically reusable feed. No external provider is connected until licensing, credentials, and sample-data validation are complete. See `docs/catalog-rebuild-stock-reset.md`.
 
 ## Catalogue policy
 
