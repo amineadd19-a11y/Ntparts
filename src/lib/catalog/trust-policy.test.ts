@@ -78,7 +78,7 @@ describe('catalogue evidence trust policy', () => {
         sourceTitle: 'Manufacturer parts catalogue, application table',
         sourceUrl: 'https://manufacturer.example/applications',
         sourceType: 'official',
-        checkedAt: '2026-10-14T09:00:00.000Z',
+        checkedAt: '2020-01-01T09:00:00.000Z',
         vehicleConfiguration: 'Truck model X, 2020–2023, engine D13K',
         sourceReference: 'Table 4, application row 12',
       },
