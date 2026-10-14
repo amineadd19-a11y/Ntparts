@@ -112,7 +112,7 @@ export default function VinDecoderPage() {
               className="min-w-0 flex-1 rounded-xl border border-slate-700 bg-slate-900 px-4 py-3.5 font-mono text-base tracking-wider text-white outline-none placeholder:text-slate-500 focus:border-sky-400 focus:ring-2 focus:ring-sky-500/20"
             />
             <button type="submit" disabled={loading || !vin.trim()} className="inline-flex items-center justify-center gap-2 rounded-xl bg-sky-500 px-6 py-3.5 text-sm font-black text-slate-950 transition hover:bg-sky-400 disabled:cursor-not-allowed disabled:opacity-50">
-              {loading ? <LoaderCircle size={17} className="animate-spin" aria-hidden /> : <Search size={17} aria-hidden />}
+              {loading ? <Loader2 size={17} className="animate-spin" aria-hidden /> : <Search size={17} aria-hidden />}
               {loading ? copy.loading : copy.submit}
             </button>
           </form>
