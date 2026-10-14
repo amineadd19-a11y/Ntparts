@@ -53,6 +53,18 @@ describe('live catalogue verification gate', () => {
     },
   );
 
+  it('rejects a public OEM reference without an attributable URL', () => {
+    const candidate = part('source-listed', 'source-listed');
+    candidate.oemReferences[0].source = 'Manufacturer catalogue page';
+    expect(isLiveCatalogueEligible(candidate)).toBe(false);
+  });
+
+  it('rejects a VERIFIED label when the evidence level is only secondary', () => {
+    const candidate = part('verified', 'verified');
+    candidate.oemReferences[0].evidenceLevel = 'secondary';
+    expect(isLiveCatalogueEligible(candidate)).toBe(false);
+  });
+
   it('filters needs-verification records from the default live merge', () => {
     const result = deduplicateAndMerge([
       part('needs-verification', 'verified'),
