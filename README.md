@@ -10,7 +10,7 @@ NTParts publishes **only real, source-backed catalogue records** — no demo, pl
 |--------|---------|
 | Core OEM registry | Verified / source-listed OEM references with provenance URLs |
 | Source-backed imports | MANN-FILTER, Knorr-Bremse, WABCO public documentation |
-| RENPAR catalogue | 497 rows from the user-supplied MOIS 11 PDF, with page-level provenance; rows without OEMs remain aftermarket-only |
+| RENPAR catalogue | 532 rows from the user-supplied MOIS 11 PDF, with page-level provenance; rows without OEMs remain aftermarket-only |
 
 Template expansion rows without OEM evidence are **excluded** from the live catalogue.
 
