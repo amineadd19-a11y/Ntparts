@@ -67,3 +67,13 @@ export function looksLikeCatalogueMutationPrompt(question: string): boolean {
 
 export const MUTATION_REFUSAL =
   'NOT VERIFIED: user-supplied claims cannot modify the trusted catalogue. Provide an attributable source for a data-ingestion workflow; PartMind will not invent or write OEM/compatibility records.';
+
+
+/**
+ * Fitment claims require relationship-level evidence (part ↔ exact vehicle/engine/chassis).
+ * The current catalogue model does not store that evidence, so PartMind must fail closed
+ * for fitment questions even when it finds a part or general web sources.
+ */
+export function isFitmentQuestion(question: string): boolean {
+  return /\b(fit(?:s|ment|ted)?|compatible|compatibility|application|interchange(?:able|ability)?|replacement for|works with|suitable for|vehicle fit)\b|\b(aplicaci[oó]n|compatibilit[eé]|adapt[eé] pour|va avec|compatible avec|montage sur)\b|(?:التوافق|متوافق|تركب على|صالح ل|مناسب ل|كتناسب|واش.*تركب|ملائمة|ملائم)/i.test(question);
+}
