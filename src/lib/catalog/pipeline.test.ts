@@ -121,6 +121,43 @@ describe('live catalogue verification gate', () => {
     expect(isLiveCatalogueEligible(candidate)).toBe(false);
   });
 
+  it('preserves separate source-listed aftermarket SKUs that share an OEM reference', () => {
+    const makeRenpar = (id: string, sku: string, page: string): Part => {
+      const candidate = part('source-listed', 'source-listed');
+      candidate.id = id;
+      candidate.name = id;
+      candidate.oemReferences[0].id = `${id}-oem`;
+      candidate.oemReferences[0].partId = id;
+      candidate.oemReferences[0].referenceNumber = '5010301993';
+      candidate.oemReferences[0].source = `RENPAR MOIS 11.pdf, page ${page}`;
+      candidate.oemReferences[0].evidenceLevel = 'parts-catalog';
+      candidate.specifications = {
+        sourceDocument: 'RENPAR MOIS 11.pdf',
+        sourcePage: page,
+        aftermarketReference: sku,
+      };
+      candidate.sources = [{
+        id: `${id}-source`,
+        partId: id,
+        name: `RENPAR MOIS 11.pdf — page ${page}`,
+        type: 'parts-catalog',
+        reliability: 'medium',
+      }];
+      return candidate;
+    };
+
+    const result = deduplicateAndMerge([
+      makeRenpar('renpar-first', '835301993T', '12'),
+      makeRenpar('renpar-second', '835993993T', '12'),
+    ]);
+
+    expect(result.parts).toHaveLength(2);
+    expect(result.parts.map((item) => item.specifications?.aftermarketReference)).toEqual([
+      '835301993T',
+      '835993993T',
+    ]);
+  });
+
   it('filters needs-verification records from the default live merge', () => {
     const result = deduplicateAndMerge([
       part('needs-verification', 'verified'),
