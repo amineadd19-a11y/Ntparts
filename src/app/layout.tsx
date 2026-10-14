@@ -11,18 +11,19 @@ const inter = Inter({
   variable: '--font-inter',
 });
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://ntparts.vercel.app';
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://ntparts-six.vercel.app';
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: {
-    default: 'NTParts — Professional truck parts catalogue & OEM intelligence',
+    default: 'NTParts — Truck parts catalogue and OEM reference research',
     template: '%s | NTParts',
   },
   description:
-    'Search OEM references, part numbers and compatibility for major truck manufacturers. Industrial catalogue built for workshops and parts specialists. Available stock research from verified inventory snapshots.',
+    'Research source-backed truck and bus parts references, OEM numbers and catalogue records. Public stock availability is currently disabled; verify fitment and stock with NTParts before ordering.',
   keywords: [
-    'truck parts',
+    'truck parts catalogue',
+    'bus parts catalogue',
     'OEM references',
     'pièces camion',
     'poids lourds',
@@ -36,8 +37,7 @@ export const metadata: Metadata = {
     'Freightliner',
     'Kenworth',
     'cross reference',
-    'stock disponible',
-    'C.M.U.P.',
+    'parts reference research',
   ],
   authors: [{ name: 'NTParts' }],
   openGraph: {
@@ -45,14 +45,15 @@ export const metadata: Metadata = {
     locale: 'en_US',
     url: siteUrl,
     siteName: 'NTParts',
-    title: 'NTParts — Professional truck parts catalogue',
+    title: 'NTParts — Truck parts catalogue and OEM reference research',
     description:
-      'Find the right part. OEM references, cross-references, available stock and fitment data for European and North American trucks.',
+      'Research source-backed OEM and aftermarket catalogue references. Public stock availability and vehicle fitment are not currently confirmed by this catalogue.',
   },
   twitter: {
     card: 'summary_large_image',
     title: 'NTParts — Truck parts catalogue',
-    description: 'OEM and aftermarket truck parts intelligence.',
+    description:
+      'Research OEM and aftermarket catalogue references. Confirm current stock and vehicle fitment before ordering.',
   },
   robots: {
     index: true,
