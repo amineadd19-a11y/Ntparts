@@ -2,6 +2,7 @@ import {
   buildEvidenceSummary,
   looksLikeCatalogueMutationPrompt,
   statusToLabel,
+  isFitmentQuestion,
 } from './partmind-policy';
 
 describe('PartMind policy', () => {
@@ -10,6 +11,14 @@ describe('PartMind policy', () => {
     expect(statusToLabel('probable')).toBe('LIKELY');
     expect(statusToLabel('unverified')).toBe('NOT VERIFIED');
     expect(statusToLabel('conflict')).toBe('SOURCE CONFLICT');
+  });
+
+  it('detects fitment questions across English, French, and Arabic/Darija', () => {
+    expect(isFitmentQuestion('Is this part compatible with a Scania R450?')).toBe(true);
+    expect(isFitmentQuestion('Application for this OEM reference')).toBe(true);
+    expect(isFitmentQuestion('Cette pièce est compatible avec Renault Trucks ?')).toBe(true);
+    expect(isFitmentQuestion('واش هاد القطعة كتركب على Volvo FH؟')).toBe(true);
+    expect(isFitmentQuestion('What is K059965K50?')).toBe(false);
   });
 
   it('detects catalogue mutation prompts', () => {

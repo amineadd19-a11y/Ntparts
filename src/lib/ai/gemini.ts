@@ -8,6 +8,7 @@ import {
 } from '@/lib/catalog/verification';
 import {
   buildEvidenceSummary,
+  isFitmentQuestion,
   looksLikeCatalogueMutationPrompt,
   MUTATION_REFUSAL,
   preRetrieveCatalogueEvidence,
@@ -284,14 +285,27 @@ export async function analyzeParts(question: string): Promise<AIAnalysisResponse
   const reported =
     parseConfidence(text) ||
     (sources.length >= 3 ? 75 : sources.length > 0 ? 55 : catalogMatches.length > 0 ? 60 : 30);
-  const confidence = clampConfidence(reported, sources, catalogMatches.length);
-  const status = statusFrom(confidence, text, sources, catalogMatches.length);
+  let confidence = clampConfidence(reported, sources, catalogMatches.length);
+  let status = statusFrom(confidence, text, sources, catalogMatches.length);
+  let answer = text || 'NOT VERIFIED: no grounded answer was returned.';
+
+  // No relationship-level fitment evidence is currently represented in the catalogue.
+  // Never return a VERIFIED/LIKELY result for a fitment question based only on generic
+  // part matches or general web sources.
+  if (isFitmentQuestion(trimmed) && status !== 'conflict') {
+    status = 'unverified';
+    confidence = Math.min(confidence, 60);
+    answer = [
+      'FITMENT NOT VERIFIED: NTParts does not currently have attributable evidence for this exact part-to-vehicle relationship. Do not order based on a compatibility claim alone; confirm the OEM reference against the manufacturer catalogue and exact VIN/chassis/engine.',
+      text,
+    ].filter(Boolean).join('\n\n');
+  }
   const sourceConflicts = /SOURCE CONFLICT/i.test(text)
     ? ['Conflicting source evidence detected; review cited sources before ordering.']
     : [];
 
   return {
-    answer: text || 'NOT VERIFIED: no grounded answer was returned.',
+    answer,
     confidence,
     status,
     statusLabel: statusToLabel(status),
