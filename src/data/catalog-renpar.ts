@@ -17,6 +17,16 @@ const manufacturerId = (text: string) => {
   if (/VOLVO/.test(t)) return 'volvo-trucks';
   return 'renault-trucks';
 };
+const manufacturerName = (id: string): string => ({
+  'mercedes-benz-trucks': 'Mercedes-Benz Trucks',
+  'scania': 'Scania',
+  'daf-trucks': 'DAF Trucks',
+  'iveco': 'Iveco',
+  'man-truck-bus': 'MAN Truck & Bus',
+  'volvo-trucks': 'Volvo Trucks',
+  'renault-trucks': 'Renault Trucks / RVI',
+}[id] ?? id);
+
 const classification = (text: string): { category: string; systemId: Part['systemId'] } => {
   const t = text.toUpperCase();
   if (/FREIN|BRAKE|PLAQUET|DISQUE|ETRIER|VALVE.*FREIN|ABS/.test(t)) return { category: 'Brakes', systemId: 'brake-system' };
@@ -45,7 +55,7 @@ export const RENPAR_CATALOG_PARTS: Part[] = ROWS.map(([ref, aftermarket, descrip
     specifications: {
       vehicleType: 'Truck',
       manufacturerId: manufacturer,
-      manufacturer: manufacturer === 'renault-trucks' ? 'Renault Trucks / RVI' : manufacturer,
+      manufacturer: manufacturerName(manufacturer),
       aftermarketReference: aftermarket,
       sourceDocument: 'RENPAR MOIS 11.pdf',
       sourcePage: String(page),
