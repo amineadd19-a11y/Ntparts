@@ -31,7 +31,7 @@ const classification = (text: string): { category: string; systemId: Part['syste
   return { category: 'Truck Parts', systemId: 'other-system' };
 };
 
-export const RENPAR_CATALOG_PARTS: Part[] = ROWS.map(([ref, aftermarket, description, oems, , page]) => {
+export const RENPAR_CATALOG_PARTS: Part[] = ROWS.map(([ref, aftermarket, description, oems, page]) => {
   const { category, systemId } = classification(description);
   const manufacturer = manufacturerId(description);
   const refs = oems.split('|').filter(Boolean);
