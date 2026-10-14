@@ -180,6 +180,17 @@ function preferVerification(
   return ia <= ib ? a : b;
 }
 
+function shouldKeepDistinctAftermarketRecords(existing: Part, incoming: Part): boolean {
+  const involvesRenpar =
+    existing.specifications?.sourceDocument === 'RENPAR MOIS 11.pdf' ||
+    incoming.specifications?.sourceDocument === 'RENPAR MOIS 11.pdf';
+  if (!involvesRenpar) return false;
+
+  const existingSku = normalizeReference(existing.specifications?.aftermarketReference ?? '');
+  const incomingSku = normalizeReference(incoming.specifications?.aftermarketReference ?? '');
+  return Boolean(existingSku && incomingSku && existingSku !== incomingSku);
+}
+
 /**
  * Merge an incoming part into an existing one, preserving provenance and stronger evidence.
  */
@@ -225,11 +236,21 @@ export function mergeParts(existing: Part, incoming: Part): Part {
  */
 export function deduplicateAndMerge(parts: Part[], options?: { liveOnly?: boolean }): MergeResult {
   const liveOnly = options?.liveOnly !== false; // default: enforce live eligibility
-  const index = new Map<string, number>();
+  // A reference can legitimately point to multiple aftermarket SKUs. Keep all
+  // matching candidates so separate supplier catalogue items are not lost.
+  const index = new Map<string, number[]>();
   const result: Part[] = [];
   let merged = 0;
   let skippedDuplicates = 0;
   let rejectedNotEligible = 0;
+
+  const indexPart = (part: Part, partIndex: number) => {
+    for (const key of allReferenceKeys(part)) {
+      const candidates = index.get(key) ?? [];
+      if (!candidates.includes(partIndex)) candidates.push(partIndex);
+      index.set(key, candidates);
+    }
+  };
 
   for (const part of parts) {
     if (liveOnly && !isLiveCatalogueEligible(part)) {
@@ -240,17 +261,17 @@ export function deduplicateAndMerge(parts: Part[], options?: { liveOnly?: boolea
     const keys = allReferenceKeys(part);
     let matchIndex = -1;
     for (const key of keys) {
-      if (index.has(key)) {
-        matchIndex = index.get(key)!;
+      for (const candidateIndex of index.get(key) ?? []) {
+        if (shouldKeepDistinctAftermarketRecords(result[candidateIndex], part)) continue;
+        matchIndex = candidateIndex;
         break;
       }
+      if (matchIndex >= 0) break;
     }
 
     if (matchIndex >= 0) {
       result[matchIndex] = mergeParts(result[matchIndex], part);
-      for (const key of allReferenceKeys(result[matchIndex])) {
-        index.set(key, matchIndex);
-      }
+      indexPart(result[matchIndex], matchIndex);
       merged += 1;
       skippedDuplicates += 1;
       continue;
@@ -258,9 +279,7 @@ export function deduplicateAndMerge(parts: Part[], options?: { liveOnly?: boolea
 
     const nextIndex = result.length;
     result.push(part);
-    for (const key of keys) {
-      index.set(key, nextIndex);
-    }
+    indexPart(part, nextIndex);
   }
 
   return {
