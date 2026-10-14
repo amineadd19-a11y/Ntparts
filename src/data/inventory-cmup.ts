@@ -1,5 +1,5 @@
 /**
  * Current stock valuation is intentionally empty after stock reset.
- * Historical values remain in Git history; do not treat them as current CMUP.
+ * Old stock/CMUP source files are removed from the active tree; prior Git history may still contain them.
  */
 export const INVENTORY_CMUP: Record<string, number> = {};

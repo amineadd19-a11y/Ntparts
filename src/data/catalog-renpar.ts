@@ -17,6 +17,16 @@ const manufacturerId = (text: string) => {
   if (/VOLVO/.test(t)) return 'volvo-trucks';
   return 'renault-trucks';
 };
+const manufacturerName = (id: string): string => ({
+  'mercedes-benz-trucks': 'Mercedes-Benz Trucks',
+  'scania': 'Scania',
+  'daf-trucks': 'DAF Trucks',
+  'iveco': 'Iveco',
+  'man-truck-bus': 'MAN Truck & Bus',
+  'volvo-trucks': 'Volvo Trucks',
+  'renault-trucks': 'Renault Trucks / RVI',
+}[id] ?? id);
+
 const classification = (text: string): { category: string; systemId: Part['systemId'] } => {
   const t = text.toUpperCase();
   if (/FREIN|BRAKE|PLAQUET|DISQUE|ETRIER|VALVE.*FREIN|ABS/.test(t)) return { category: 'Brakes', systemId: 'brake-system' };
@@ -31,7 +41,7 @@ const classification = (text: string): { category: string; systemId: Part['syste
   return { category: 'Truck Parts', systemId: 'other-system' };
 };
 
-export const RENPAR_CATALOG_PARTS: Part[] = ROWS.map(([ref, aftermarket, description, oems, price, page]) => {
+export const RENPAR_CATALOG_PARTS: Part[] = ROWS.map(([ref, aftermarket, description, oems, page]) => {
   const { category, systemId } = classification(description);
   const manufacturer = manufacturerId(description);
   const refs = oems.split('|').filter(Boolean);
@@ -45,13 +55,12 @@ export const RENPAR_CATALOG_PARTS: Part[] = ROWS.map(([ref, aftermarket, descrip
     specifications: {
       vehicleType: 'Truck',
       manufacturerId: manufacturer,
-      manufacturer: manufacturer === 'renault-trucks' ? 'Renault Trucks / RVI' : manufacturer,
+      manufacturer: manufacturerName(manufacturer),
       aftermarketReference: aftermarket,
-      sourcePrice: price,
       sourceDocument: 'RENPAR MOIS 11.pdf',
       sourcePage: String(page),
       tags: description.toLowerCase().split(/\s+/).filter(x => x.length > 2).slice(0, 14).join(', '),
-      oemStatus: refs.length ? 'SOURCE-LISTED / NOT INDEPENDENTLY VERIFIED' : 'NOT VERIFIED',
+      oemStatus: refs.length ? 'SOURCE-LISTED / NOT INDEPENDENTLY VERIFIED' : 'NO OEM IN SOURCE — PART NUMBER SOURCE-LISTED',
       referencePolicy: 'No fitment claim beyond the supplied catalogue source.',
     },
     images: [],
@@ -62,13 +71,13 @@ export const RENPAR_CATALOG_PARTS: Part[] = ROWS.map(([ref, aftermarket, descrip
       referenceNumber,
       alternateNumbers: [aftermarket, ...refs.filter(x => x !== referenceNumber)].filter(Boolean),
       verificationStatus: 'source-listed' as const,
-      source: 'RENPAR MOIS 11.pdf',
+      source: `RENPAR MOIS 11.pdf, page ${page}`,
       evidenceLevel: 'parts-catalog' as const,
     })),
     crossReferences: [],
     compatibility: [],
-    sources: [{ id: `${partId}-source`, partId, name: 'RENPAR MOIS 11 catalogue (supplied PDF)', type: 'parts-catalog', reliability: 'medium' }],
-    verificationStatus: 'needs-verification',
+    sources: [{ id: `${partId}-source`, partId, name: `RENPAR MOIS 11.pdf — page ${page}`, type: 'parts-catalog', reliability: 'medium' }],
+    verificationStatus: 'source-listed',
     createdAt: '2026-08-16T00:00:00.000Z',
     updatedAt: '2026-08-16T00:00:00.000Z',
   } as Part;

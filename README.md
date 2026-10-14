@@ -10,16 +10,17 @@ NTParts publishes **only real, source-backed catalogue records** — no demo, pl
 |--------|---------|
 | Core OEM registry | Verified / source-listed OEM references with provenance URLs |
 | Source-backed imports | MANN-FILTER, Knorr-Bremse, WABCO public documentation |
-| RENPAR catalogue | Supplied commercial catalogue PDF (MOIS 11) rows |
+| RENPAR catalogue | 532 rows from the user-supplied MOIS 11 PDF, with page-level provenance; rows without OEMs remain aftermarket-only |
 
 Template expansion rows without OEM evidence are **excluded** from the live catalogue.
 
 ## Features
 
-- Structured OEM + aftermarket search
+- Structured OEM + aftermarket search across source-listed catalogue rows
+- Searchable catalogue with category/manufacturer filters and pagination
 - **PartMind AI** — catalogue tools + Google Search grounding
 - Explicit `NOT VERIFIED` / `SOURCE CONFLICT` answers
-- Catalogue is separate from private company inventory; public stock display is disabled
+- Catalogue is separate from private company inventory; public stock and supplier/source prices are not published
 - Multi-language UI (EN / FR / AR)
 - Full quality gate (types, lint, tests, catalog validation, build)
 
