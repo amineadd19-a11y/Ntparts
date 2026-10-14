@@ -63,9 +63,34 @@ describe('catalogue evidence trust policy', () => {
     expect(isVerifiedCrossReference({ ...crossReference, source: 'catalogue page without URL' })).toBe(false);
   });
 
-  it('fails closed on vehicle fitment because compatibility rows have no relationship-level evidence yet', () => {
+  it('fails closed when a legacy boolean has no relationship-level evidence', () => {
     expect(isVerifiedCompatibility(compatibility)).toBe(false);
     expect(isVerifiedCompatibility({ ...compatibility, verified: false })).toBe(false);
+    expect(isVerifiedCompatibility({ ...compatibility, verificationStatus: 'verified' })).toBe(false);
+  });
+
+  it('accepts fitment only when the exact relationship has attributable, dated official/catalogue evidence', () => {
+    const evidenced: Compatibility = {
+      ...compatibility,
+      verificationStatus: 'verified',
+      evidence: {
+        status: 'verified',
+        sourceTitle: 'Manufacturer parts catalogue, application table',
+        sourceUrl: 'https://manufacturer.example/applications',
+        sourceType: 'official',
+        checkedAt: '2026-10-14T09:00:00.000Z',
+        vehicleConfiguration: 'Truck model X, 2020–2023, engine D13K',
+        sourceReference: 'Table 4, application row 12',
+      },
+    };
+    expect(isVerifiedCompatibility(evidenced)).toBe(true);
+    expect(isVerifiedCompatibility({ ...evidenced, evidence: { ...evidenced.evidence!, sourceType: 'secondary' } })).toBe(false);
+    expect(isVerifiedCompatibility({ ...evidenced, evidence: { ...evidenced.evidence!, sourceUrl: 'not-a-url' } })).toBe(false);
+    expect(isVerifiedCompatibility({ ...evidenced, evidence: { ...evidenced.evidence!, sourceTitle: ' ' } })).toBe(false);
+    expect(isVerifiedCompatibility({ ...evidenced, evidence: { ...evidenced.evidence!, vehicleConfiguration: '' } })).toBe(false);
+    expect(isVerifiedCompatibility({ ...evidenced, evidence: { ...evidenced.evidence!, checkedAt: 'not-a-date' } })).toBe(false);
+    expect(isVerifiedCompatibility({ ...evidenced, evidence: { ...evidenced.evidence!, checkedAt: '2999-01-01T00:00:00.000Z' } })).toBe(false);
+    expect(isVerifiedCompatibility({ ...evidenced, evidence: { ...evidenced.evidence!, status: 'source-listed' } })).toBe(false);
   });
 
   it('keeps source-listed and cross-checked distinct from verified in public-facing trust labels', () => {
