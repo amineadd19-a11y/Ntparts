@@ -115,13 +115,31 @@ export interface CrossReference {
   notes?: string;
 }
 
+/**
+ * Evidence attached to one exact part ↔ vehicle-configuration relationship.
+ * A source URL by itself is not enough: the source must identify the application
+ * and the checked configuration must be recorded.
+ */
+export interface FitmentEvidence {
+  status: VerificationStatus;
+  sourceTitle: string;
+  sourceUrl: string;
+  sourceType: 'official' | 'parts-catalog' | 'secondary';
+  checkedAt: string;
+  vehicleConfiguration: string;
+  sourceReference?: string;
+}
+
 export interface Compatibility {
   id: string;
   partId: string;
   generationId: string;
   engineId?: string;
   notes?: string;
+  /** Legacy boolean retained for compatibility; never sufficient to verify fitment. */
   verified: boolean;
+  verificationStatus?: VerificationStatus;
+  evidence?: FitmentEvidence;
 }
 
 export interface Source {

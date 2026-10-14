@@ -32,12 +32,24 @@ export function isVerifiedCrossReference(reference: CrossReference): boolean {
 }
 
 /**
- * Compatibility currently has no per-relationship evidence fields in the data model.
- * Therefore a boolean flag alone is not sufficient to claim verified vehicle fitment.
- * This intentionally fails closed until the relationship itself stores attributable evidence.
+ * Verified fitment requires evidence attached to this exact relationship.
+ * Legacy `verified: true`, a part-level source, or a bare URL cannot establish fitment.
  */
-export function isVerifiedCompatibility(_compatibility: Compatibility): boolean {
-  return false;
+export function isVerifiedCompatibility(compatibility: Compatibility): boolean {
+  const evidence = compatibility.evidence;
+  if (
+    compatibility.verified !== true ||
+    compatibility.verificationStatus !== 'verified' ||
+    !evidence ||
+    evidence.status !== 'verified' ||
+    (evidence.sourceType !== 'official' && evidence.sourceType !== 'parts-catalog') ||
+    !evidence.sourceTitle.trim() ||
+    !evidence.vehicleConfiguration.trim() ||
+    !isHttpUrl(evidence.sourceUrl)
+  ) return false;
+
+  const checkedAt = Date.parse(evidence.checkedAt);
+  return Number.isFinite(checkedAt) && checkedAt <= Date.now();
 }
 
 export type PartTrustLabel = 'verified' | 'source-listed' | 'needs-verification' | 'unverified' | 'rejected';
