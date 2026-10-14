@@ -13,7 +13,7 @@
     "test:coverage": "jest --coverage",
     "type-check": "tsc --noEmit",
     "validate:catalog": "node scripts/validate-catalog.mjs",
-    "quality-gate": "npm run type-check && npm run lint && npm test -- --runInBand && npm run validate:catalog && npm run build"
+    "quality-gate": "node scripts/quality-gate.mjs"
   },
   "dependencies": {
     "react": "^18.2.0",

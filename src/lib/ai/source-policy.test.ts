@@ -44,4 +44,14 @@ describe('PartMind source policy', () => {
   it('can verify when catalogue matches exist with high confidence', () => {
     expect(statusFrom(90, 'Match found', [], 2)).toBe('verified');
   });
+
+  it('never verifies on LLM confidence alone with zero evidence', () => {
+    expect(statusFrom(99, 'I am certain', [], 0)).toBe('unverified');
+  });
+
+  it('returns conflict when SOURCE CONFLICT is reported', () => {
+    expect(
+      statusFrom(95, 'SOURCE CONFLICT between A and B', [source('volvotrucks.com', 'OFFICIAL', 98)], 1),
+    ).toBe('conflict');
+  });
 });

@@ -2,6 +2,28 @@
  * NTParts - Core Type Definitions
  */
 
+/**
+ * Explicit verification lifecycle for catalogue entities.
+ *
+ * - verified: supported by acceptable evidence (OEM/official/parts-catalog tiers)
+ * - source-listed: present in a attributable source but exact fitment may be unproven
+ * - cross-checked: corroborated across multiple sources (legacy / intermediate)
+ * - needs-verification: incomplete evidence; must not be treated as production fact
+ * - unverified: no acceptable evidence
+ * - rejected: explicitly rejected (bad data, conflict, policy)
+ *
+ * LLM confidence alone MUST NEVER promote a record to verified.
+ */
+export type VerificationStatus =
+  | 'verified'
+  | 'source-listed'
+  | 'cross-checked'
+  | 'needs-verification'
+  | 'unverified'
+  | 'rejected';
+
+export type EvidenceLevel = 'official' | 'parts-catalog' | 'secondary';
+
 export interface Manufacturer {
   id: string;
   name: string;
@@ -56,7 +78,7 @@ export interface Part {
   crossReferences: CrossReference[];
   compatibility: Compatibility[];
   sources: Source[];
-  verificationStatus: 'verified' | 'cross-checked' | 'needs-verification';
+  verificationStatus: VerificationStatus;
   createdAt: string;
   updatedAt: string;
 }
@@ -78,9 +100,9 @@ export interface OEMReference {
   modelIds?: string[];
   referenceNumber: string;
   alternateNumbers?: string[];
-  verificationStatus: 'verified' | 'source-listed' | 'unverified';
+  verificationStatus: VerificationStatus;
   source?: string;
-  evidenceLevel?: 'official' | 'parts-catalog' | 'secondary';
+  evidenceLevel?: EvidenceLevel;
 }
 
 export interface CrossReference {
@@ -88,7 +110,7 @@ export interface CrossReference {
   partId: string;
   referencedPartId: string;
   relationshipType: 'compatible' | 'compatible-with-modification' | 'upgrade' | 'downgrade' | 'substitute';
-  verificationStatus?: 'verified' | 'source-listed' | 'unverified';
+  verificationStatus?: VerificationStatus;
   source?: string;
   notes?: string;
 }

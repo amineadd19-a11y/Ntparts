@@ -5,32 +5,11 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Search, Package, ArrowRight, ShieldCheck, Filter } from 'lucide-react';
 import SearchBar from '@/components/search/SearchBar';
+import VerificationBadge from '@/components/common/VerificationBadge';
 import { useAppStore } from '@/store';
 import { getTranslation } from '@/data/translations';
 import { CATALOG_PARTS } from '@/data/catalog';
-import { normalizeReference } from '@/lib/catalog/normalize';
-
-function matchesPart(part: (typeof CATALOG_PARTS)[number], q: string): boolean {
-  const raw = q.trim();
-  if (!raw) return true;
-  const lower = raw.toLowerCase();
-  const norm = normalizeReference(raw);
-  const candidates: string[] = [
-    part.name,
-    part.category,
-    part.description ?? '',
-    part.specifications?.manufacturer ?? '',
-    part.specifications?.aftermarketReference ?? '',
-    ...part.oemReferences.flatMap((o) => [o.referenceNumber, ...(o.alternateNumbers ?? [])]),
-  ];
-  for (const c of candidates) {
-    if (!c) continue;
-    const s = String(c);
-    if (s.toLowerCase().includes(lower)) return true;
-    if (norm.length >= 2 && normalizeReference(s).includes(norm)) return true;
-  }
-  return false;
-}
+import { searchCatalogue } from '@/lib/catalog/search';
 
 function SearchResults() {
   const searchParams = useSearchParams();
@@ -50,13 +29,18 @@ function SearchResults() {
     return Array.from(set).sort();
   }, []);
 
-  const results = useMemo(() => {
-    let list = CATALOG_PARTS.filter((p) => matchesPart(p, q));
-    if (category !== 'all') list = list.filter((p) => p.category === category);
-    return list.slice(0, 100);
+  const searchResult = useMemo(() => {
+    if (!q) return { results: [], total: 0 };
+    return searchCatalogue(q, {
+      limit: 100,
+      category: category === 'all' ? undefined : category,
+    });
   }, [q, category]);
 
-  const totalUnfiltered = useMemo(() => CATALOG_PARTS.filter((p) => matchesPart(p, q)).length, [q]);
+  const totalUnfiltered = useMemo(() => {
+    if (!q) return 0;
+    return searchCatalogue(q, { limit: 500 }).total;
+  }, [q]);
 
   return (
     <main className="min-h-screen bg-slate-100">
@@ -88,7 +72,7 @@ function SearchResults() {
               <>
                 <strong className="font-bold text-navy-900">{totalUnfiltered}</strong>{' '}
                 {language === 'fr' ? 'résultats pour' : language === 'ar' ? 'نتيجة لـ' : 'results for'}{' '}
-                <span className="font-mono font-semibold text-sky-700">&quot;{q}&quot;</span>
+                <span className="font-mono font-semibold text-sky-700">{`\u201c${q}\u201d`}</span>
               </>
             ) : (
               <span>
@@ -121,7 +105,7 @@ function SearchResults() {
         </div>
 
         <div className="space-y-3">
-          {results.map((part) => (
+          {searchResult.results.map(({ part, matchKind, verificationStatus }) => (
             <Link
               key={part.id}
               href={`/parts/${part.id}`}
@@ -130,9 +114,10 @@ function SearchResults() {
               <div className="min-w-0 flex-1">
                 <div className="flex flex-wrap items-center gap-2">
                   <span className="font-bold text-navy-900 group-hover:text-sky-800">{part.name}</span>
-                  {part.verificationStatus === 'verified' && (
-                    <span className="inline-flex items-center gap-1 rounded-full bg-accent-100 px-2 py-0.5 text-[10px] font-bold uppercase text-accent-800">
-                      <ShieldCheck size={11} aria-hidden /> Verified
+                  <VerificationBadge status={verificationStatus} size="sm" />
+                  {matchKind.startsWith('exact') && (
+                    <span className="inline-flex items-center gap-1 rounded-full bg-sky-50 px-2 py-0.5 text-[10px] font-bold uppercase text-sky-800">
+                      <ShieldCheck size={11} aria-hidden /> Exact ref
                     </span>
                   )}
                 </div>
@@ -154,7 +139,7 @@ function SearchResults() {
             </Link>
           ))}
 
-          {q && results.length === 0 && (
+          {q && searchResult.results.length === 0 && (
             <div className="rounded-2xl border border-slate-200 bg-white p-12 text-center">
               <Search className="mx-auto text-slate-300" size={32} aria-hidden />
               <p className="mt-4 text-sm font-semibold text-slate-600">

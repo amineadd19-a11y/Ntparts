@@ -6,9 +6,10 @@
  * - Prefer merging sources into an existing entity over creating duplicates.
  * - Preserve provenance (sources) on merge.
  * - Never upgrade SOURCE-LISTED / NOT VERIFIED to VERIFIED without explicit evidence.
+ * - Template / discovery rows without OEM evidence must not enter the live catalogue.
  */
 
-import type { Part, OEMReference, Source } from '@/types';
+import type { Part, OEMReference, Source, VerificationStatus } from '@/types';
 import { normalizeReference, referenceIdentityKey } from './normalize';
 
 export type IncomingPart = Part;
@@ -20,8 +21,29 @@ export interface MergeResult {
     output: number;
     merged: number;
     skippedDuplicates: number;
+    rejectedNotEligible: number;
   };
 }
+
+/**
+ * Live-catalogue eligibility gate.
+ * A part may appear in the production catalogue only when it carries at least one
+ * non-empty OEM/reference with a status other than rejected/unverified-without-source.
+ * Template combinations without evidence are discovery data — not live.
+ */
+export function isLiveCatalogueEligible(part: Part): boolean {
+  if (part.verificationStatus === 'rejected') return false;
+  const refs = part.oemReferences ?? [];
+  if (refs.length === 0) return false;
+  return refs.some(
+    (ref) =>
+      Boolean(ref.referenceNumber?.trim()) &&
+      ref.verificationStatus !== 'rejected' &&
+      ref.verificationStatus !== 'unverified',
+  );
+}
+
+const LIVE_OK: VerificationStatus[] = ['verified', 'source-listed', 'cross-checked', 'needs-verification'];
 
 function allReferenceKeys(part: Part): string[] {
   const keys: string[] = [];
@@ -40,8 +62,23 @@ function allReferenceKeys(part: Part): string[] {
 function mergeOemReferences(existing: OEMReference[], incoming: OEMReference[]): OEMReference[] {
   const byNorm = new Map<string, OEMReference>();
 
-  const rank = (status: OEMReference['verificationStatus']) =>
-    status === 'verified' ? 3 : status === 'source-listed' ? 2 : 1;
+  const rank = (status: VerificationStatus) => {
+    switch (status) {
+      case 'verified':
+        return 5;
+      case 'cross-checked':
+        return 4;
+      case 'source-listed':
+        return 3;
+      case 'needs-verification':
+        return 2;
+      case 'unverified':
+        return 1;
+      case 'rejected':
+      default:
+        return 0;
+    }
+  };
 
   for (const ref of [...existing, ...incoming]) {
     const key = normalizeReference(ref.referenceNumber);
@@ -89,11 +126,22 @@ function mergeSources(existing: Source[], incoming: Source[]): Source[] {
 }
 
 function preferVerification(
-  a: Part['verificationStatus'],
-  b: Part['verificationStatus'],
-): Part['verificationStatus'] {
-  const order: Part['verificationStatus'][] = ['verified', 'cross-checked', 'needs-verification'];
-  return order.indexOf(a) <= order.indexOf(b) ? a : b;
+  a: VerificationStatus,
+  b: VerificationStatus,
+): VerificationStatus {
+  const order: VerificationStatus[] = [
+    'verified',
+    'cross-checked',
+    'source-listed',
+    'needs-verification',
+    'unverified',
+    'rejected',
+  ];
+  const ia = order.indexOf(a);
+  const ib = order.indexOf(b);
+  if (ia < 0) return b;
+  if (ib < 0) return a;
+  return ia <= ib ? a : b;
 }
 
 /**
@@ -137,14 +185,22 @@ export function mergeParts(existing: Part, incoming: Part): Part {
 /**
  * Deduplicate a list of parts by normalized ID / OEM / aftermarket references.
  * When a collision is found, sources are merged into the first occurrence.
+ * Optionally filters out non-eligible (discovery-only) rows when `liveOnly` is true.
  */
-export function deduplicateAndMerge(parts: Part[]): MergeResult {
+export function deduplicateAndMerge(parts: Part[], options?: { liveOnly?: boolean }): MergeResult {
+  const liveOnly = options?.liveOnly !== false; // default: enforce live eligibility
   const index = new Map<string, number>();
   const result: Part[] = [];
   let merged = 0;
   let skippedDuplicates = 0;
+  let rejectedNotEligible = 0;
 
   for (const part of parts) {
+    if (liveOnly && !isLiveCatalogueEligible(part)) {
+      rejectedNotEligible += 1;
+      continue;
+    }
+
     const keys = allReferenceKeys(part);
     let matchIndex = -1;
     for (const key of keys) {
@@ -178,6 +234,7 @@ export function deduplicateAndMerge(parts: Part[]): MergeResult {
       output: result.length,
       merged,
       skippedDuplicates,
+      rejectedNotEligible,
     },
   };
 }
@@ -206,4 +263,4 @@ export function findByNormalizedReference(
   return ids.map((id) => partsById.get(id)).filter((p): p is Part => Boolean(p));
 }
 
-export { referenceIdentityKey };
+export { referenceIdentityKey, LIVE_OK };
