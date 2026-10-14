@@ -1,7 +1,7 @@
 'use client';
 
 import { FormEvent, useState } from 'react';
-import { AlertCircle, CheckCircle2, LoaderCircle, Search, ShieldAlert, Truck } from 'lucide-react';
+import { AlertCircle, CheckCircle2, Loader2, Search, ShieldAlert, Truck } from 'lucide-react';
 import { useAppStore } from '@/store';
 
 type DecodeResponse = {
@@ -12,6 +12,7 @@ type DecodeResponse = {
   fitmentVerified?: boolean;
   note?: string;
   error?: string;
+  code?: string;
 };
 
 const LABELS: Record<string, { en: string; fr: string; ar: string }> = {
