@@ -1,1 +1,1 @@
-export type RenparRow = [ref: string, aftermarket: string, description: string, oems: string, price: string, page: number];
+export type RenparRow = [ref: string, aftermarket: string, description: string, oems: string, page: number];
