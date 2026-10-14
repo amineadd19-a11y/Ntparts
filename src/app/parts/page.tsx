@@ -34,6 +34,12 @@ export default function PartsPage() {
     );
   }, [query, category, manufacturer]);
 
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const initialQuery = params.get('q') ?? params.get('search');
+    if (initialQuery) setQuery(initialQuery.slice(0, 120));
+  }, []);
+
   useEffect(() => setPage(1), [query, category, manufacturer]);
 
   const pageCount = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
