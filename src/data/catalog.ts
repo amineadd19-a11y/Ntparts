@@ -74,7 +74,8 @@ function withRealPhotos(part: Part): Part {
  * and would create a circular dependency that breaks Next.js / Vercel builds.
  * Prefer searchCatalogue() from @/lib/catalog/search for ranked UI/AI search.
  */
-const coreOemBacked: Part[] = CORE.CATALOG_PARTS.map(withRealPhotos);
+/** Legacy generated/core catalogue is intentionally excluded from live results. */
+const coreOemBacked: Part[] = [];
 const sourceBackedWithPhotos = SOURCE_BACKED_PARTS.map(withRealPhotos);
 const renparWithPhotos = RENPAR_CATALOG_PARTS.map(withRealPhotos);
 
@@ -104,7 +105,7 @@ export const CATALOG_AFTERMARKET_BRANDS: string[] = Array.from(
 export const CATALOG_STATS = {
   manufacturers: CATALOG_MANUFACTURERS.length,
   models: CATALOG_MODELS.length,
-  partTemplates: CORE.CATALOG_STATS.partTemplates,
+  partTemplates: 0,
   parts: CATALOG_PARTS.length,
   categories: CATALOG_CATEGORIES.length,
   systems: CATALOG_SYSTEMS.length,
