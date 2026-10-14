@@ -40,13 +40,16 @@ export default function Header() {
     ['/search', 'nav.search'],
     ['/trucks', 'nav.trucks'],
     ['/vehicles', 'nav.vehicles'],
+    ['/vin-decoder', 'nav.vin'],
     ['/parts', 'nav.parts'],
     ['/about', 'nav.about'],
   ];
 
   const labelFor = (key: string) => key === 'nav.vehicles'
     ? language === 'ar' ? 'المركبات' : language === 'fr' ? 'Véhicules' : 'Vehicles'
-    : t(key);
+    : key === 'nav.vin'
+      ? language === 'ar' ? 'فك رقم الهيكل VIN' : language === 'fr' ? 'Décodeur VIN' : 'VIN Decoder'
+      : t(key);
 
   const isActive = (href: string) => {
     if (href === '/') return pathname === '/';
