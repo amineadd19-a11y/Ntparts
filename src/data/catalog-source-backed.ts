@@ -63,7 +63,9 @@ function part(input: {
         reliability: 'high',
       },
     ],
-    verificationStatus: 'needs-verification',
+    // Publish as SOURCE-LISTED, not VERIFIED: the cited catalogue supports the reference
+    // listing, while exact vehicle/engine/chassis fitment remains unconfirmed.
+    verificationStatus: 'source-listed',
     createdAt: IMPORT_DATE,
     updatedAt: IMPORT_DATE,
   };
