@@ -285,7 +285,7 @@ export async function analyzeParts(question: string): Promise<AIAnalysisResponse
   const reported =
     parseConfidence(text) ||
     (sources.length >= 3 ? 75 : sources.length > 0 ? 55 : catalogMatches.length > 0 ? 60 : 30);
-  const confidence = clampConfidence(reported, sources, catalogMatches.length);
+  let confidence = clampConfidence(reported, sources, catalogMatches.length);
   let status = statusFrom(confidence, text, sources, catalogMatches.length);
   let answer = text || 'NOT VERIFIED: no grounded answer was returned.';
 
