@@ -1,5 +1,5 @@
 import { SOURCE_BACKED_PARTS } from '@/data/catalog-source-backed';
-import { isLiveCatalogueEligible } from './pipeline';
+import { isLiveCatalogueEligible } from '../lib/catalog/pipeline';
 
 describe('source-backed catalogue publication', () => {
   it('publishes cited records as source-listed without promoting them to verified fitment', () => {
