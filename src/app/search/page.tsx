@@ -8,7 +8,7 @@ import SearchBar from '@/components/search/SearchBar';
 import VerificationBadge from '@/components/common/VerificationBadge';
 import { useAppStore } from '@/store';
 import { getTranslation } from '@/data/translations';
-import { CATALOG_PARTS } from '@/data/catalog';
+import { CATALOG_PARTS, CATALOG_MANUFACTURERS } from '@/data/catalog';
 import { searchCatalogue } from '@/lib/catalog/search';
 
 function SearchResults() {
@@ -36,6 +36,8 @@ function SearchResults() {
       category: category === 'all' ? undefined : category,
     });
   }, [q, category]);
+
+  const manufacturerNames = useMemo(() => new Map(CATALOG_MANUFACTURERS.map((m) => [m.id, m.name])), []);
 
   const totalUnfiltered = useMemo(() => {
     if (!q) return 0;
@@ -124,12 +126,58 @@ function SearchResults() {
                 <p className="mt-1 line-clamp-2 text-sm text-slate-500">{part.description}</p>
                 <div className="mt-2 flex flex-wrap gap-1.5">
                   <span className="rounded-md bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-600">{part.category}</span>
-                  {part.oemReferences.slice(0, 3).map((o) => (
-                    <span key={o.referenceNumber} className="rounded-md bg-sky-50 px-2 py-0.5 font-mono text-xs font-semibold text-sky-800">
-                      {o.referenceNumber}
+                  {part.oemReferences.map((o) => (
+                    <span key={o.id} className="inline-flex flex-wrap items-center gap-1 rounded-md bg-sky-50 px-2 py-0.5 text-xs text-sky-900">
+                      <span className="font-semibold">{manufacturerNames.get(o.manufacturerId) ?? o.manufacturerId}</span>
+                      <span className="font-mono font-bold">{o.referenceNumber}</span>
+                    </span>
+                  ))}
+                  {part.oemReferences.flatMap((o) => o.alternateNumbers ?? []).map((ref, index) => (
+                    <span key={part.id + '-alt-' + index + '-' + ref} className="rounded-md border border-slate-200 bg-white px-2 py-0.5 font-mono text-xs text-slate-600">
+                      {ref}
                     </span>
                   ))}
                 </div>
+                {(part.crossReferences.length > 0 || (part.crossBrandReferences?.length ?? 0) > 0) && (
+                  <div className="mt-3 rounded-lg border border-emerald-200 bg-emerald-50 p-3">
+                    <p className="mb-2 text-xs font-extrabold uppercase tracking-wide text-emerald-900">
+                      {language === 'fr' ? 'Références équivalentes / autres marques' : language === 'ar' ? 'المراجع المكافئة / ماركات أخرى' : 'Equivalent references / other brands'}
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      {(part.crossBrandReferences ?? []).map((xref) => (
+                        <a
+                          key={xref.brand + '-' + xref.referenceNumber}
+                          href={xref.sourceUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                          title={xref.notes ?? xref.verificationStatus}
+                          className="rounded-md border border-emerald-200 bg-white px-2 py-1 text-xs text-emerald-950 hover:bg-emerald-100"
+                        >
+                          <b>{xref.brand}</b>
+                          <span className="ml-2 font-mono font-bold">{xref.referenceNumber}</span>
+                          <span className="ml-2 text-[10px] text-emerald-700">({xref.verificationStatus})</span>
+                          <span className="ml-1" aria-hidden="true">↗</span>
+                        </a>
+                      ))}
+                      {part.crossReferences.map((xref) => {
+                        const linkedPart = CATALOG_PARTS.find((candidate) => candidate.id === xref.referencedPartId);
+                        const linkedRefs = linkedPart?.oemReferences ?? [];
+                        return (
+                          <span key={xref.id} title={xref.notes ?? xref.relationshipType} className="rounded-md border border-emerald-200 bg-white px-2 py-1 text-xs text-emerald-950">
+                            <b>{linkedPart?.name ?? xref.referencedPartId}</b>
+                            {linkedRefs.map((ref) => (
+                              <span key={ref.id} className="ml-2 font-mono">{(manufacturerNames.get(ref.manufacturerId) ?? ref.manufacturerId) + ': ' + ref.referenceNumber}</span>
+                            ))}
+                            <span className="ml-2 text-[10px] text-emerald-700">({xref.relationshipType})</span>
+                          </span>
+                        );
+                      })}
+                    </div>
+                    <p className="mt-2 text-[11px] leading-4 text-emerald-800">
+                      {language === 'fr' ? 'Confirmez la compatibilité exacte avant commande.' : language === 'ar' ? 'تأكد من التوافق الدقيق قبل الطلب.' : 'Confirm exact fitment before ordering.'}
+                    </p>
+                  </div>
+                )}
               </div>
               <span className="inline-flex shrink-0 items-center gap-1 text-sm font-bold text-sky-700 group-hover:text-sky-900">
                 <Package size={15} aria-hidden />

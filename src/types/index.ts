@@ -76,6 +76,7 @@ export interface Part {
   images: PartImage[];
   oemReferences: OEMReference[];
   crossReferences: CrossReference[];
+  crossBrandReferences?: CrossBrandReference[];
   compatibility: Compatibility[];
   sources: Source[];
   verificationStatus: VerificationStatus;
@@ -103,6 +104,14 @@ export interface OEMReference {
   verificationStatus: VerificationStatus;
   source?: string;
   evidenceLevel?: EvidenceLevel;
+}
+
+export interface CrossBrandReference {
+  brand: string;
+  referenceNumber: string;
+  sourceUrl: string;
+  verificationStatus: VerificationStatus;
+  notes?: string;
 }
 
 export interface CrossReference {
