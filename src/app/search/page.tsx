@@ -46,7 +46,7 @@ function SearchResults() {
 
   return (
     <main className="min-h-screen bg-slate-100">
-      <section className="border-b border-slate-800 bg-navy-950 px-4 py-10 sm:px-6 lg:px-8">
+      <section className="nt-hero-grid border-b border-slate-800 px-4 py-10 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-4xl">
           <p className="text-[11px] font-black uppercase tracking-[0.2em] text-sky-400">
             {language === 'fr' ? 'Recherche industrielle' : language === 'ar' ? 'بحث صناعي' : 'Industrial search'}
@@ -69,12 +69,17 @@ function SearchResults() {
 
       <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6 lg:px-8">
         <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <p className="text-sm text-slate-600">
+          <div className="text-sm text-slate-600" aria-live="polite">
             {q ? (
               <>
                 <strong className="font-bold text-navy-900">{totalUnfiltered}</strong>{' '}
                 {language === 'fr' ? 'résultats pour' : language === 'ar' ? 'نتيجة لـ' : 'results for'}{' '}
-                <span className="font-mono font-semibold text-sky-700">{`\u201c${q}\u201d`}</span>
+                <span className="rounded-md bg-sky-50 px-1.5 py-1 font-mono font-semibold text-sky-700">{'“' + q + '”'}</span>
+                {category !== 'all' && (
+                  <span className="ml-2 inline-flex rounded-full border border-slate-200 bg-white px-2 py-0.5 text-xs font-semibold text-slate-500">
+                    {searchResult.total} {language === 'fr' ? 'dans cette catégorie' : language === 'ar' ? 'في هذه الفئة' : 'in this category'}
+                  </span>
+                )}
               </>
             ) : (
               <span>
@@ -85,14 +90,14 @@ function SearchResults() {
                     : 'Enter a reference, name or manufacturer.'}
               </span>
             )}
-          </p>
-          <div className="flex items-center gap-2">
+          </div>
+          <div className="flex items-center gap-2 self-start rounded-xl border border-slate-200 bg-white px-3 shadow-sm sm:self-auto">
             <Filter size={14} className="text-slate-400" aria-hidden />
             <select
               value={category}
               onChange={(e) => setCategory(e.target.value)}
-              className="h-10 rounded-lg border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 outline-none focus:border-sky-400"
-              aria-label="Category"
+              className="h-10 min-w-0 bg-transparent text-sm font-semibold text-slate-700 outline-none focus-visible:ring-2 focus-visible:ring-sky-500"
+              aria-label={language === 'fr' ? 'Filtrer par catégorie' : language === 'ar' ? 'تصفية حسب الفئة' : 'Filter by category'}
             >
               <option value="all">
                 {language === 'fr' ? 'Toutes catégories' : language === 'ar' ? 'كل الفئات' : 'All categories'}
@@ -106,16 +111,16 @@ function SearchResults() {
           </div>
         </div>
 
-        <div className="space-y-3">
-          {searchResult.results.map(({ part, matchKind, verificationStatus }) => (
-            <Link
+        <div className="space-y-4">
+          {searchResult.results.map(({ part, matchKind, verificationStatus }, index) => (
+            <article
               key={part.id}
-              href={`/parts/${part.id}`}
-              className="group flex flex-col gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-nt-sm transition hover:border-sky-300 hover:shadow-nt sm:flex-row sm:items-center sm:justify-between"
+              style={{ animationDelay: `${Math.min(index, 8) * 45}ms` }}
+              className="nt-card nt-card-hover animate-fade-up group flex flex-col gap-4 rounded-2xl p-4 sm:p-5 lg:flex-row lg:items-start lg:justify-between"
             >
               <div className="min-w-0 flex-1">
                 <div className="flex flex-wrap items-center gap-2">
-                  <span className="font-bold text-navy-900 group-hover:text-sky-800">{part.name}</span>
+                  <h2 className="font-bold text-navy-900 transition-colors group-hover:text-sky-800">{part.name}</h2>
                   <VerificationBadge status={verificationStatus} size="sm" />
                   {matchKind.startsWith('exact') && (
                     <span className="inline-flex items-center gap-1 rounded-full bg-sky-50 px-2 py-0.5 text-[10px] font-bold uppercase text-sky-800">
@@ -123,23 +128,23 @@ function SearchResults() {
                     </span>
                   )}
                 </div>
-                <p className="mt-1 line-clamp-2 text-sm text-slate-500">{part.description}</p>
-                <div className="mt-2 flex flex-wrap gap-1.5">
-                  <span className="rounded-md bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-600">{part.category}</span>
+                <p className="mt-1 line-clamp-2 text-sm leading-6 text-slate-500">{part.description}</p>
+                <div className="mt-3 flex flex-wrap gap-1.5">
+                  <span className="rounded-md bg-slate-100 px-2 py-1 text-xs font-semibold text-slate-600">{part.category}</span>
                   {part.oemReferences.map((o) => (
-                    <span key={o.id} className="inline-flex flex-wrap items-center gap-1 rounded-md bg-sky-50 px-2 py-0.5 text-xs text-sky-900">
+                    <span key={o.id} className="inline-flex flex-wrap items-center gap-1 rounded-md bg-sky-50 px-2 py-1 text-xs text-sky-900">
                       <span className="font-semibold">{manufacturerNames.get(o.manufacturerId) ?? o.manufacturerId}</span>
                       <span className="font-mono font-bold">{o.referenceNumber}</span>
                     </span>
                   ))}
-                  {part.oemReferences.flatMap((o) => o.alternateNumbers ?? []).map((ref, index) => (
-                    <span key={part.id + '-alt-' + index + '-' + ref} className="rounded-md border border-slate-200 bg-white px-2 py-0.5 font-mono text-xs text-slate-600">
+                  {part.oemReferences.flatMap((o) => o.alternateNumbers ?? []).map((ref, altIndex) => (
+                    <span key={part.id + '-alt-' + altIndex + '-' + ref} className="rounded-md border border-slate-200 bg-white px-2 py-1 font-mono text-xs text-slate-600">
                       {ref}
                     </span>
                   ))}
                 </div>
                 {(part.crossReferences.length > 0 || (part.crossBrandReferences?.length ?? 0) > 0) && (
-                  <div className="mt-3 rounded-lg border border-emerald-200 bg-emerald-50 p-3">
+                  <div className="mt-4 rounded-xl border border-emerald-200/90 bg-emerald-50/80 p-3 sm:p-4">
                     <p className="mb-2 text-xs font-extrabold uppercase tracking-wide text-emerald-900">
                       {language === 'fr' ? 'Références équivalentes / autres marques' : language === 'ar' ? 'المراجع المكافئة / ماركات أخرى' : 'Equivalent references / other brands'}
                     </p>
@@ -151,7 +156,7 @@ function SearchResults() {
                           target="_blank"
                           rel="noreferrer"
                           title={xref.notes ?? xref.verificationStatus}
-                          className="rounded-md border border-emerald-200 bg-white px-2 py-1 text-xs text-emerald-950 hover:bg-emerald-100"
+                          className="rounded-lg border border-emerald-200 bg-white px-2.5 py-1.5 text-xs text-emerald-950 transition-colors hover:border-emerald-400 hover:bg-emerald-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-600"
                         >
                           <b>{xref.brand}</b>
                           <span className="ml-2 font-mono font-bold">{xref.referenceNumber}</span>
@@ -163,7 +168,7 @@ function SearchResults() {
                         const linkedPart = CATALOG_PARTS.find((candidate) => candidate.id === xref.referencedPartId);
                         const linkedRefs = linkedPart?.oemReferences ?? [];
                         return (
-                          <span key={xref.id} title={xref.notes ?? xref.relationshipType} className="rounded-md border border-emerald-200 bg-white px-2 py-1 text-xs text-emerald-950">
+                          <span key={xref.id} title={xref.notes ?? xref.relationshipType} className="rounded-lg border border-emerald-200 bg-white px-2.5 py-1.5 text-xs text-emerald-950">
                             <b>{linkedPart?.name ?? xref.referencedPartId}</b>
                             {linkedRefs.map((ref) => (
                               <span key={ref.id} className="ml-2 font-mono">{(manufacturerNames.get(ref.manufacturerId) ?? ref.manufacturerId) + ': ' + ref.referenceNumber}</span>
@@ -173,27 +178,37 @@ function SearchResults() {
                         );
                       })}
                     </div>
-                    <p className="mt-2 text-[11px] leading-4 text-emerald-800">
+                    <p className="mt-3 text-[11px] leading-4 text-emerald-800">
                       {language === 'fr' ? 'Confirmez la compatibilité exacte avant commande.' : language === 'ar' ? 'تأكد من التوافق الدقيق قبل الطلب.' : 'Confirm exact fitment before ordering.'}
                     </p>
                   </div>
                 )}
               </div>
-              <span className="inline-flex shrink-0 items-center gap-1 text-sm font-bold text-sky-700 group-hover:text-sky-900">
-                <Package size={15} aria-hidden />
-                {language === 'fr' ? 'Voir' : language === 'ar' ? 'عرض' : 'View'}
-                <ArrowRight size={14} aria-hidden className={language === 'ar' ? 'rotate-180' : ''} />
-              </span>
-            </Link>
+              <div className="flex shrink-0 items-center justify-between gap-3 border-t border-slate-100 pt-3 lg:w-28 lg:flex-col lg:items-end lg:border-0 lg:pt-1">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                  {language === 'fr' ? 'Fiche pièce' : language === 'ar' ? 'تفاصيل القطعة' : 'Part details'}
+                </span>
+                <Link
+                  href={`/parts/${part.id}`}
+                  className="inline-flex items-center gap-1.5 rounded-lg bg-slate-900 px-3.5 py-2.5 text-sm font-bold text-white transition duration-200 hover:-translate-y-0.5 hover:bg-sky-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-600"
+                >
+                  <Package size={15} aria-hidden />
+                  {language === 'fr' ? 'Voir' : language === 'ar' ? 'عرض' : 'View'}
+                  <ArrowRight size={14} aria-hidden className={language === 'ar' ? 'rotate-180' : ''} />
+                </Link>
+              </div>
+            </article>
           ))}
 
           {q && searchResult.results.length === 0 && (
-            <div className="rounded-2xl border border-slate-200 bg-white p-12 text-center">
-              <Search className="mx-auto text-slate-300" size={32} aria-hidden />
-              <p className="mt-4 text-sm font-semibold text-slate-600">
+            <div className="animate-fade-up rounded-2xl border border-slate-200 bg-white p-8 text-center shadow-sm sm:p-12">
+              <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-100">
+                <Search className="text-slate-400" size={26} aria-hidden />
+              </div>
+              <p className="mt-4 text-sm font-semibold text-slate-700">
                 {language === 'fr' ? 'Aucun résultat dans le catalogue.' : language === 'ar' ? 'لا نتائج في الكتالوج.' : 'No catalogue matches.'}
               </p>
-              <p className="mt-2 text-xs text-slate-400">
+              <p className="mt-2 text-xs leading-5 text-slate-400">
                 {language === 'fr'
                   ? 'Essayez une autre référence ou consultez le stock disponible.'
                   : language === 'ar'
@@ -201,10 +216,10 @@ function SearchResults() {
                     : 'Try another reference or check available stock.'}
               </p>
               <div className="mt-6 flex flex-wrap justify-center gap-3">
-                <Link href="/stock" className="rounded-xl bg-accent-600 px-4 py-2.5 text-sm font-bold text-white hover:bg-accent-500">
+                <Link href="/stock" className="rounded-xl bg-accent-600 px-4 py-2.5 text-sm font-bold text-white transition hover:-translate-y-0.5 hover:bg-accent-500">
                   {language === 'fr' ? 'Stock disponible' : language === 'ar' ? 'السلع المتوفرة' : 'Available stock'}
                 </Link>
-                <button type="button" onClick={() => router.push('/search')} className="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-bold text-slate-700 hover:border-slate-300">
+                <button type="button" onClick={() => router.push('/search')} className="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-bold text-slate-700 transition hover:border-slate-300">
                   {language === 'fr' ? 'Effacer' : language === 'ar' ? 'مسح' : 'Clear'}
                 </button>
               </div>
@@ -212,7 +227,7 @@ function SearchResults() {
           )}
 
           {!q && (
-            <div className="rounded-2xl border border-dashed border-slate-200 bg-white/60 p-10 text-center text-sm text-slate-500">
+            <div className="animate-fade-up rounded-2xl border border-dashed border-slate-200 bg-white/70 p-8 text-center text-sm leading-6 text-slate-500 sm:p-10">
               {language === 'fr'
                 ? 'Recherchez par numéro OEM, référence aftermarket, nom de pièce ou constructeur.'
                 : language === 'ar'
