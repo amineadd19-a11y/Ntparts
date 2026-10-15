@@ -38,6 +38,32 @@ describe('canonical catalogue search', () => {
     expect(a).toEqual(b);
   });
 
+  it('finds DAF XF106 fuel filters by both OEM references and listed alternates', () => {
+    const expectedByQuery: Array<[string, string]> = [
+      ['2277128', 'src-daf-2277128-fuel-filter'],
+      ['2277129', 'src-daf-2277129-fuel-filter'],
+      ['1852005', 'src-daf-2277128-fuel-filter'],
+      ['2164463', 'src-daf-2277129-fuel-filter'],
+    ];
+
+    for (const [query, expectedPartId] of expectedByQuery) {
+      const { results } = searchCatalogue(query, { limit: 50 });
+      expect(results.some((result) => result.part.id === expectedPartId)).toBe(true);
+    }
+  });
+
+  it('finds DAF filter OEMs despite inserted spaces and punctuation', () => {
+    const variants: Array<[string, string]> = [
+      ['2277 128', 'src-daf-2277128-fuel-filter'],
+      ['2277-129', 'src-daf-2277129-fuel-filter'],
+    ];
+
+    for (const [query, expectedPartId] of variants) {
+      const { results } = searchCatalogue(query, { limit: 50 });
+      expect(results.some((result) => result.part.id === expectedPartId)).toBe(true);
+    }
+  });
+
   it('exposes verificationStatus on every scored result', () => {
     const { results } = searchCatalogue('filter', { limit: 5 });
     for (const r of results) {
