@@ -21,6 +21,7 @@ function part(input: {
   sourceName: string;
   sourceUrl: string;
   sourceType: 'official' | 'parts-catalog' | 'documentation' | 'other';
+  crossBrandReferences?: Part['crossBrandReferences'];
 }): Part {
   return {
     id: input.id,
@@ -52,6 +53,7 @@ function part(input: {
       evidenceLevel: 'parts-catalog' as const,
     })),
     crossReferences: [],
+    crossBrandReferences: input.crossBrandReferences ?? [],
     compatibility: [],
     sources: [
       {
@@ -291,6 +293,14 @@ export const SOURCE_BACKED_PARTS: Part[] = [
     sourceName: 'Public DAF truck-parts catalogue (XF106) and commercial-vehicle cross-reference listing',
     sourceUrl: 'https://www.kmotorshop.com/en/article-detail/view/377676/fuel-filter-50019071-kolbenschmidt-1852005-2133095-2164462',
     sourceType: 'parts-catalog',
+    crossBrandReferences: [
+      { brand: 'DT Spare Parts', referenceNumber: '5.45070', sourceUrl: 'https://garages.brew-web.co.uk/app/uploads/sites/3/OE-DAF-Filter.pdf', verificationStatus: 'source-listed', notes: 'DAF 2277128 filter cross-reference' },
+      { brand: 'FEBI BILSTEIN', referenceNumber: '176029', sourceUrl: 'https://garages.brew-web.co.uk/app/uploads/sites/3/OE-DAF-Filter.pdf', verificationStatus: 'source-listed' },
+      { brand: 'MANN-FILTER', referenceNumber: 'PU10012Z', sourceUrl: 'https://garages.brew-web.co.uk/app/uploads/sites/3/OE-DAF-Filter.pdf', verificationStatus: 'source-listed' },
+      { brand: 'HENGST', referenceNumber: 'E127KPD303', sourceUrl: 'https://www.fuelfilter-crossreference.com/convert/DAF/2277128', verificationStatus: 'source-listed' },
+      { brand: 'KOLBENSCHMIDT', referenceNumber: '50019071', sourceUrl: 'https://www.kmotorshop.com/en/article-detail/view/377676/fuel-filter-50019071-kolbenschmidt-1852005-2133095-2164462', verificationStatus: 'source-listed' },
+      { brand: 'HIFI FILTER', referenceNumber: 'SN30055', sourceUrl: 'https://garages.brew-web.co.uk/app/uploads/sites/3/OE-DAF-Filter.pdf', verificationStatus: 'source-listed' },
+    ],
   }),
   part({
     id: 'src-daf-2277129-fuel-filter',
@@ -315,6 +325,13 @@ export const SOURCE_BACKED_PARTS: Part[] = [
     sourceName: 'Public DAF truck-parts catalogue (XF106) and commercial-vehicle cross-reference listing',
     sourceUrl: 'https://www.hermans-brems.be/nl/shop/product/hermans-brems/hbb1852006',
     sourceType: 'parts-catalog',
+    crossBrandReferences: [
+      { brand: 'DT Spare Parts', referenceNumber: '5.45071', sourceUrl: 'https://garages.brew-web.co.uk/app/uploads/sites/3/OE-DAF-Filter.pdf', verificationStatus: 'source-listed', notes: 'DAF 2277129 filter cross-reference' },
+      { brand: 'FEBI BILSTEIN', referenceNumber: '176031', sourceUrl: 'https://garages.brew-web.co.uk/app/uploads/sites/3/OE-DAF-Filter.pdf', verificationStatus: 'source-listed' },
+      { brand: 'MANN-FILTER', referenceNumber: 'PU10009Z', sourceUrl: 'https://garages.brew-web.co.uk/app/uploads/sites/3/OE-DAF-Filter.pdf', verificationStatus: 'source-listed' },
+      { brand: 'HENGST', referenceNumber: 'E126KPD303', sourceUrl: 'https://www.hermans-brems.be/nl/shop/product/hermans-brems/hbb1852006', verificationStatus: 'source-listed' },
+      { brand: 'HIFI FILTER', referenceNumber: 'SN70503', sourceUrl: 'https://garages.brew-web.co.uk/app/uploads/sites/3/OE-DAF-Filter.pdf', verificationStatus: 'source-listed' },
+    ],
   }),
 
   part({
