@@ -63,15 +63,16 @@ export default function SearchBar({
           placeholder={placeholder}
           autoFocus={autoFocus}
           autoComplete="off"
+          dir="auto"
           enterKeyHint="search"
           className={
             isHero
-              ? 'w-full rounded-xl border border-slate-600/60 bg-slate-900/80 px-5 py-4 pl-12 pr-24 text-base font-medium text-white shadow-[0_8px_32px_rgba(0,0,0,0.3)] outline-none transition placeholder:text-slate-500 focus:border-sky-500/60 focus:ring-4 focus:ring-sky-500/15'
-              : 'w-full rounded-xl border border-slate-200 bg-white px-5 py-3.5 pl-12 pr-24 text-base font-medium text-navy-900 shadow-nt-sm outline-none transition placeholder:text-slate-400 focus:border-sky-400 focus:ring-4 focus:ring-sky-100'
+              ? 'nt-search-input nt-search-input-hero w-full rounded-xl border border-slate-600/60 bg-slate-900/80 px-5 py-4 text-base font-medium text-white shadow-[0_8px_32px_rgba(0,0,0,0.3)] outline-none transition placeholder:text-slate-500 focus:border-sky-500/60 focus:ring-4 focus:ring-sky-500/15'
+              : 'nt-search-input nt-search-input-light w-full rounded-xl border border-slate-200 bg-white px-5 py-3.5 text-base font-medium text-navy-900 shadow-nt-sm outline-none transition placeholder:text-slate-400 focus:border-sky-400 focus:ring-4 focus:ring-sky-100'
           }
         />
         <Search
-          className={`pointer-events-none absolute left-4 ${isHero ? 'text-slate-500' : 'text-slate-400'}`}
+          className={`nt-search-leading pointer-events-none absolute ${isHero ? 'text-slate-500' : 'text-slate-400'}`}
           size={20}
           aria-hidden
         />
@@ -82,7 +83,7 @@ export default function SearchBar({
               setQuery('');
               inputRef.current?.focus();
             }}
-            className={`absolute right-14 flex h-8 w-8 items-center justify-center rounded-lg transition ${
+            className={`nt-search-clear absolute flex h-8 w-8 items-center justify-center rounded-lg transition ${
               isHero ? 'text-slate-400 hover:bg-slate-800 hover:text-white' : 'text-slate-400 hover:bg-slate-100 hover:text-slate-700'
             }`}
             aria-label="Clear"
@@ -92,14 +93,14 @@ export default function SearchBar({
         )}
         {isLoading ? (
           <Loader2
-            className={`absolute right-3 animate-spin ${isHero ? 'text-sky-400' : 'text-sky-600'}`}
+            className={`nt-search-loading absolute animate-spin ${isHero ? 'text-sky-400' : 'text-sky-600'}`}
             size={20}
             aria-hidden
           />
         ) : (
           <button
             type="submit"
-            className="absolute right-2 flex h-10 items-center gap-1.5 rounded-lg bg-sky-500 px-3 text-sm font-bold text-navy-950 transition hover:bg-sky-400"
+            className="nt-search-submit absolute flex h-10 items-center gap-1.5 rounded-lg bg-sky-500 px-3 text-sm font-bold text-navy-950 transition hover:bg-sky-400"
             aria-label="Search"
           >
             <Search size={16} />
