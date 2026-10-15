@@ -62,7 +62,8 @@ export default function SearchBar({
           onChange={handleChange}
           placeholder={placeholder}
           autoFocus={autoFocus}
-          autoComplete="off"\n          dir="auto"
+          autoComplete="off"
+          dir="auto"
           enterKeyHint="search"
           className={
             isHero
