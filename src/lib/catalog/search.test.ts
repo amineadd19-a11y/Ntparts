@@ -38,6 +38,61 @@ describe('canonical catalogue search', () => {
     expect(a).toEqual(b);
   });
 
+  it('finds an exact cross-brand reference and preserves its evidence status', () => {
+    const base = CATALOG_PARTS[0];
+    if (!base) throw new Error('Catalogue fixture is required for this test');
+
+    const fixture = {
+      ...base,
+      oemReferences: [],
+      crossBrandReferences: [
+        {
+          brand: 'WABCO',
+          referenceNumber: '4324102227',
+          sourceUrl: 'https://www.wabco-customercentre.com/',
+          verificationStatus: 'source-listed' as const,
+          notes: 'Regression fixture only',
+        },
+      ],
+    };
+
+    const { results, total } = searchCatalogue('4324102227', {
+      parts: [fixture],
+      limit: 5,
+    });
+
+    expect(total).toBe(1);
+    expect(results[0]?.part.id).toBe(fixture.id);
+    expect(results[0]?.matchKind).toBe('exact-source-listed-oem');
+    expect(results[0]?.verificationStatus).toBeTruthy();
+  });
+
+  it('normalizes punctuation in cross-brand reference lookup', () => {
+    const base = CATALOG_PARTS[0];
+    if (!base) throw new Error('Catalogue fixture is required for this test');
+
+    const fixture = {
+      ...base,
+      oemReferences: [],
+      crossBrandReferences: [
+        {
+          brand: 'WABCO',
+          referenceNumber: '4324-102-227',
+          sourceUrl: 'https://www.wabco-customercentre.com/',
+          verificationStatus: 'source-listed' as const,
+        },
+      ],
+    };
+
+    const { results } = searchCatalogue('4324102227', {
+      parts: [fixture],
+      limit: 5,
+    });
+
+    expect(results[0]?.part.id).toBe(fixture.id);
+    expect(results[0]?.matchKind).toBe('exact-source-listed-oem');
+  });
+
   it('exposes verificationStatus on every scored result', () => {
     const { results } = searchCatalogue('filter', { limit: 5 });
     for (const r of results) {
