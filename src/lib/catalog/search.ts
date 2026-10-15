@@ -154,6 +154,48 @@ export function scorePart(part: Part, query: string): ScoredPart | null {
     }
   }
 
+  // --- Cross-brand OEM / aftermarket references ---
+  // These source-linked references must be searchable as well as visible in results.
+  for (const xref of part.crossBrandReferences ?? []) {
+    const candidate = xref.referenceNumber;
+    const cSoft = softNormalize(candidate);
+    const cNorm = normalizeReference(candidate);
+    if (!cSoft && !cNorm) continue;
+
+    const exact = cSoft === qSoft || cNorm === qNorm;
+    const partial =
+      (qNorm.length >= 3 && (cNorm.includes(qNorm) || qNorm.includes(cNorm))) ||
+      (qSoft.length >= 3 && (cSoft.includes(qSoft) || qSoft.includes(cSoft)));
+
+    if (exact) {
+      if (xref.verificationStatus === 'verified') {
+        score = Math.max(score, 320);
+        matchKind = upgradeMatchKind(matchKind, 'exact-verified-oem');
+      } else if (
+        xref.verificationStatus === 'source-listed' ||
+        xref.verificationStatus === 'cross-checked'
+      ) {
+        score = Math.max(score, 260);
+        matchKind = upgradeMatchKind(matchKind, 'exact-source-listed-oem');
+      } else {
+        score = Math.max(score, 200);
+        matchKind = upgradeMatchKind(matchKind, 'exact-oem');
+      }
+    } else if (partial) {
+      const partialScore =
+        xref.verificationStatus === 'verified'
+          ? 160
+          : xref.verificationStatus === 'source-listed' ||
+              xref.verificationStatus === 'cross-checked'
+            ? 130
+            : 100;
+      if (partialScore > score) {
+        score = partialScore;
+        matchKind = upgradeMatchKind(matchKind, 'partial-oem');
+      }
+    }
+  }
+
   // --- Aftermarket reference ---
   const aftermarket = part.specifications?.aftermarketReference || '';
   if (aftermarket) {
