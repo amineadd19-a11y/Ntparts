@@ -526,3 +526,63 @@ textarea {
     transition: none;
   }
 }
+
+
+/* Logical positioning keeps the global search usable in LTR and RTL layouts. */
+.nt-search-input {
+  min-width: 0;
+  padding-inline-start: 3.15rem;
+  padding-inline-end: 6.25rem;
+  text-align: start;
+}
+
+.nt-search-leading {
+  inset-inline-start: 1rem;
+}
+
+.nt-search-clear {
+  inset-inline-end: 3.55rem;
+}
+
+.nt-search-loading {
+  inset-inline-end: 1rem;
+}
+
+.nt-search-submit {
+  inset-inline-end: 0.5rem;
+}
+
+.nt-search-input-light {
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.045);
+}
+
+.nt-search-input-hero {
+  box-shadow: 0 12px 34px rgba(0, 0, 0, 0.2);
+}
+
+.nt-search-input:focus-visible {
+  outline: 2px solid rgba(14, 165, 233, 0.65);
+  outline-offset: 2px;
+}
+
+@media (max-width: 420px) {
+  .nt-search-input {
+    padding-inline-start: 2.8rem;
+    padding-inline-end: 5.6rem;
+    font-size: 14px;
+  }
+
+  .nt-search-leading {
+    width: 18px;
+    inset-inline-start: 0.85rem;
+  }
+
+  .nt-search-submit {
+    gap: 0;
+    padding-inline: 0.7rem;
+  }
+
+  .nt-search-clear {
+    inset-inline-end: 3.1rem;
+  }
+}
