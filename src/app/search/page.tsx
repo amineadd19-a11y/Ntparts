@@ -138,12 +138,27 @@ function SearchResults() {
                     </span>
                   ))}
                 </div>
-                {part.crossReferences.length > 0 && (
+                {(part.crossReferences.length > 0 || (part.crossBrandReferences?.length ?? 0) > 0) && (
                   <div className="mt-3 rounded-lg border border-emerald-200 bg-emerald-50 p-3">
                     <p className="mb-2 text-xs font-extrabold uppercase tracking-wide text-emerald-900">
                       {language === 'fr' ? 'Références équivalentes / autres marques' : language === 'ar' ? 'المراجع المكافئة / ماركات أخرى' : 'Equivalent references / other brands'}
                     </p>
                     <div className="flex flex-wrap gap-2">
+                      {(part.crossBrandReferences ?? []).map((xref) => (
+                        <a
+                          key={xref.brand + '-' + xref.referenceNumber}
+                          href={xref.sourceUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                          title={xref.notes ?? xref.verificationStatus}
+                          className="rounded-md border border-emerald-200 bg-white px-2 py-1 text-xs text-emerald-950 hover:bg-emerald-100"
+                        >
+                          <b>{xref.brand}</b>
+                          <span className="ml-2 font-mono font-bold">{xref.referenceNumber}</span>
+                          <span className="ml-2 text-[10px] text-emerald-700">({xref.verificationStatus})</span>
+                          <span className="ml-1" aria-hidden="true">↗</span>
+                        </a>
+                      ))}
                       {part.crossReferences.map((xref) => {
                         const linkedPart = CATALOG_PARTS.find((candidate) => candidate.id === xref.referencedPartId);
                         const linkedRefs = linkedPart?.oemReferences ?? [];
