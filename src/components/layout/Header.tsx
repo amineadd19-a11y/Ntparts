@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Menu, X, Heart, Globe, Search, Package } from 'lucide-react';
+import { Menu, X, Heart, Globe, Search, Package, ChevronDown } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useAppStore } from '@/store';
 import { getTranslation } from '@/data/translations';
@@ -18,22 +18,20 @@ export default function Header() {
     document.documentElement.dir = language === 'ar' ? 'rtl' : 'ltr';
   }, [language]);
 
-  useEffect(() => {
-    setMobileMenuOpen(false);
-  }, [pathname]);
+  useEffect(() => setMobileMenuOpen(false), [pathname]);
 
-  const languages: Array<{ code: 'fr' | 'en' | 'ar'; label: string }> = [
-    { code: 'fr', label: 'FR' },
-    { code: 'en', label: 'EN' },
-    { code: 'ar', label: 'AR' },
+  const languages: Array<{ code: 'fr' | 'en' | 'ar'; label: string; name: string }> = [
+    { code: 'fr', label: 'FR', name: 'Français' },
+    { code: 'en', label: 'EN', name: 'English' },
+    { code: 'ar', label: 'AR', name: 'العربية' },
   ];
 
   const tagline =
     language === 'fr'
-      ? 'Catalogue pièces industrielles'
+      ? 'Catalogue pièces poids lourds'
       : language === 'ar'
-        ? 'كتالوج القطع الصناعية'
-        : 'Industrial Parts Intelligence';
+        ? 'كتالوج قطع الشاحنات والحافلات'
+        : 'Truck & Bus Parts Intelligence';
 
   const links: Array<[string, string]> = [
     ['/', 'nav.home'],
@@ -48,39 +46,33 @@ export default function Header() {
   const labelFor = (key: string) => key === 'nav.vehicles'
     ? language === 'ar' ? 'المركبات' : language === 'fr' ? 'Véhicules' : 'Vehicles'
     : key === 'nav.vin'
-      ? language === 'ar' ? 'فك رقم الهيكل VIN' : language === 'fr' ? 'Décodeur VIN' : 'VIN Decoder'
+      ? language === 'ar' ? 'فك رقم الهيكل VIN' : language === 'fr' ? 'Décodeur VIN' : 'VIN decoder'
       : t(key);
 
-  const isActive = (href: string) => {
-    if (href === '/') return pathname === '/';
-    return pathname === href || pathname.startsWith(`${href}/`);
-  };
+  const isActive = (href: string) =>
+    href === '/' ? pathname === '/' : pathname === href || pathname.startsWith(`${href}/`);
 
   return (
-    <header className="sticky top-0 z-50 border-b border-slate-800/80 bg-navy-950/95 shadow-[0_8px_32px_rgba(0,0,0,0.25)] backdrop-blur-xl">
-      <div className="mx-auto flex h-[72px] max-w-7xl items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
-        <Link href="/" className="flex shrink-0 items-center gap-3" onClick={() => setMobileMenuOpen(false)}>
-          <div className="relative flex h-10 w-10 items-center justify-center overflow-hidden rounded-xl text-white shadow-lg shadow-sky-900/40">
-            <div className="absolute inset-0 bg-gradient-to-br from-sky-400 via-sky-600 to-navy-900" />
-            <div className="absolute inset-0 bg-[linear-gradient(135deg,transparent_40%,rgba(255,255,255,0.15)_50%,transparent_60%)]" />
-            <span className="relative text-sm font-black tracking-tight">NT</span>
-          </div>
-          <div className="hidden leading-none sm:block">
-            <div className="text-[16px] font-black tracking-tight text-white">NTPARTS</div>
-            <div className="mt-1 text-[9px] font-bold uppercase tracking-[0.14em] text-slate-400">{tagline}</div>
-          </div>
+    <header className="nt-header sticky top-0 z-50">
+      <div className="mx-auto flex min-h-[76px] max-w-[1440px] items-center justify-between gap-4 px-4 sm:px-6 xl:px-8">
+        <Link href="/" className="group flex min-w-0 shrink-0 items-center gap-3" onClick={() => setMobileMenuOpen(false)}>
+          <span className="nt-brand-mark" aria-hidden="true">
+            <span>NT</span>
+          </span>
+          <span className="min-w-0 leading-none">
+            <span className="block text-[17px] font-black tracking-[-0.055em] text-slate-950">NTPARTS<span className="text-sky-600">.</span></span>
+            <span className="mt-1.5 hidden text-[9px] font-bold uppercase tracking-[0.12em] text-slate-500 sm:block">{tagline}</span>
+          </span>
         </Link>
 
-        <nav className="hidden items-center gap-0.5 rounded-xl border border-slate-700/80 bg-slate-900/80 p-1 md:flex" aria-label="Main">
+        <nav className="hidden items-center gap-1 xl:flex" aria-label="Main navigation">
           {links.map(([href, key]) => {
             const active = isActive(href);
             return (
               <Link
                 key={href}
                 href={href}
-                className={`rounded-lg px-3.5 py-2 text-sm font-semibold transition ${
-                  active ? 'bg-slate-800 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white'
-                }`}
+                className={`nt-nav-link ${active ? 'nt-nav-link-active' : ''}`}
                 aria-current={active ? 'page' : undefined}
               >
                 {labelFor(key)}
@@ -89,41 +81,31 @@ export default function Header() {
           })}
         </nav>
 
-        <div className="flex items-center gap-2 sm:gap-2.5">
-          <Link
-            href="/search"
-            className="hidden h-9 w-9 items-center justify-center rounded-lg border border-slate-700 bg-slate-900 text-slate-300 transition hover:border-sky-500/50 hover:text-sky-400 sm:flex"
-            aria-label={t('nav.search')}
-          >
-            <Search size={17} />
+        <div className="flex shrink-0 items-center gap-2">
+          <Link href="/search" className="nt-header-icon hidden sm:inline-flex" aria-label={t('nav.search')}>
+            <Search size={17} aria-hidden="true" />
           </Link>
-          <Link
-            href="/favorites"
-            className="hidden h-9 w-9 items-center justify-center rounded-lg border border-slate-700 bg-slate-900 text-slate-300 transition hover:border-sky-500/50 hover:text-sky-400 sm:flex"
-            aria-label={t('nav.favorites')}
-          >
-            <Heart size={17} />
+          <Link href="/favorites" className="nt-header-icon hidden sm:inline-flex" aria-label={t('nav.favorites')}>
+            <Heart size={17} aria-hidden="true" />
           </Link>
-          <div className="hidden h-9 items-center gap-1.5 rounded-lg border border-sky-500/40 bg-slate-900 px-2.5 sm:flex">
-            <Globe size={14} className="text-sky-400" aria-hidden />
+          <label className="nt-language-control hidden sm:flex">
+            <Globe size={15} aria-hidden="true" />
             <select
               value={language}
               onChange={(e) => setLanguage(e.target.value as 'en' | 'fr' | 'ar')}
-              className="cursor-pointer bg-transparent text-xs font-bold text-sky-300 outline-none"
               aria-label="Language"
             >
               {languages.map((lang) => (
-                <option key={lang.code} value={lang.code} className="bg-slate-900 text-slate-200">
-                  {lang.label}
-                </option>
+                <option key={lang.code} value={lang.code}>{lang.label}</option>
               ))}
             </select>
-          </div>
+            <ChevronDown size={13} aria-hidden="true" className="pointer-events-none opacity-60" />
+          </label>
           <button
             type="button"
-            className="flex h-9 w-9 items-center justify-center rounded-lg border border-slate-700 bg-slate-900 text-slate-200 md:hidden"
+            className="nt-header-icon xl:hidden"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            aria-label="Menu"
+            aria-label={mobileMenuOpen ? 'Close navigation menu' : 'Open navigation menu'}
             aria-expanded={mobileMenuOpen}
           >
             {mobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
@@ -132,45 +114,37 @@ export default function Header() {
       </div>
 
       {mobileMenuOpen && (
-        <nav className="border-t border-slate-800 bg-navy-950 px-4 pb-5 pt-3 md:hidden" aria-label="Mobile">
-          <div className="grid gap-1">
-            {links.map(([href, key]) => (
-              <Link
-                key={href}
-                href={href}
-                onClick={() => setMobileMenuOpen(false)}
-                className={`flex items-center gap-3 rounded-lg px-4 py-3 font-semibold ${
-                  isActive(href) ? 'bg-slate-900 text-white' : 'text-slate-300 hover:bg-slate-900 hover:text-white'
-                }`}
-                aria-current={isActive(href) ? 'page' : undefined}
-              >
-                <Package size={16} className="text-slate-500" aria-hidden />
-                {labelFor(key)}
-              </Link>
-            ))}
-            <Link
-              href="/favorites"
-              onClick={() => setMobileMenuOpen(false)}
-              className="flex items-center gap-3 rounded-lg px-4 py-3 font-semibold text-slate-300 hover:bg-slate-900 hover:text-white"
-            >
-              <Heart size={16} className="text-slate-500" aria-hidden />
-              {t('nav.favorites')}
+        <nav className="nt-mobile-nav xl:hidden" aria-label="Mobile navigation">
+          <div className="mx-auto grid max-w-[1440px] gap-1 px-4 pb-4 pt-2 sm:px-6">
+            {links.map(([href, key]) => {
+              const active = isActive(href);
+              return (
+                <Link
+                  key={href}
+                  href={href}
+                  className={`nt-mobile-link ${active ? 'nt-mobile-link-active' : ''}`}
+                  aria-current={active ? 'page' : undefined}
+                >
+                  <Package size={16} aria-hidden="true" />
+                  <span>{labelFor(key)}</span>
+                </Link>
+              );
+            })}
+            <Link href="/favorites" className="nt-mobile-link">
+              <Heart size={16} aria-hidden="true" />
+              <span>{t('nav.favorites')}</span>
             </Link>
-          </div>
-          <div className="mt-3 flex items-center gap-2 rounded-lg border border-sky-500/40 bg-slate-900 px-4 py-3">
-            <Globe size={15} className="text-sky-400" aria-hidden />
-            <select
-              value={language}
-              onChange={(e) => setLanguage(e.target.value as 'en' | 'fr' | 'ar')}
-              className="bg-transparent text-sm font-semibold text-sky-300 outline-none"
-              aria-label="Language"
-            >
-              {languages.map((lang) => (
-                <option key={lang.code} value={lang.code} className="bg-slate-900">
-                  {lang.label}
-                </option>
-              ))}
-            </select>
+            <label className="nt-mobile-language">
+              <Globe size={16} aria-hidden="true" />
+              <span className="text-sm font-semibold">{language === 'ar' ? 'اللغة' : language === 'fr' ? 'Langue' : 'Language'}</span>
+              <select
+                value={language}
+                onChange={(e) => setLanguage(e.target.value as 'en' | 'fr' | 'ar')}
+                aria-label="Language"
+              >
+                {languages.map((lang) => <option key={lang.code} value={lang.code}>{lang.name}</option>)}
+              </select>
+            </label>
           </div>
         </nav>
       )}
