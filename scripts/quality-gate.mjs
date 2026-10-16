@@ -10,6 +10,7 @@ const stages = [
   { name: 'lint', cmd: 'npm', args: ['run', 'lint'] },
   { name: 'test', cmd: 'npm', args: ['test', '--', '--runInBand'] },
   { name: 'validate:catalog', cmd: 'npm', args: ['run', 'validate:catalog'] },
+  { name: 'audit:oem-sources', cmd: 'npm', args: ['run', 'audit:oem-sources'] },
   { name: 'build', cmd: 'npm', args: ['run', 'build'] },
 ];
 
