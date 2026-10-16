@@ -58,18 +58,18 @@ console.log(`- Homepage/root URLs needing stronger product-level evidence: ${hom
 console.log(`- Invalid/non-HTTPS source links: ${errors.length}`);
 
 if (homepageLinks.length) {
-  console.log('\\nWEAK PROVENANCE — replace with a product page, searchable catalogue result, or document page when possible:');
+  console.log('\nWEAK PROVENANCE — replace with a product page, searchable catalogue result, or document page when possible:');
   for (const [key, count] of [...homepageHosts.entries()].sort(([a], [b]) => a.localeCompare(b))) {
     console.log(`- ${key}${count > 1 ? ` (used ${count} times)` : ''}`);
   }
 }
 
 if (errors.length) {
-  console.error('\\nSOURCE URL ERRORS:');
+  console.error('\nSOURCE URL ERRORS:');
   for (const error of errors) console.error(`- ${error}`);
   process.exitCode = 1;
 } else {
-  console.log('\\nNo malformed or non-HTTPS source URLs found.');
+  console.log('\nNo malformed or non-HTTPS source URLs found.');
 }
 
-console.log('\\nPolicy: this audit does not prove OEM equivalence or VIN fitment; source-listed references remain source-listed.');
+console.log('\nPolicy: this audit does not prove OEM equivalence or VIN fitment; source-listed references remain source-listed.');
