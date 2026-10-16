@@ -55,14 +55,34 @@ function hasSuppliedRenparProvenance(part: Part): boolean {
   );
 }
 
+
+function hasSuppliedDafCatalogueProvenance(part: Part): boolean {
+  const specs = part.specifications ?? {};
+  const row = Number(specs.sourceRow);
+  if (
+    specs.sourceDocument !== 'Catalogue Poids Lourds PRO 2026.html' ||
+    !Number.isInteger(row) ||
+    row < 1
+  ) return false;
+
+  return (part.sources ?? []).some(
+    (source) =>
+      source.type === 'parts-catalog' &&
+      source.name === `Catalogue Poids Lourds PRO 2026.html, row ${row}` &&
+      !source.url,
+  );
+}
+
 export function isLiveCatalogueEligible(part: Part): boolean {
   if (!LIVE_OK.includes(part.verificationStatus)) return false;
   const refs = part.oemReferences ?? [];
   const hasRenparSource = hasSuppliedRenparProvenance(part);
+  const hasDafSource = hasSuppliedDafCatalogueProvenance(part);
+  const hasSuppliedLocalSource = hasRenparSource || hasDafSource;
 
   // A source-listed aftermarket part number is a valid catalogue entry even when
   // the supplied source does not state an OEM number. It is never relabelled as OEM.
-  if (refs.length === 0) return hasRenparSource;
+  if (refs.length === 0) return hasSuppliedLocalSource;
 
   return refs.some((ref) => {
     if (!ref.referenceNumber?.trim() || !LIVE_OK.includes(ref.verificationStatus)) return false;
@@ -76,8 +96,12 @@ export function isLiveCatalogueEligible(part: Part): boolean {
 
     // Allow a local-document citation only when the part carries the exact matching
     // source document/page metadata. No arbitrary non-URL references are accepted.
-    const expectedCitation = `RENPAR MOIS 11.pdf, page ${part.specifications?.sourcePage}`;
-    return hasRenparSource && ref.evidenceLevel === 'parts-catalog' && ref.source === expectedCitation;
+    const expectedRenparCitation = `RENPAR MOIS 11.pdf, page ${part.specifications?.sourcePage}`;
+    const expectedDafCitation = `Catalogue Poids Lourds PRO 2026.html, row ${part.specifications?.sourceRow}`;
+    return ref.evidenceLevel === 'parts-catalog' && (
+      (hasRenparSource && ref.source === expectedRenparCitation) ||
+      (hasDafSource && ref.source === expectedDafCitation)
+    );
   });
 }
 

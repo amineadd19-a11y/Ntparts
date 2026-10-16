@@ -64,6 +64,29 @@ describe('canonical catalogue search', () => {
     }
   });
 
+  it('finds additional source-listed DAF references from the supplied catalogue', () => {
+    for (const query of ['1948921', '1828379', '2272926', '1928868', '2253989']) {
+      const { results } = searchCatalogue(query, { limit: 50 });
+      expect(results.some((result) =>
+        result.part.oemReferences.some((ref) =>
+          [ref.referenceNumber, ...(ref.alternateNumbers ?? [])].some((value) =>
+            value.replace(/[^a-z0-9]/gi, '').toLowerCase() === query.toLowerCase(),
+          ),
+        ),
+      )).toBe(true);
+    }
+  });
+
+  it('keeps supplied DAF catalogue entries source-listed, not verified', () => {
+    const { results } = searchCatalogue('2272926', { limit: 50 });
+    const match = results.find((result) =>
+      result.part.oemReferences.some((ref) => ref.referenceNumber === '2272926'),
+    );
+    expect(match).toBeTruthy();
+    expect(match?.verificationStatus).toBe('source-listed');
+    expect(match?.part.specifications?.sourceDocument).toBe('Catalogue Poids Lourds PRO 2026.html');
+  });
+
   it('exposes verificationStatus on every scored result', () => {
     const { results } = searchCatalogue('filter', { limit: 5 });
     for (const r of results) {

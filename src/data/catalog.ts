@@ -2,6 +2,7 @@ import type { Part } from '@/types';
 import * as CORE from '@/data/catalog-core';
 import { RENPAR_CATALOG_PARTS } from '@/data/catalog-renpar';
 import { SOURCE_BACKED_PARTS } from '@/data/catalog-source-backed';
+import { SUPPLIED_DAF_CATALOG_PARTS } from '@/data/catalog-supplied-daf';
 import { imagesForPartRefs } from '@/data/catalog-images';
 import { deduplicateAndMerge, isLiveCatalogueEligible } from '@/lib/catalog/pipeline';
 import { normalizeReference } from '@/lib/catalog/normalize';
@@ -77,10 +78,11 @@ function withRealPhotos(part: Part): Part {
 /** Legacy generated/core catalogue is intentionally excluded from live results. */
 const coreOemBacked: Part[] = [];
 const sourceBackedWithPhotos = SOURCE_BACKED_PARTS.map(withRealPhotos);
+const suppliedDafWithPhotos = SUPPLIED_DAF_CATALOG_PARTS.map(withRealPhotos);
 const renparWithPhotos = RENPAR_CATALOG_PARTS.map(withRealPhotos);
 
 const merged = deduplicateAndMerge(
-  [...coreOemBacked, ...sourceBackedWithPhotos, ...renparWithPhotos],
+  [...coreOemBacked, ...sourceBackedWithPhotos, ...suppliedDafWithPhotos, ...renparWithPhotos],
   { liveOnly: true },
 );
 
@@ -117,6 +119,7 @@ export const CATALOG_STATS = {
   ),
   partsWithRealPhotos: CATALOG_PARTS.filter((part) => (part.images?.length ?? 0) > 0).length,
   sourceBackedRecords: SOURCE_BACKED_PARTS.length,
+  suppliedDafRecords: SUPPLIED_DAF_CATALOG_PARTS.length,
   renparRecords: RENPAR_CATALOG_PARTS.length,
   coreOemBacked: coreOemBacked.length,
   mergeInput: CATALOG_MERGE_STATS.input,
@@ -242,4 +245,4 @@ export function assertLiveCatalogueIntegrity(): { ok: boolean; violations: strin
   return { ok: violations.length === 0, violations };
 }
 
-export { RENPAR_CATALOG_PARTS, SOURCE_BACKED_PARTS, OEM_REFERENCE_REGISTRY, isLiveCatalogueEligible };
+export { RENPAR_CATALOG_PARTS, SOURCE_BACKED_PARTS, SUPPLIED_DAF_CATALOG_PARTS, OEM_REFERENCE_REGISTRY, isLiveCatalogueEligible };
