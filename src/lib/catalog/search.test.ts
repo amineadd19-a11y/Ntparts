@@ -64,6 +64,23 @@ describe('canonical catalogue search', () => {
     }
   });
 
+  it('finds source-listed DAF filters by their listed MANN and HENGST references', () => {
+    const cases: Array<[string, string]> = [
+      ['PU 10 012 Z', 'sup-daf-2277128'],
+      ['E127KP', 'sup-daf-2277128'],
+      ['PU 10 009 Z', 'sup-daf-2277129'],
+      ['E126KP', 'sup-daf-2277129'],
+    ];
+
+    for (const [query, expectedPartId] of cases) {
+      const { results } = searchCatalogue(query, { limit: 50 });
+      const match = results.find((result) => result.part.id === expectedPartId);
+      expect(match).toBeTruthy();
+      expect(['aftermarket', 'exact-source-listed-oem', 'partial-oem']).toContain(match?.matchKind);
+      expect(match?.verificationStatus).toBe('source-listed');
+    }
+  });
+
   it('finds additional source-listed DAF references from the supplied catalogue', () => {
     for (const query of ['1948921', '1828379', '2272926', '1928868', '2253989']) {
       const { results } = searchCatalogue(query, { limit: 50 });
