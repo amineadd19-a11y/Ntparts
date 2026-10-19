@@ -40,10 +40,10 @@ describe('canonical catalogue search', () => {
 
   it('finds DAF XF106 fuel filters by both OEM references and listed alternates', () => {
     const expectedByQuery: Array<[string, string]> = [
-      ['2277128', 'src-daf-2277128-fuel-filter'],
-      ['2277129', 'src-daf-2277129-fuel-filter'],
-      ['1852005', 'src-daf-2277128-fuel-filter'],
-      ['2164463', 'src-daf-2277129-fuel-filter'],
+      ['2277128', 'sup-daf-2277128'],
+      ['2277129', 'sup-daf-2277129'],
+      ['1852005', 'sup-daf-2277128'],
+      ['2164463', 'sup-daf-2277129'],
     ];
 
     for (const [query, expectedPartId] of expectedByQuery) {
@@ -54,13 +54,30 @@ describe('canonical catalogue search', () => {
 
   it('finds DAF filter OEMs despite inserted spaces and punctuation', () => {
     const variants: Array<[string, string]> = [
-      ['2277 128', 'src-daf-2277128-fuel-filter'],
-      ['2277-129', 'src-daf-2277129-fuel-filter'],
+      ['2277 128', 'sup-daf-2277128'],
+      ['2277-129', 'sup-daf-2277129'],
     ];
 
     for (const [query, expectedPartId] of variants) {
       const { results } = searchCatalogue(query, { limit: 50 });
       expect(results.some((result) => result.part.id === expectedPartId)).toBe(true);
+    }
+  });
+
+  it('finds source-listed DAF filters by their listed MANN and HENGST references', () => {
+    const cases: Array<[string, string]> = [
+      ['PU 10 012 Z', 'sup-daf-2277128'],
+      ['E127KP', 'sup-daf-2277128'],
+      ['PU 10 009 Z', 'sup-daf-2277129'],
+      ['E126KP', 'sup-daf-2277129'],
+    ];
+
+    for (const [query, expectedPartId] of cases) {
+      const { results } = searchCatalogue(query, { limit: 50 });
+      const match = results.find((result) => result.part.id === expectedPartId);
+      expect(match).toBeTruthy();
+      expect(['aftermarket', 'exact-source-listed-oem', 'partial-oem']).toContain(match?.matchKind);
+      expect(match?.verificationStatus).toBe('source-listed');
     }
   });
 
